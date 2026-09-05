@@ -38,7 +38,7 @@ workspace/
 
 | Downstream Repository                                         | Role in Ecosystem | How it Uses `vexspoke` |
 |:--------------------------------------------------------------| :--- | :--- |
-| [**`hotcwap`**](https://github.com/vexgraph-dev/hotcwap)      | Dynamic library hot-reloader & native OS windowing | Consumes `event/`, `input/`, `time/`, and `buffer/` for zero-allocation event pumps and persistent OS display surfaces. |
+| [**`hotcwap`**](https://github.com/vexgraph-dev/hotcwap)      | Dynamic library hot-reloader & native OS windowing | Consumes `event/`, `input/`, and `time/` for zero-allocation event pumps and persistent OS display surfaces (raster `buffer/` types now come via `graphvex`). |
 | [**`darling`**](https://github.com/vexgraph-dev/darling)      | Retained-mode UI nodes & Vulkan UI pipelines | Consumes `nio/mem`, `bit/bit`, `oop/type`, `lang/math`, and base `vulkan/` contexts to build off-heap UI nodes (`Panel`, `Picture`, `Label`), font baking, and GPU distance-field passes. |
 | [**`api-haven`**](https://github.com/vexgraph-dev/api-haven)  | Zero-allocation network APIs & telemetry | Consumes `net/http`, `net/json`, `net/url`, `nio/mem`, and `primitive/string` for off-heap Discord webhooks and metrics streaming. |
 | A local directory that holds all                              | Local orchestrator & application probes | Vertically links all three downstream layers together into composite binaries (`main/vk_test.c`). |

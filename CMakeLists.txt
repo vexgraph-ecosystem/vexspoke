@@ -32,14 +32,6 @@ add_library(vexspoke STATIC
     src/oop/field.c
     src/oop/stride.c
     src/oop/struct.c
-    src/buffer/buffer.c
-    src/buffer/color_buffer.c
-    src/buffer/depth_buffer.c
-    src/buffer/frame_buffer.c
-    src/buffer/height_buffer.c
-    src/buffer/normal_buffer.c
-    src/buffer/shadow_buffer.c
-    src/buffer/stencil_buffer.c
     src/cli/command.c
     src/cli/commandparser.c
     src/cli/commandregistry.c

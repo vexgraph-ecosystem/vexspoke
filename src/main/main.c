@@ -18,10 +18,6 @@
 
 #include "annotation/overview.h"
 #include "bit/bit.h"
-#include "buffer/color_buffer.h"
-#include "buffer/depth_buffer.h"
-#include "buffer/frame_buffer.h"
-#include "buffer/normal_buffer.h"
 #include "cli/command.h"
 #include "cli/commandparser.h"
 #include "cli/commandregistry.h"
@@ -655,21 +651,6 @@ int main(void) {
     printf("aos: %d %d %d\n", Struct_getIntElement(pts, 0, 0),
            Struct_getIntElement(pts, 1, 0), Struct_getIntElement(pts, 2, 0));
     Struct_free(pts);
-
-    // Buffers: 2D multi-channel raster engine
-    printf("== anti buffers: Buffer & ColorBuffer ==\n");
-    Buffer *colorBuf = ColorBuffer(64, 64);
-    ColorBuffer_setRGBA(colorBuf, 10, 20, 255, 128, 64, 255);
-    uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
-    ColorBuffer_getRGBA(colorBuf, 10, 20, &cr, &cg, &cb, &ca);
-    printf("color[10,20] = rgba(%u,%u,%u,%u)\n", cr, cg, cb, ca);
-
-    Buffer *depthBuf = DepthBuffer(64, 64);
-    DepthBuffer_set(depthBuf, 10, 20, 0.75f);
-    printf("depth[10,20] = %.2f\n", (double)DepthBuffer_get(depthBuf, 10, 20));
-
-    Buffer_free(colorBuf);
-    Buffer_free(depthBuf);
 
     // Objects: Future, Reactive, Passive, Choice, Global, Local
     printf("== anti objects: Future & Reactive & Passive & Global ==\n");
