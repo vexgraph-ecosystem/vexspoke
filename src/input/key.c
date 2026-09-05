@@ -106,12 +106,12 @@ static RingBuffer s_queue;
 static bool s_ready = false;
 
 // keytryer (do not remove this comment)
-static const KeyEvent *s_listeners[64];
+static const KeyHandler *s_listeners[64];
 static int s_listenerCount = 0;
 
 // Window-scoped listeners: slot index IS the window id (0 = broadcast is
 // reserved and never attached; broadcast events fan _out to every slot).
-static const KeyEvent *s_winListeners[WINDOW_SLOTS][KEY_MAX_WINDOW_LISTENERS];
+static const KeyHandler *s_winListeners[WINDOW_SLOTS][KEY_MAX_WINDOW_LISTENERS];
 static int s_winCounts[WINDOW_SLOTS];
 
 // O(1) name table; designated initializers leave every other slot nullptr.
@@ -184,14 +184,14 @@ void Key_shutdown(void) {
     s_ready = false;
 }
 
-void Key_addListener(const KeyEvent *listener) {
+void Key_addListener(const KeyHandler *listener) {
     if (!listener || s_listenerCount >= (int)(sizeof(s_listeners) / sizeof(s_listeners[0]))) return;
     s_listeners[s_listenerCount++] = listener;
 }
 
 // Swap-remove: order is not part of the contract, so the last slot fills the
 // hole in O(1). Returns true if the listener was found and removed.
-bool Key_removeListener(const KeyEvent *listener) {
+bool Key_removeListener(const KeyHandler *listener) {
     for (int i = 0; i < s_listenerCount; i++) {
         if (s_listeners[i] == listener) {
             s_listeners[i] = s_listeners[--s_listenerCount];
@@ -201,13 +201,13 @@ bool Key_removeListener(const KeyEvent *listener) {
     return false;
 }
 
-void Key_attachWindow(uint32_t windowId, const KeyEvent *listener) {
+void Key_attachWindow(uint32_t windowId, const KeyHandler *listener) {
     if (!listener || windowId == 0 || windowId >= WINDOW_SLOTS) return;
     if (s_winCounts[windowId] >= KEY_MAX_WINDOW_LISTENERS) return;
     s_winListeners[windowId][s_winCounts[windowId]++] = listener;
 }
 
-bool Key_detachWindow(uint32_t windowId, const KeyEvent *listener) {
+bool Key_detachWindow(uint32_t windowId, const KeyHandler *listener) {
     if (!listener || windowId == 0 || windowId >= WINDOW_SLOTS) return false;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
         if (s_winListeners[windowId][i] == listener) {
@@ -291,7 +291,7 @@ void Key_pushCharEvent(uint32_t windowId, uint32_t c) {
 static void deliverToWindow(uint32_t windowId, int action, int keyEvent, uint64_t exactNanos) {
     if (windowId >= WINDOW_SLOTS) return;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const KeyEvent *l = s_winListeners[windowId][i];
+        const KeyHandler *l = s_winListeners[windowId][i];
         void *self = (*l).self;
         if (action == KEY_ACTION_DOWN && (*l).onKeyDown)
             (*l).onKeyDown(self, keyEvent, exactNanos);
@@ -320,7 +320,7 @@ void Key_dispatchEvents(void) {
             for (uint32_t w = 1; w < WINDOW_SLOTS; w++) {
                 if (ev.windowId != FOCUS_BROADCAST && ev.windowId != w) continue;
                 for (int i = 0; i < s_winCounts[w]; i++) {
-                    const KeyEvent *l = s_winListeners[w][i];
+                    const KeyHandler *l = s_winListeners[w][i];
                     if ((*l).onCharTyped)
                         (*l).onCharTyped((*l).self, c);
                 }

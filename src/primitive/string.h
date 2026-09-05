@@ -40,7 +40,7 @@ const char *string_get(const uint8_t *ptr);
 size_t string_length(const uint8_t *ptr);
 
 // Block header type id (Java type).
-uint32_t string_type(const uint8_t *ptr);
+uint64_t string_type(const uint8_t *ptr);
 
 // True if the block type is an array form (Java isArray).
 bool string_isArray(const uint8_t *ptr);

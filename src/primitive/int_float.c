@@ -63,7 +63,7 @@ void *IntFloat_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(int64_t))
         bytes = count * 8;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_INT_FLOAT), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT_FLOAT), bytes);
 }
 
 void IntFloat_free(void *ptr) {
@@ -92,7 +92,7 @@ bool IntFloat_compareAndSet(void *ptr, int64_t expected, int64_t value) {
     return __atomic_compare_exchange_n((int64_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t IntFloat_type(void *ptr) {
+uint64_t IntFloat_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_int_floatPool, ptr)) return BitPool_type(&g_int_floatPool, ptr);

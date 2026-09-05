@@ -25,7 +25,7 @@
 // stride.c — Stride port (Legacy: oop/Stride.java). Byte width of a class.
 
 size_t Stride_get(uint32_t class_id) {
-    uint32_t id = class_id & MASK_CLASS;
+    uint64_t id = (uint64_t)class_id & MASK_CLASS;
 
     // Runtime-defined custom structs first: the Struct registry is the source
     // of truth for their stride.

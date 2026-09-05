@@ -22,7 +22,7 @@ void IntDouble_free(void *ptr);
 int64_t IntDouble_get(void *ptr);
 void IntDouble_set(void *ptr, int64_t value);
 bool IntDouble_compareAndSet(void *ptr, int64_t expected, int64_t value);
-uint32_t IntDouble_type(void *ptr);
+uint64_t IntDouble_type(void *ptr);
 size_t IntDouble_length(void *ptr);
 
 

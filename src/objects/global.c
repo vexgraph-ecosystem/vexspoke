@@ -47,7 +47,7 @@ typedef struct Global {
 } Global;
 
 Global *Global_1(uint64_t initialValue) {
-    uint32_t type = Type_make(FORM_SINGLETON, ID_GLOBAL) | MOD_GLOBAL;
+    uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_GLOBAL) | MOD_GLOBAL;
     Global *global = (Global*) Memory_alloc(type, sizeof(Global));
     if (!global)
         return nullptr;

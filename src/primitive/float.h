@@ -22,7 +22,7 @@ void Float_free(void *ptr);
 float Float_get(void *ptr);
 void Float_set(void *ptr, float value);
 bool Float_compareAndSet(void *ptr, float expected, float value);
-uint32_t Float_type(void *ptr);
+uint64_t Float_type(void *ptr);
 size_t Float_length(void *ptr);
 
 

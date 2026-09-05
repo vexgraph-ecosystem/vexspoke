@@ -128,7 +128,7 @@ static int defineInto(Fields *s, const size_t *sizesOrClasses, size_t count) {
     }
 
     Field *items = Memory_alloc(
-        Type_make(FORM_ARRAY, ID_STRIDE), count * sizeof(Field));
+        Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_STRIDE), count * sizeof(Field));
     if (!items)
         return 0;
 
@@ -197,7 +197,7 @@ static int defineIntoNamed(Fields *s, const size_t *sizesOrClasses, const char *
         (*s).items = nullptr;
     }
     Field *items = Memory_alloc(
-        Type_make(FORM_ARRAY, ID_STRIDE), count * sizeof(Field));
+        Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_STRIDE), count * sizeof(Field));
     if (!items)
         return 0;
     for (size_t i = 0; i < count; i++)
@@ -249,8 +249,8 @@ Class *Class_createNamed(size_t count, ...) {
         return nullptr;
     if (nextFieldsId >= MAX_FIELDS)
         return nullptr;
-    size_t *classes = Memory_alloc(Type_make(FORM_ARRAY, ID_STRIDE), count * sizeof(size_t));
-    const char **names = Memory_alloc(Type_make(FORM_ARRAY, ID_STRIDE), count * sizeof(char*));
+    size_t *classes = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_STRIDE), count * sizeof(size_t));
+    const char **names = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_STRIDE), count * sizeof(char*));
     if (!classes || !names) {
         if (classes) Memory_free(classes);
         if (names) Memory_free(names);

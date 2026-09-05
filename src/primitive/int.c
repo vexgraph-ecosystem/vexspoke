@@ -63,7 +63,7 @@ void *Int_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 4 != sizeof(int32_t))
         bytes = count * 4;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_INT), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT), bytes);
 }
 
 void Int_free(void *ptr) {
@@ -92,7 +92,7 @@ bool Int_compareAndSet(void *ptr, int32_t expected, int32_t value) {
     return __atomic_compare_exchange_n((int32_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Int_type(void *ptr) {
+uint64_t Int_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_intPool, ptr)) return BitPool_type(&g_intPool, ptr);

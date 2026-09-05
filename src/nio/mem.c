@@ -15,7 +15,7 @@
  * ============================================================================
  * Pre-allocated Master Arena and Size-Class Slab Allocator fulfilling the
  * Anti Paradigm: zero steady-state malloc, cache-hot slot recycling, and
- * 16-byte negative pointer math.
+ * 32-byte negative pointer math.
  *
  * Phase-4 instancing: globals are the DEFAULT MemoryArena; secondaries
  * register for address-range free routing. Header layout untouched.
@@ -23,10 +23,11 @@
  * STRUCT FIELDS (Mirroring nio/mem.h + local to this file):
  * ----------------------------------------------------------------------------
  *   MemoryHeader {
- *     uint32_t typeId; // block-header type id
+ *     uint64_t typeId; // block-header type id
  *     uint32_t length; // payload length
  *     uint32_t slabIndex; // slab index
  *     uint32_t magic; // block magic cookie
+ *     uint32_t reserved[3]; // zeroed future flags
  *   }
  *   Block {
  *     struct Block *prev; // instance state
@@ -187,7 +188,7 @@ static bool arena_init(MemoryArena *a, size_t totalBytes) {
     return true;
 }
 
-static void *arena_alloc(MemoryArena *a, uint32_t typeId, size_t numBytes) {
+static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
     if (!a || !(*a).live)
         return nullptr;
     if (numBytes > UINT32_MAX)
@@ -342,7 +343,7 @@ bool Memory_init(size_t totalBytes) {
     return arena_init(&s_default, totalBytes);
 }
 
-void *Memory_alloc(uint32_t typeId, size_t numBytes) {
+void *Memory_alloc(uint64_t typeId, size_t numBytes) {
     ensure_initialized();
     return arena_alloc(&s_default, typeId, numBytes);
 }
@@ -351,7 +352,7 @@ void *Memory_realloc(void *userPtr, size_t newBytes) {
     if (!userPtr)
         return Memory_alloc(0, newBytes);
 
-    uint32_t typeId = Memory_type(userPtr);
+    uint64_t typeId = Memory_type(userPtr);
     size_t oldLen = Memory_length(userPtr);
     void *next = Memory_alloc(typeId, newBytes);
     if (!next)
@@ -398,7 +399,7 @@ size_t Memory_length(void *userPtr) {
     return 0;
 }
 
-uint32_t Memory_type(void *userPtr) {
+uint64_t Memory_type(void *userPtr) {
     if (!userPtr)
         return 0;
 
@@ -413,7 +414,7 @@ uint32_t Memory_type(void *userPtr) {
     return 0;
 }
 
-size_t Memory_findAll(uint32_t typeId, void **outArray, size_t maxCount) {
+size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount) {
     return MemoryArena_findAll(&s_default, typeId, outArray, maxCount);
 }
 
@@ -458,7 +459,7 @@ void MemoryArena_destroy(MemoryArena *a) {
     free(a);
 }
 
-void *MemoryArena_alloc(MemoryArena *a, uint32_t typeId, size_t numBytes) {
+void *MemoryArena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
     if (!a)
         return nullptr;
     return arena_alloc(a, typeId, numBytes);
@@ -470,7 +471,7 @@ void *MemoryArena_realloc(MemoryArena *a, void *userPtr, size_t newBytes) {
     if (!userPtr)
         return arena_alloc(a, 0, newBytes);
 
-    uint32_t typeId = Memory_type(userPtr);
+    uint64_t typeId = Memory_type(userPtr);
     size_t oldLen = Memory_length(userPtr);
     void *next = arena_alloc(a, typeId, newBytes);
     if (!next)
@@ -493,7 +494,7 @@ void MemoryArena_freeAll(MemoryArena *a) {
     arena_freeAll(a);
 }
 
-size_t MemoryArena_findAll(MemoryArena *a, uint32_t typeId, void **outArray, size_t maxCount) {
+size_t MemoryArena_findAll(MemoryArena *a, uint64_t typeId, void **outArray, size_t maxCount) {
     size_t count = 0;
     if (!a || !(*a).live)
         return 0;

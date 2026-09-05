@@ -19,8 +19,9 @@
 // finds next. Upper 16 bits of `next` are an ABA-defeating tag.
 
 typedef struct BitSlot {
-    uint32_t type_id;
+    uint64_t type_id;
     uint32_t length;
+    uint32_t pad;
     _Atomic uint64_t next;   // ABA-tagged freelist next (lower 48 bits ptr, upper 16 tag)
 } BitSlot;
 
@@ -37,7 +38,7 @@ void BitPool_shutdown(BitPool *pool);
 
 // Pop a slot from the free list and stamp type_id into its header.
 // Returns nullptr when the pool is exhausted.
-void *BitPool_alloc(BitPool *pool, uint32_t type_id);
+void *BitPool_alloc(BitPool *pool, uint64_t type_id);
 
 // Push a slot back onto the free list. user_ptr must come from this pool.
 void BitPool_free(BitPool *pool, void *user_ptr);
@@ -45,7 +46,7 @@ void BitPool_free(BitPool *pool, void *user_ptr);
 // Helpers for mixed-allocator primitives — Memory vs BitPool dispatch.
 // These let primitive *_free/_type/_length safely handle both arenas.
 bool BitPool_contains(const BitPool *pool, const void *user_ptr);
-uint32_t BitPool_type(const BitPool *pool, const void *user_ptr);
+uint64_t BitPool_type(const BitPool *pool, const void *user_ptr);
 size_t BitPool_length(const BitPool *pool, const void *user_ptr);
 
 #endif

@@ -25,7 +25,7 @@ typedef struct Command Command;
 Command *Command_3(uint8_t *name_ptr, uint8_t **arg_ptrs, size_t argc);
 
 // Block-header type id of a command (0 if nullptr).
-uint32_t Command_type(const Command *command);
+uint64_t Command_type(const Command *command);
 
 // Owned command name string block (Java getName).
 uint8_t *Command_name(const Command *command);

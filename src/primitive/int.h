@@ -22,7 +22,7 @@ void Int_free(void *ptr);
 int32_t Int_get(void *ptr);
 void Int_set(void *ptr, int32_t value);
 bool Int_compareAndSet(void *ptr, int32_t expected, int32_t value);
-uint32_t Int_type(void *ptr);
+uint64_t Int_type(void *ptr);
 size_t Int_length(void *ptr);
 
 

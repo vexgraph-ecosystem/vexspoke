@@ -105,14 +105,14 @@ size_t string_length(const uint8_t *ptr) {
     return n > 0 ? n - 1 : 0;
 }
 
-uint32_t string_type(const uint8_t *ptr) {
+uint64_t string_type(const uint8_t *ptr) {
     if (!ptr)
         return 0;
     return Memory_type((void*) (uintptr_t)ptr);
 }
 
 bool string_isArray(const uint8_t *ptr) {
-    uint32_t t = string_type(ptr);
+    uint64_t t = string_type(ptr);
     return t != 0 && (t & FORM_ARRAY) == FORM_ARRAY;
 }
 

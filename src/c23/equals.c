@@ -73,8 +73,8 @@ bool isEqual(const void *a, const void *b) {
     if (!a || !b)
         return false;
 
-    uint32_t ta = Memory_type((void*) a);
-    uint32_t tb = Memory_type((void*) b);
+    uint64_t ta = Memory_type((void*) a);
+    uint64_t tb = Memory_type((void*) b);
     if (ta == 0 || tb == 0)
         return false;
     if (ta != tb)

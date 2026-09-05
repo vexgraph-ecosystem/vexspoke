@@ -30,7 +30,7 @@
  * STRUCT FIELDS (Mirroring bit/bit.h):
  * ----------------------------------------------------------------------------
  *   BitSlot {
- *     uint32_t type_id; // block-header type id
+ *     uint64_t type_id; // block-header type id
  *     uint32_t length; // payload length
  *     _Atomic uint64_t next; // ABA-tagged freelist next (lower 48 bits ptr, upper 16 tag)
  *   }
@@ -109,7 +109,7 @@ void BitPool_shutdown(BitPool *pool) {
 
 // Pop a slot: CAS the tagged free head forward, bumping the tag each time so
 // the ABA problem can't sneak in. On success the slot is exclusively ours.
-void *BitPool_alloc(BitPool *pool, uint32_t type_id) {
+void *BitPool_alloc(BitPool *pool, uint64_t type_id) {
     if (!pool) return nullptr;
 
     uint64_t head_packed = atomic_load_explicit(&(*pool).free_head, memory_order_acquire);
@@ -203,7 +203,7 @@ bool BitPool_contains(const BitPool *pool, const void *user_ptr) {
     return true;
 }
 
-uint32_t BitPool_type(const BitPool *pool, const void *user_ptr) {
+uint64_t BitPool_type(const BitPool *pool, const void *user_ptr) {
     if (!BitPool_contains(pool, user_ptr))
         return 0;
     const BitSlot *slot = (const BitSlot*) ((const uint8_t*) user_ptr - sizeof(BitSlot));

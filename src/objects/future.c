@@ -48,7 +48,7 @@ typedef struct Future {
 } Future;
 
 Future *Future_0(void) {
-    uint32_t type = Type_make(FORM_SINGLETON, ID_FUTURE) | WRAP2_FUTURE;
+    uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_FUTURE) | WRAP2_FUTURE;
     Future *future = Memory_alloc(type, sizeof(Future));
     if (!future)
         return nullptr;

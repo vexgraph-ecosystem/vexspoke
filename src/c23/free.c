@@ -29,7 +29,7 @@
 void c23_free(void *ptr) {
     if (!ptr) return;
 
-    uint32_t typeId = Memory_type(ptr);
+    uint64_t typeId = Memory_type(ptr);
 
     switch (typeId) {
         case TYPE_PROBABLE:

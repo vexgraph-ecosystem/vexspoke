@@ -56,7 +56,7 @@ struct Reactive {
 };
 
 Reactive *Reactive_1(uint64_t initialValue) {
-    uint32_t type = Type_make(FORM_SINGLETON, ID_REACTIVE) | WRAP_REACTIVE;
+    uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_REACTIVE) | WRAP_REACTIVE;
     Reactive *reactive = (Reactive*) Memory_alloc(type, sizeof(Reactive));
     if (!reactive)
         return nullptr;

@@ -55,7 +55,7 @@ static int32_t *allocateInts(size_t count) {
 }
 
 SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
-    SparseSet *set = (SparseSet*) Memory_alloc(Type_make(FORM_SINGLETON, ID_SPARSE_SET), sizeof(SparseSet));
+    SparseSet *set = (SparseSet*) Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_SPARSE_SET), sizeof(SparseSet));
     if (!set) return nullptr;
 
     (*set).capacity = (int32_t)capacity;
@@ -80,7 +80,7 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
 
     if (stride > 0) {
         size_t bytes = capacity * stride;
-        uint32_t bufType = Type_make(FORM_ARRAY, ID_SPARSE_SET);
+        uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SPARSE_SET);
         (*set).data = (uint8_t*) Memory_alloc(bufType, bytes);
         if (!(*set).data) {
             Memory_free((*set).dense);

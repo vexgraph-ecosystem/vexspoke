@@ -29,7 +29,7 @@ typedef void (*Thread_Job)(Thread *self, void *task);
 // Create a stopped handle. typeId stamps the block header (one of the
 // ID_THREAD_* classes); queueCapacity holds void* tasks. Core handles reject
 // stop/free like legacy ROLE_CORE. nullptr on OOM/bad args.
-Thread *Thread_new(uint32_t typeId, Thread_Job job, size_t queueCapacity,
+Thread *Thread_new(uint64_t typeId, Thread_Job job, size_t queueCapacity,
                    bool tickWhenIdle, bool core);
 
 // Spawn the platform thread. True on success or if already running.
@@ -47,7 +47,7 @@ void Thread_free(Thread *self);
 
 bool Thread_isRunning(Thread *self);
 RingBuffer *Thread_queue(Thread *self);
-uint32_t Thread_purpose(Thread *self);
+uint64_t Thread_purpose(Thread *self);
 
 // Pool-wide walkers over the central registry (legacy runAll/stopAll/freeAll).
 void Thread_runAll(void);

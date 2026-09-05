@@ -58,7 +58,7 @@ Command *Command_3(uint8_t *name_ptr, uint8_t **arg_ptrs, size_t argc) {
     return cmd;
 }
 
-uint32_t Command_type(const Command *command) {
+uint64_t Command_type(const Command *command) {
     if (!command)
         return 0;
     return Memory_type((void*) (uintptr_t)command);

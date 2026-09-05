@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-// event/key.h — high-level listener contract for hardware key events
+// event/keyhandler.h — high-level listener contract for hardware key events
 // (Legacy: event/KeyEvent.java).
 //
-// A KeyEvent is C's version of a Java interface: a vtable of callbacks plus
+// A KeyHandler is C's version of a Java interface: a vtable of callbacks plus
 // a leading `self` pointer. Any struct "implements" it by exposing one of
 // these with .self pointing at itself; every callback receives that pointer
 // back as its first argument (the `this` Java implied). Callbacks mirror the
@@ -20,12 +20,12 @@
 // keyEvent packs the code + modifier flags (see input/key.h); exactNanos is
 // the reconstructed engine-epoch timestamp of the OS delivery.
 
-typedef struct KeyEvent {
+typedef struct KeyHandler {
     void *self; // the implementing object, handed back to every callback
     void (*onKeyDown)(void *self, int keyEvent, uint64_t exactNanos);
     void (*onKeyUp)(void *self, int keyEvent, uint64_t exactNanos);
     void (*onKeyRepeat)(void *self, int keyEvent, uint64_t exactNanos);
     void (*onCharTyped)(void *self, uint32_t character); // default no-op in legacy
-} KeyEvent;
+} KeyHandler;
 
 #endif

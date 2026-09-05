@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "event/key.h"
+#include "event/keyhandler.h"
 
 // Window id carried by every queued event (0 = FOCUS_BROADCAST, no window).
 // Events only exist on the window the OS delivered them to; dispatch routes
@@ -160,13 +160,13 @@ void Key_init(void);
 void Key_shutdown(void);
 
 // Register a listener (fixed slots, silently dropped when full — legacy parity).
-void Key_addListener(const KeyEvent *listener);
-bool Key_removeListener(const KeyEvent *listener);
+void Key_addListener(const KeyHandler *listener);
+bool Key_removeListener(const KeyHandler *listener);
 
 // Window-scoped registration: the listener only receives events whose
 // windowId tag matches (broadcast-tagged events reach every window).
-void Key_attachWindow(uint32_t windowId, const KeyEvent *listener);
-bool Key_detachWindow(uint32_t windowId, const KeyEvent *listener);
+void Key_attachWindow(uint32_t windowId, const KeyHandler *listener);
+bool Key_detachWindow(uint32_t windowId, const KeyHandler *listener);
 void Key_detachWindowAll(uint32_t windowId);
 
 // Producer: Thread 0 only. Updates the state table (with multi-tap counting

@@ -112,11 +112,11 @@ static double s_posY = 0.0;
 static RingBuffer s_queue;
 static bool s_ready = false;
 
-static const MouseEvent *s_listeners[64];
+static const MouseHandler *s_listeners[64];
 static int s_listenerCount = 0;
 
 // Window-scoped listeners: slot index IS the window id (0 reserved).
-static const MouseEvent *s_winListeners[MOUSE_MAX_WINDOWS][MOUSE_MAX_WINDOW_LISTENERS];
+static const MouseHandler *s_winListeners[MOUSE_MAX_WINDOWS][MOUSE_MAX_WINDOW_LISTENERS];
 static int s_winCounts[MOUSE_MAX_WINDOWS];
 
 void Mouse_init(void) {
@@ -133,12 +133,12 @@ void Mouse_shutdown(void) {
     s_ready = false;
 }
 
-void Mouse_addListener(const MouseEvent *listener) {
+void Mouse_addListener(const MouseHandler *listener) {
     if (!listener || s_listenerCount >= (int)(sizeof(s_listeners) / sizeof(s_listeners[0]))) return;
     s_listeners[s_listenerCount++] = listener;
 }
 
-bool Mouse_removeListener(const MouseEvent *listener) {
+bool Mouse_removeListener(const MouseHandler *listener) {
     for (int i = 0; i < s_listenerCount; i++) {
         if (s_listeners[i] == listener) {
             s_listeners[i] = s_listeners[--s_listenerCount];
@@ -148,13 +148,13 @@ bool Mouse_removeListener(const MouseEvent *listener) {
     return false;
 }
 
-void Mouse_attachWindow(uint32_t windowId, const MouseEvent *listener) {
+void Mouse_attachWindow(uint32_t windowId, const MouseHandler *listener) {
     if (!listener || windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
     if (s_winCounts[windowId] >= MOUSE_MAX_WINDOW_LISTENERS) return;
     s_winListeners[windowId][s_winCounts[windowId]++] = listener;
 }
 
-bool Mouse_detachWindow(uint32_t windowId, const MouseEvent *listener) {
+bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener) {
     if (!listener || windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return false;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
         if (s_winListeners[windowId][i] == listener) {
@@ -298,7 +298,7 @@ static void deliverMotion(uint32_t windowId, int action8, int button,
                           double a, double b) {
     if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseEvent *l = s_winListeners[windowId][i];
+        const MouseHandler *l = s_winListeners[windowId][i];
         void *self = (*l).self;
         if (action8 == 5 && (*l).onMouseMove)
             (*l).onMouseMove(self, a, b);
@@ -315,7 +315,7 @@ static void deliverMotion(uint32_t windowId, int action8, int button,
 static void deliverZoom(uint32_t windowId, double magnification) {
     if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseEvent *l = s_winListeners[windowId][i];
+        const MouseHandler *l = s_winListeners[windowId][i];
         if ((*l).onMouseZoom)
             (*l).onMouseZoom((*l).self, magnification);
     }
@@ -325,7 +325,7 @@ static void deliverZoom(uint32_t windowId, double magnification) {
 static void deliverButton(uint32_t windowId, int action, int mouseEvent, uint64_t exactNanos) {
     if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseEvent *l = s_winListeners[windowId][i];
+        const MouseHandler *l = s_winListeners[windowId][i];
         void *self = (*l).self;
         if (action == KEY_ACTION_DOWN && (*l).onMouseDown)
             (*l).onMouseDown(self, mouseEvent, exactNanos);

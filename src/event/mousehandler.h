@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-// event/mouse.h — high-level listener contract for mouse events
+// event/mousehandler.h — high-level listener contract for mouse events
 // (Legacy: event/MouseEvent.java).
 //
-// Interface vtable + `self` (see event/key.h). mouseEvent packs the button +
+// Interface vtable + `self` (see event/keyhandler.h). mouseEvent packs the button +
 // modifier flags (see input/mouse.h).
 
-typedef struct MouseEvent {
+typedef struct MouseHandler {
     void *self; // the implementing object, handed back to every callback
     void (*onMouseDown)(void *self, int mouseEvent, uint64_t exactNanos);
     void (*onMouseUp)(void *self, int mouseEvent, uint64_t exactNanos);
@@ -23,6 +23,6 @@ typedef struct MouseEvent {
     // Trackpad pinch-to-zoom (macOS NSEventTypeMagnify). Positive = zoom in
     // (fingers spread), negative = zoom _out (fingers pinched).
     void (*onMouseZoom)(void *self, double magnification);               // default no-op
-} MouseEvent;
+} MouseHandler;
 
 #endif

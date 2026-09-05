@@ -63,7 +63,7 @@ void *Double_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(double))
         bytes = count * 8;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_DOUBLE), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_DOUBLE), bytes);
 }
 
 void Double_free(void *ptr) {
@@ -95,7 +95,7 @@ bool Double_compareAndSet(void *ptr, double expected, double value) {
     return __atomic_compare_exchange_n((int64_t*) ptr, &expBits, valBits, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Double_type(void *ptr) {
+uint64_t Double_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_doublePool, ptr)) return BitPool_type(&g_doublePool, ptr);

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "event/mouse.h"
+#include "event/mousehandler.h"
 
 // Window id carried by every queued event (0 = FOCUS_BROADCAST).
 #define MOUSE_MAX_WINDOWS 8
@@ -38,12 +38,12 @@ enum {
 
 void Mouse_init(void);
 void Mouse_shutdown(void);
-void Mouse_addListener(const MouseEvent *listener);
-bool Mouse_removeListener(const MouseEvent *listener);
+void Mouse_addListener(const MouseHandler *listener);
+bool Mouse_removeListener(const MouseHandler *listener);
 
 // Window-scoped registration (see input/key.h for the routing rules).
-void Mouse_attachWindow(uint32_t windowId, const MouseEvent *listener);
-bool Mouse_detachWindow(uint32_t windowId, const MouseEvent *listener);
+void Mouse_attachWindow(uint32_t windowId, const MouseHandler *listener);
+bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener);
 void Mouse_detachWindowAll(uint32_t windowId);
 
 // Producers: Thread 0 only. windowId tags the receiving window.

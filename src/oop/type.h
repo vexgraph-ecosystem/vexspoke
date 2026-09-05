@@ -5,48 +5,72 @@
 
 // oop/type.h — the TypeRegister, ported from oop/TypeRegister.java.
 //
-// Every allocated object in anti carries a 32-bit type id in its header. The
-// id is bit-packed, mirroring the legacy hex layout:
+// Every allocated object in vexspoke carries a 64-bit type id in its
+// header. The id is bit-packed thus:
 //
-//     0x F M W1 W2 CCCC
-//        | | |  |   `---- class id     (which subsystem/struct this is)
-//        | | |  `-------- wrapper 2    (probable/future/choice | none/proactive/reactive)
-//        | | |                         none: 1 = p, 2 = f, 3 = c | proactive: 4 = p, 5 = f, 6 = c | reactive: 7 = p, 8 = f, 9 = c
-//        | | `----------- wrapper 1    (architecture: 1 = vexspoke, 2 = hotcwap, 3 = darling, > 4 in the future)
-//        | `------------- modifier     (global/locale/transient)
-//        `--------------- form         (singleton/array/pointer/struct...)
+//     0x F PRPR M W1 W2 PDPD CCCCCCCC
+//        | |    | |  |  |    `-------- class        (32 bits: which
+//        | |    | |  |  |              struct this is, per-project)
+//        | |    | |  |  `------------- padding      (8 bits, reserved 0)
+//        | |    | |  `---------------- wrapper 2    (probable/future/choice)
+//        | |    | `------------------- wrapper 1    (proactive/reactive)
+//        | |    `---------------------- modifier     (global/locale/transient)
+//        | `--------------------------- project      (8 bits: owning repo;
+//        |                                            64+ projects per stack)
+//        `------------------------------ form         (singleton/array/...,
+//                                                      struct layouts)
 //
-// Reading the nibbles lets code decide *shape* without a switch: is it an
-// array? a struct? The class id then says *what kind*. This is what lets one
-// allocator serve every type (see anti_bit.c / anti_mem.c).
+// Written with C23 digit separators grouping each field, e.g.
+// FORM_SINGLETON is 0x1000'0000'0000'0000ULL. Reading the fields lets
+// code decide *shape* without a switch: is it an array? a struct? The
+// class id then says *what kind*, the project byte says *whose*. This
+// is what lets one allocator serve every type across the whole stack
+// (see nio/mem.h).
+//
+// Previous layout was 32-bit (0x F M W1 W2 CCCC); the project byte and
+// the 32-bit class space are new. Bare ID_* constants carry no project
+// bits — Type_arch falls back to the legacy class-range table for them,
+// so old call sites keep working while TYPE_* macros carry explicit
+// PROJ_* bits.
 
-#define MASK_FORM      0xF0000000u
-#define MASK_MODIFIER  0x0F000000u
-#define MASK_WRAPPER_1 0x00F00000u
-#define MASK_WRAPPER_2 0x000F0000u
-#define MASK_CLASS     0x0000FFFFu
+#define MASK_FORM      0xF000'0000'0000'0000ULL
+#define MASK_PROJECT   0x0FF0'0000'0000'0000ULL
+#define MASK_MODIFIER  0x000F'0000'0000'0000ULL
+#define MASK_WRAPPER_1 0x0000'F000'0000'0000ULL
+#define MASK_WRAPPER_2 0x0000'0F00'0000'0000ULL
+#define MASK_PAD       0x0000'00FF'0000'0000ULL
+#define MASK_CLASS     0x0000'0000'FFFF'FFFFULL
 
-#define FORM_SINGLETON       0x10000000u
-#define FORM_ARRAY           0x20000000u
-#define FORM_POINTER         0x30000000u
-#define FORM_STRUCT_SINGLETON 0x40000000u
-#define FORM_STRUCT_ARRAY    0x50000000u
-#define FORM_STRUCT_POINTER  0x60000000u
-#define FORM_ARRAY_SOA       0x70000000u
-#define FORM_ARRAY_AOS       0x80000000u
-#define FORM_STRUCT_COEXISTENT 0x90000000u
+#define FORM_SINGLETON       0x1000'0000'0000'0000ULL
+#define FORM_ARRAY           0x2000'0000'0000'0000ULL
+#define FORM_POINTER         0x3000'0000'0000'0000ULL
+#define FORM_STRUCT_SINGLETON 0x4000'0000'0000'0000ULL
+#define FORM_STRUCT_ARRAY    0x5000'0000'0000'0000ULL
+#define FORM_STRUCT_POINTER  0x6000'0000'0000'0000ULL
+#define FORM_ARRAY_SOA       0x7000'0000'0000'0000ULL
+#define FORM_ARRAY_AOS       0x8000'0000'0000'0000ULL
+#define FORM_STRUCT_COEXISTENT 0x9000'0000'0000'0000ULL
 
-#define MOD_GLOBAL           0x01000000u
-#define MOD_LOCALE           0x02000000u
-#define MOD_TRANSIENT        0x03000000u
+// Project byte: which repo owns the class. Matches ARCH_* numbering;
+// 64+ projects fit the same stack (relentless dogfooding).
+#define PROJ_GENERIC  0x0000'0000'0000'0000ULL // zero lol
+#define PROJ_VEXSPOKE 0x0010'0000'0000'0000ULL
+#define PROJ_GRAPHVEX 0x0020'0000'0000'0000ULL
+#define PROJ_HOTCWAP  0x0030'0000'0000'0000ULL
+#define PROJ_DARLING  0x0040'0000'0000'0000ULL
+#define PROJ_APIHAVEN 0x0050'0000'0000'0000ULL
 
-#define WRAP_PROACTIVE       0x00100000u
-#define WRAP_REACTIVE        0x00200000u
+#define MOD_GLOBAL           0x0000'1000'0000'0000ULL
+#define MOD_LOCALE           0x0000'2000'0000'0000ULL
+#define MOD_TRANSIENT        0x0000'3000'0000'0000ULL
 
-#define WRAP2_PROBABLE       0x00010000u
-#define WRAP2_PROBABLE_OBJECTS 0x00020000u
-#define WRAP2_FUTURE         0x00030000u
-#define WRAP2_CHOICE         0x00040000u
+#define WRAP_PROACTIVE       0x0000'0100'0000'0000ULL
+#define WRAP_REACTIVE        0x0000'0200'0000'0000ULL
+
+#define WRAP2_PROBABLE       0x0000'0010'0000'0000ULL
+#define WRAP2_PROBABLE_OBJECTS 0x0000'0020'0000'0000ULL
+#define WRAP2_FUTURE         0x0000'0030'0000'0000ULL
+#define WRAP2_CHOICE         0x0000'0040'0000'0000ULL
 
 #define ID_INT        0x0001u
 #define ID_LONG       0x0002u
@@ -142,7 +166,7 @@
 
 // --- SYSTEM CLASSES ---
 #define ID_DISPLAY_MONITOR        0x0066u
-#define TYPE_DISPLAY_MONITOR_SINGLETON (FORM_SINGLETON | ID_DISPLAY_MONITOR)
+#define TYPE_DISPLAY_MONITOR_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_DISPLAY_MONITOR)
 
 // --- THREAD CLASSES (the real OS threads; sync primitives live in atomic/) ---
 #define ID_THREAD            0x0080u
@@ -152,234 +176,234 @@
 #define ID_THREAD_SCRIPTING  0x0084u
 #define ID_THREAD_UI         0x0085u
 
-#define TYPE_THREAD_SINGLETON            (FORM_SINGLETON | ID_THREAD)
-#define TYPE_THREAD_NETWORKING_SINGLETON (FORM_SINGLETON | ID_THREAD_NETWORKING)
-#define TYPE_THREAD_EVENT_SINGLETON      (FORM_SINGLETON | ID_THREAD_EVENT)
-#define TYPE_THREAD_DRAW_SINGLETON       (FORM_SINGLETON | ID_THREAD_DRAW)
-#define TYPE_THREAD_SCRIPTING_SINGLETON  (FORM_SINGLETON | ID_THREAD_SCRIPTING)
-#define TYPE_THREAD_UI_SINGLETON         (FORM_SINGLETON | ID_THREAD_UI)
+#define TYPE_THREAD_SINGLETON            (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD)
+#define TYPE_THREAD_NETWORKING_SINGLETON (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_NETWORKING)
+#define TYPE_THREAD_EVENT_SINGLETON      (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_EVENT)
+#define TYPE_THREAD_DRAW_SINGLETON       (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_DRAW)
+#define TYPE_THREAD_SCRIPTING_SINGLETON  (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_SCRIPTING)
+#define TYPE_THREAD_UI_SINGLETON         (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_UI)
 
 // --- AUDIO CLASSES (native playback seam) ---
 #define ID_AUDIO_CLIP    0x0086u
 #define ID_AUDIO_VOICE   0x0087u
 #define ID_AUDIO         0x0088u
 
-#define TYPE_AUDIO_CLIP_SINGLETON  (FORM_SINGLETON | ID_AUDIO_CLIP)
-#define TYPE_AUDIO_VOICE_SINGLETON (FORM_SINGLETON | ID_AUDIO_VOICE)
-#define TYPE_AUDIO_SINGLETON       (FORM_SINGLETON | ID_AUDIO)
+#define TYPE_AUDIO_CLIP_SINGLETON  (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO_CLIP)
+#define TYPE_AUDIO_VOICE_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO_VOICE)
+#define TYPE_AUDIO_SINGLETON       (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO)
 
-// --- DARLING UI TREE (structural subclasses) ---
-#define ID_CONTAINER              0x0079u
-#define ID_PANEL                  0x0078u
-#define ID_PICTURE                0x007Au
-#define ID_LABEL                  0x007Bu
-#define ID_SCENE                  0x007Cu
-#define ID_SCENE2D                0x007Du
-#define ID_SCENE3D                0x007Eu
-#define ID_RICH_LABEL             0x007Fu
-#define ID_CANVAS                 0x0065u
-
-// Structural subclass singletons (darling tree)
-#define TYPE_CONTAINER_SINGLETON  (FORM_SINGLETON | ID_CONTAINER)
-#define TYPE_PANEL_SINGLETON      (FORM_SINGLETON | ID_PANEL)
-#define TYPE_PICTURE_SINGLETON    (FORM_SINGLETON | ID_PICTURE)
-#define TYPE_LABEL_SINGLETON      (FORM_SINGLETON | ID_LABEL)
-#define TYPE_SCENE_SINGLETON      (FORM_SINGLETON | ID_SCENE)
-#define TYPE_SCENE2D_SINGLETON    (FORM_SINGLETON | ID_SCENE2D)
-#define TYPE_SCENE3D_SINGLETON    (FORM_SINGLETON | ID_SCENE3D)
-#define TYPE_RICH_LABEL_SINGLETON (FORM_SINGLETON | ID_RICH_LABEL)
-#define TYPE_CANVAS_SINGLETON     (FORM_SINGLETON | ID_CANVAS)
+// --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
+// Darling classes (0x0065-0x00FF) live in darling/darling-type.h;
+// graphvex classes (0x0100-0x01FF) live in graphvex/src/graphvex/type.h;
+// hotcwap module constants live in hotcwap/hotcwap-type.h. This file
+// keeps vexspoke-owned IDs only. Rule 17: central logic below dispatches
+// on project byte + class ranges and must never include downstream ID
+// files (upstream builds standalone). New projects claim a class range
+// here and ship their own *-type.h. Bare-ID fallback ranges live in
+// Type_arch; parent defaults live in Type_getParentClass.
 
 // --- ARCHITECTURE LAYER (which repo owns the class) ---
-// Phase 1: nibble WRAPPER_1 (0x00F00000) is already taken by
-// WRAP_PROACTIVE/WRAP_REACTIVE, so architecture is derived from the
-// CLASS id range instead of a nibble. Long overhaul should carve a real
-// nibble; until then these helpers are the single source of truth.
+// Primary key is the project byte (PROJ_* above): one macro, no table.
+// Bare ID_* constants carry no project byte, so Type_arch falls back to
+// class ranges (vexspoke 0x0001-0x0064, darling 0x0065-0x00FF, threads
+// by exact id). Range fallback exists for compat only — new code ships
+// full TYPE_* ids.
 #define ARCH_VEXSPOKE 1u
 #define ARCH_HOTCWAP  2u
 #define ARCH_DARLING  3u
+#define ARCH_GRAPHVEX 4u
+#define ARCH_APIHAVEN 5u
 
-#define TYPE_INT_SINGLETON (FORM_SINGLETON | ID_INT)
-#define TYPE_INT_ARRAY     (FORM_ARRAY     | ID_INT)
-#define TYPE_INT_POINTER   (FORM_POINTER   | ID_INT)
-#define TYPE_LONG_ARRAY    (FORM_ARRAY     | ID_LONG)
-#define TYPE_FLOAT_ARRAY   (FORM_ARRAY     | ID_FLOAT)
-#define TYPE_DOUBLE_ARRAY  (FORM_ARRAY     | ID_DOUBLE)
-#define TYPE_BYTE_ARRAY    (FORM_ARRAY     | ID_BYTE)
-#define TYPE_STRING_ARRAY  (FORM_ARRAY     | ID_STRING)
+#define TYPE_INT_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_INT)
+#define TYPE_INT_ARRAY     (PROJ_VEXSPOKE | FORM_ARRAY     | ID_INT)
+#define TYPE_INT_POINTER   (PROJ_VEXSPOKE | FORM_POINTER   | ID_INT)
+#define TYPE_LONG_ARRAY    (PROJ_VEXSPOKE | FORM_ARRAY     | ID_LONG)
+#define TYPE_FLOAT_ARRAY   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_FLOAT)
+#define TYPE_DOUBLE_ARRAY  (PROJ_VEXSPOKE | FORM_ARRAY     | ID_DOUBLE)
+#define TYPE_BYTE_ARRAY    (PROJ_VEXSPOKE | FORM_ARRAY     | ID_BYTE)
+#define TYPE_STRING_ARRAY  (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STRING)
 
-#define TYPE_SPIN_LOCK     (FORM_SINGLETON | ID_SPINLOCK)
-#define TYPE_RING_BUFFER   (FORM_ARRAY     | ID_RING_BUFFER)
-#define TYPE_LIST          (FORM_ARRAY     | ID_LIST)
-#define TYPE_ARRAY         (FORM_ARRAY     | ID_ARRAYS)
-#define TYPE_VEC2_SINGLETON (FORM_SINGLETON | ID_VEC2)
-#define TYPE_VEC3_SINGLETON (FORM_SINGLETON | ID_VEC3)
-#define TYPE_VEC4_SINGLETON (FORM_SINGLETON | ID_VEC4)
-#define TYPE_MAT3_SINGLETON (FORM_SINGLETON | ID_MAT3)
-#define TYPE_MAT4_SINGLETON (FORM_SINGLETON | ID_MAT4)
-#define TYPE_QUATERNION_SINGLETON (FORM_SINGLETON | ID_QUATERNION)
-#define TYPE_STACK         (FORM_ARRAY     | ID_STACK)
-#define TYPE_DEQUE         (FORM_ARRAY     | ID_DEQUE)
-#define TYPE_QUEUE         (FORM_ARRAY     | ID_QUEUE)
-#define TYPE_MAP           (FORM_POINTER   | ID_MAP)
-#define TYPE_SET           (FORM_POINTER   | ID_SET)
-#define TYPE_MIN_HEAP      (FORM_SINGLETON | ID_MIN_HEAP)
-#define TYPE_RANDOM        (FORM_SINGLETON | ID_RANDOM)
-#define TYPE_PROBABLE      (FORM_SINGLETON | WRAP2_PROBABLE | ID_PROBABLE)
-#define TYPE_PROBABLE_ARRAY (FORM_ARRAY     | WRAP2_PROBABLE | ID_PROBABLE)
-#define TYPE_PROBABLE_OBJECTS_ARRAY (FORM_ARRAY | WRAP2_PROBABLE_OBJECTS | ID_PROBABLE_OBJECTS)
-#define TYPE_CHOICE (FORM_SINGLETON | WRAP2_CHOICE | ID_CHOICE)
-#define TYPE_CHOICE_ARRAY (FORM_ARRAY | WRAP2_CHOICE | ID_CHOICE)
-#define TYPE_FUTURE (FORM_SINGLETON | WRAP2_FUTURE | ID_FUTURE)
-#define TYPE_FUTURE_ARRAY (FORM_ARRAY | WRAP2_FUTURE | ID_FUTURE)
-#define TYPE_GLOBAL (FORM_SINGLETON | MOD_GLOBAL | ID_GLOBAL)
-#define TYPE_GLOBAL_ARRAY (FORM_ARRAY | MOD_GLOBAL | ID_GLOBAL)
-#define TYPE_LOCAL (FORM_SINGLETON | MOD_LOCALE | ID_LOCAL)
-#define TYPE_LOCAL_ARRAY (FORM_ARRAY | MOD_LOCALE | ID_LOCAL)
-#define TYPE_PASSIVE (FORM_SINGLETON | WRAP_PROACTIVE | ID_PASSIVE)
-#define TYPE_PASSIVE_ARRAY (FORM_ARRAY | WRAP_PROACTIVE | ID_PASSIVE)
-#define TYPE_REACTIVE (FORM_SINGLETON | WRAP_REACTIVE | ID_REACTIVE)
-#define TYPE_REACTIVE_ARRAY (FORM_ARRAY | WRAP_REACTIVE | ID_REACTIVE)
-#define TYPE_PROBABLE_OBJECTS (FORM_SINGLETON | WRAP2_PROBABLE_OBJECTS | ID_PROBABLE_OBJECTS)
-#define TYPE_FILE_SINGLETON (FORM_SINGLETON | ID_FILE)
-#define TYPE_COMMAND_SINGLETON (FORM_SINGLETON | ID_COMMAND)
+#define TYPE_SPIN_LOCK     (PROJ_VEXSPOKE | FORM_SINGLETON | ID_SPINLOCK)
+#define TYPE_RING_BUFFER   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_RING_BUFFER)
+#define TYPE_LIST          (PROJ_VEXSPOKE | FORM_ARRAY     | ID_LIST)
+#define TYPE_ARRAY         (PROJ_VEXSPOKE | FORM_ARRAY     | ID_ARRAYS)
+#define TYPE_VEC2_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_VEC2)
+#define TYPE_VEC3_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_VEC3)
+#define TYPE_VEC4_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_VEC4)
+#define TYPE_MAT3_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MAT3)
+#define TYPE_MAT4_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MAT4)
+#define TYPE_QUATERNION_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_QUATERNION)
+#define TYPE_STACK         (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STACK)
+#define TYPE_DEQUE         (PROJ_VEXSPOKE | FORM_ARRAY     | ID_DEQUE)
+#define TYPE_QUEUE         (PROJ_VEXSPOKE | FORM_ARRAY     | ID_QUEUE)
+#define TYPE_MAP           (PROJ_VEXSPOKE | FORM_POINTER   | ID_MAP)
+#define TYPE_SET           (PROJ_VEXSPOKE | FORM_POINTER   | ID_SET)
+#define TYPE_MIN_HEAP      (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MIN_HEAP)
+#define TYPE_RANDOM        (PROJ_VEXSPOKE | FORM_SINGLETON | ID_RANDOM)
+#define TYPE_PROBABLE      (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP2_PROBABLE | ID_PROBABLE)
+#define TYPE_PROBABLE_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY     | WRAP2_PROBABLE | ID_PROBABLE)
+#define TYPE_PROBABLE_OBJECTS_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | WRAP2_PROBABLE_OBJECTS | ID_PROBABLE_OBJECTS)
+#define TYPE_CHOICE (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP2_CHOICE | ID_CHOICE)
+#define TYPE_CHOICE_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | WRAP2_CHOICE | ID_CHOICE)
+#define TYPE_FUTURE (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP2_FUTURE | ID_FUTURE)
+#define TYPE_FUTURE_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | WRAP2_FUTURE | ID_FUTURE)
+#define TYPE_GLOBAL (PROJ_VEXSPOKE | FORM_SINGLETON | MOD_GLOBAL | ID_GLOBAL)
+#define TYPE_GLOBAL_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | MOD_GLOBAL | ID_GLOBAL)
+#define TYPE_LOCAL (PROJ_VEXSPOKE | FORM_SINGLETON | MOD_LOCALE | ID_LOCAL)
+#define TYPE_LOCAL_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | MOD_LOCALE | ID_LOCAL)
+#define TYPE_PASSIVE (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP_PROACTIVE | ID_PASSIVE)
+#define TYPE_PASSIVE_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | WRAP_PROACTIVE | ID_PASSIVE)
+#define TYPE_REACTIVE (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP_REACTIVE | ID_REACTIVE)
+#define TYPE_REACTIVE_ARRAY (PROJ_VEXSPOKE | FORM_ARRAY | WRAP_REACTIVE | ID_REACTIVE)
+#define TYPE_PROBABLE_OBJECTS (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP2_PROBABLE_OBJECTS | ID_PROBABLE_OBJECTS)
+#define TYPE_FILE_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_FILE)
+#define TYPE_COMMAND_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_COMMAND)
 
-#define TYPE_INT_SINGLETON (FORM_SINGLETON | ID_INT)
-#define TYPE_INT_ARRAY     (FORM_ARRAY     | ID_INT)
-#define TYPE_INT_POINTER   (FORM_POINTER   | ID_INT)
+#define TYPE_INT_SINGLETON (PROJ_VEXSPOKE | FORM_SINGLETON | ID_INT)
+#define TYPE_INT_ARRAY     (PROJ_VEXSPOKE | FORM_ARRAY     | ID_INT)
+#define TYPE_INT_POINTER   (PROJ_VEXSPOKE | FORM_POINTER   | ID_INT)
 
-#define TYPE_SPIN_LOCK     (FORM_SINGLETON | ID_SPINLOCK)
-#define TYPE_RING_BUFFER   (FORM_ARRAY     | ID_RING_BUFFER)
+#define TYPE_SPIN_LOCK     (PROJ_VEXSPOKE | FORM_SINGLETON | ID_SPINLOCK)
+#define TYPE_RING_BUFFER   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_RING_BUFFER)
 
 // The header prefixing every allocated block: [typeId][length].
 // 16 bytes keeps payloads 8-byte aligned, so doubles/pointers sit naturally.
 typedef struct TypeHeader {
-    uint32_t typeId;
+    uint64_t typeId;
     uint32_t length;
+    uint32_t pad;
 } TypeHeader;
 
-// Compose a full type id from a form + class id. Shape in the high nibble,
-// identity in the low 16 bits.
-static inline uint32_t Type_make(uint32_t form, uint32_t classId) {
-    return (form & MASK_FORM) | (classId & MASK_CLASS);
+_Static_assert(sizeof(TypeHeader) == 16, "TypeHeader must stay 16 bytes");
+
+// Compose a full type id from project + form + class id. Project owns
+// the high byte, shape the top nibble, identity the low 32 bits.
+static inline uint64_t Type_make(uint64_t proj, uint64_t form, uint32_t classId) {
+    return (proj & MASK_PROJECT) | (form & MASK_FORM) | (classId & MASK_CLASS);
 }
 
-static inline uint32_t Type_class(uint32_t typeId) {
+static inline uint64_t Type_class(uint64_t typeId) {
     return typeId & MASK_CLASS;
 }
 
-static inline uint32_t Type_form(uint32_t typeId) {
+static inline uint64_t Type_form(uint64_t typeId) {
     return typeId & MASK_FORM;
 }
 
-static inline int Type_isStruct(uint32_t form) {
+static inline uint64_t Type_project(uint64_t typeId) {
+    return typeId & MASK_PROJECT;
+}
+
+static inline int Type_isStruct(uint64_t form) {
     return form == FORM_STRUCT_SINGLETON || form == FORM_STRUCT_ARRAY
         || form == FORM_STRUCT_POINTER;
 }
 
-static inline int Type_isSingleton(uint32_t typeId) {
+static inline int Type_isSingleton(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_SINGLETON;
 }
 
-static inline int Type_isArray(uint32_t typeId) {
-    uint32_t form = typeId & MASK_FORM;
+static inline int Type_isArray(uint64_t typeId) {
+    uint64_t form = typeId & MASK_FORM;
     return form == FORM_ARRAY || form == FORM_ARRAY_SOA || form == FORM_ARRAY_AOS || form == FORM_STRUCT_COEXISTENT;
 }
 
-static inline int Type_isPointer(uint32_t typeId) {
+static inline int Type_isPointer(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_POINTER;
 }
 
-static inline int Type_isStructSingleton(uint32_t typeId) {
+static inline int Type_isStructSingleton(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_STRUCT_SINGLETON;
 }
 
-static inline int Type_isStructArray(uint32_t typeId) {
-    uint32_t form = typeId & MASK_FORM;
+static inline int Type_isStructArray(uint64_t typeId) {
+    uint64_t form = typeId & MASK_FORM;
     return form == FORM_STRUCT_ARRAY || form == FORM_ARRAY_SOA || form == FORM_ARRAY_AOS || form == FORM_STRUCT_COEXISTENT;
 }
 
-static inline int Type_isStructSOA(uint32_t typeId) {
+static inline int Type_isStructSOA(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_ARRAY_SOA;
 }
 
-static inline int Type_isStructAOS(uint32_t typeId) {
+static inline int Type_isStructAOS(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_ARRAY_AOS;
 }
 
-static inline int Type_isStructCoexistent(uint32_t typeId) {
+static inline int Type_isStructCoexistent(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_STRUCT_COEXISTENT;
 }
 
-static inline int Type_isStructPointer(uint32_t typeId) {
+static inline int Type_isStructPointer(uint64_t typeId) {
     return (typeId & MASK_FORM) == FORM_STRUCT_POINTER;
 }
 
-static inline int Type_isPrimitive(uint32_t typeId) {
-    uint32_t form = typeId & MASK_FORM;
+static inline int Type_isPrimitive(uint64_t typeId) {
+    uint64_t form = typeId & MASK_FORM;
     return form == FORM_SINGLETON || form == FORM_ARRAY || form == FORM_POINTER;
 }
 
-static inline int Type_isGlobal(uint32_t typeId) {
+static inline int Type_isGlobal(uint64_t typeId) {
     return (typeId & MASK_MODIFIER) == MOD_GLOBAL;
 }
 
-static inline int Type_isLocale(uint32_t typeId) {
+static inline int Type_isLocale(uint64_t typeId) {
     return (typeId & MASK_MODIFIER) == MOD_LOCALE;
 }
 
-static inline int Type_isTransient(uint32_t typeId) {
+static inline int Type_isTransient(uint64_t typeId) {
     return (typeId & MASK_MODIFIER) == MOD_TRANSIENT;
 }
 
-static inline int Type_isProactive(uint32_t typeId) {
+static inline int Type_isProactive(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_1) == WRAP_PROACTIVE;
 }
 
-static inline int Type_isReactive(uint32_t typeId) {
+static inline int Type_isReactive(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_1) == WRAP_REACTIVE;
 }
 
-static inline int Type_isProbable(uint32_t typeId) {
+static inline int Type_isProbable(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_PROBABLE;
 }
 
-static inline int Type_isProbableObjects(uint32_t typeId) {
+static inline int Type_isProbableObjects(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_PROBABLE_OBJECTS;
 }
 
-static inline int Type_isFuture(uint32_t typeId) {
+static inline int Type_isFuture(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_FUTURE;
 }
 
-static inline int Type_isChoice(uint32_t typeId) {
+static inline int Type_isChoice(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_CHOICE;
 }
 
-// Parent-class walk (Legacy getParentClass). Returns the parent class id,
-// or the class id itself when it is a root. Used by Type_isA.
-uint32_t Type_getParentClass(uint32_t classId);
+// Parent-class walk (Legacy getParentClass). Takes a full id or a bare
+// class id (masks to class first); returns the parent class id, or the
+// class id itself when it is a root. Used by Type_isA.
+uint64_t Type_getParentClass(uint64_t classId);
 
-// Architecture layer owning a class id (ARCH_VEXSPOKE/HOTCWAP/DARLING).
-// Phase 1: range-based (darling = container/panel/picture/label/scene/rich
-// label/canvas ids above; hotcwap/thread/window ids handled by caller via
-// Type_isA; everything else = vexspoke). Used by Darling_addAny.
-uint32_t Type_arch(uint32_t classId);
+// Architecture layer owning an id (ARCH_* — one per project byte).
+// Reads the project byte when present; falls back to the legacy
+// class-range table for bare ID_* constants (project byte zero).
+// Used by Darling_addAny.
+uint64_t Type_arch(uint64_t classId);
 
 // True if classId belongs to the given architecture layer.
-static inline int Type_isVexspoke(uint32_t classId) {
+static inline int Type_isVexspoke(uint64_t classId) {
     return Type_arch(classId) == ARCH_VEXSPOKE;
 }
 
-static inline int Type_isHotcwap(uint32_t classId) {
+static inline int Type_isHotcwap(uint64_t classId) {
     return Type_arch(classId) == ARCH_HOTCWAP;
 }
 
-static inline int Type_isDarling(uint32_t classId) {
+static inline int Type_isDarling(uint64_t classId) {
     return Type_arch(classId) == ARCH_DARLING;
 }
 
-// True if classId is ancestorId or any descendant of it (walks parents).
-int Type_isA(uint32_t classId, uint32_t ancestorId);
+// True if classId is ancestorId or any descendant of it (walks parents;
+// both sides masked to class first so full and bare ids mix freely).
+int Type_isA(uint64_t classId, uint64_t ancestorId);
 
 #endif

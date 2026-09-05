@@ -22,7 +22,7 @@ void Byte_free(void *ptr);
 int8_t Byte_get(void *ptr);
 void Byte_set(void *ptr, int8_t value);
 bool Byte_compareAndSet(void *ptr, int8_t expected, int8_t value);
-uint32_t Byte_type(void *ptr);
+uint64_t Byte_type(void *ptr);
 size_t Byte_length(void *ptr);
 
 

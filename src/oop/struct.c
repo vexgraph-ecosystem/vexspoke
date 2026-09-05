@@ -99,7 +99,7 @@
 // struct.c — Dynamic Struct Instance & Allocation Engine.
 
 Fields *Struct_constructArray(const uint32_t *fieldClasses, size_t fieldCount) {
-    size_t *buf = Memory_alloc(Type_make(FORM_ARRAY, ID_STRIDE), fieldCount * sizeof(size_t));
+    size_t *buf = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_STRIDE), fieldCount * sizeof(size_t));
     if (!buf) return nullptr;
     for (size_t i = 0; i < fieldCount; i++) buf[i] = fieldClasses[i];
     Fields *res = Fields_create(buf, fieldCount);
@@ -153,7 +153,7 @@ void *Struct_allocate(const Fields *fields) {
 void *Struct_allocateSingletonRaw(uint32_t generic) {
     size_t stride = Fields_stride(generic);
     if (stride == 0) return nullptr;
-    void *ptr = Memory_alloc(Type_make(FORM_STRUCT_SINGLETON, generic), stride);
+    void *ptr = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_STRUCT_SINGLETON, generic), stride);
     if (!ptr) return nullptr;
     memset(ptr, 0, stride);
     return ptr;
@@ -167,7 +167,7 @@ void *Struct_allocateArrayFrom(const Fields *fields, size_t amount) {
 void *Struct_allocateArrayRaw(uint32_t generic, size_t amount) {
     size_t stride = Fields_stride(generic);
     if (stride == 0 || amount == 0) return nullptr;
-    void *ptr = Memory_alloc(Type_make(FORM_STRUCT_ARRAY, generic), amount * stride);
+    void *ptr = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_STRUCT_ARRAY, generic), amount * stride);
     if (!ptr) return nullptr;
     memset(ptr, 0, amount * stride);
     return ptr;
@@ -191,7 +191,7 @@ void *Struct_allocateCoexistentRaw(uint32_t generic, size_t amount) {
     size_t s2Size = amount * (*s).stream2Stride;
     size_t totalPayload = s1Size + s2Size;
 
-    void *ptr = Memory_alloc(Type_make(FORM_STRUCT_COEXISTENT, generic), totalPayload);
+    void *ptr = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_STRUCT_COEXISTENT, generic), totalPayload);
     if (!ptr) return nullptr;
     memset(ptr, 0, totalPayload);
     return ptr;
@@ -205,7 +205,7 @@ void *Struct_allocateSOAFrom(const Fields *fields, size_t amount) {
 void *Struct_allocateSOARaw(uint32_t generic, size_t amount) {
     size_t stride = Fields_stride(generic);
     if (stride == 0 || amount == 0) return nullptr;
-    void *ptr = Memory_alloc(Type_make(FORM_ARRAY_SOA, generic), amount * stride);
+    void *ptr = Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY_SOA, generic), amount * stride);
     if (!ptr) return nullptr;
     memset(ptr, 0, amount * stride);
     return ptr;
@@ -235,7 +235,7 @@ void *Struct_elementField(void *ptr, size_t elementIndex, size_t fieldIndex) {
     if (!layout || fieldIndex >= (*layout).count)
         return nullptr;
 
-    uint32_t type = Memory_type(ptr);
+    uint64_t type = Memory_type(ptr);
     size_t length = Memory_length(ptr);
 
     // length is bytes, not element count — derive count from stride.
@@ -500,7 +500,7 @@ void *Struct_getNested(void *ptr, size_t elementIndex, size_t fieldIndex) {
     if (!(*layout).items[fieldIndex].isStruct)
         return nullptr;
 
-    uint32_t type = Memory_type(ptr);
+    uint64_t type = Memory_type(ptr);
     if (Type_isSingleton(type) || Type_isStructSingleton(type)) {
         return (uint8_t*) ptr + (*layout).items[fieldIndex].offset;
     }

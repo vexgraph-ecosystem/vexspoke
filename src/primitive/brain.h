@@ -22,7 +22,7 @@ void Brain_free(void *ptr);
 uint16_t Brain_get(void *ptr);
 void Brain_set(void *ptr, uint16_t value);
 bool Brain_compareAndSet(void *ptr, uint16_t expected, uint16_t value);
-uint32_t Brain_type(void *ptr);
+uint64_t Brain_type(void *ptr);
 size_t Brain_length(void *ptr);
 
 // bfloat16 — Brain IS bf16, helpers convert float <=> bf16 bits

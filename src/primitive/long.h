@@ -22,7 +22,7 @@ void Long_free(void *ptr);
 int64_t Long_get(void *ptr);
 void Long_set(void *ptr, int64_t value);
 bool Long_compareAndSet(void *ptr, int64_t expected, int64_t value);
-uint32_t Long_type(void *ptr);
+uint64_t Long_type(void *ptr);
 size_t Long_length(void *ptr);
 
 

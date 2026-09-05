@@ -63,7 +63,7 @@ void *Bool_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 1 != sizeof(bool))
         bytes = count * 1;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_BOOL), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BOOL), bytes);
 }
 
 void Bool_free(void *ptr) {
@@ -92,7 +92,7 @@ bool Bool_compareAndSet(void *ptr, bool expected, bool value) {
     return __atomic_compare_exchange_n((bool*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Bool_type(void *ptr) {
+uint64_t Bool_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_boolPool, ptr)) return BitPool_type(&g_boolPool, ptr);

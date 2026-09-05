@@ -51,7 +51,7 @@ struct Passive {
 };
 
 Passive *Passive_3(PassiveGetter getter, PassiveSetter setter, void *userdata) {
-    uint32_t type = Type_make(FORM_SINGLETON, ID_PASSIVE) | WRAP_PROACTIVE;
+    uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_PASSIVE) | WRAP_PROACTIVE;
     Passive *passive = (Passive*) Memory_alloc(type, sizeof(Passive));
     if (!passive)
         return nullptr;

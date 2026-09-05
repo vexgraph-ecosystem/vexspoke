@@ -67,7 +67,7 @@ void *Brain_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 2 != sizeof(uint16_t))
         bytes = count * 2;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_BRAIN), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BRAIN), bytes);
 }
 
 void Brain_free(void *ptr) {
@@ -120,7 +120,7 @@ bool Brain_compareAndSet(void *ptr, uint16_t expected, uint16_t value) {
     return __atomic_compare_exchange_n((uint16_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Brain_type(void *ptr) {
+uint64_t Brain_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_brainPool, ptr)) return BitPool_type(&g_brainPool, ptr);

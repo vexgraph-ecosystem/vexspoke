@@ -12,29 +12,32 @@
 // out one massive master arena at startup. Memory is partitioned into
 // size-class slabs for O(1) slot claiming and cache-hot recycling.
 //
-// Every allocation returns a payload pointer whose 16-byte prefix holds:
+// Every allocation returns a payload pointer whose 32-byte prefix holds:
 //
-//     [ typeId (32-bit) ][ length (32-bit) ][ slabIndex (32-bit) ][ magic (32-bit) ]
+//     [ typeId (64-bit) ][ length (32-bit) ][ slabIndex (32-bit) ]
+//     [ magic (32-bit) ][ reserved (96-bit, zeroed) ]
 //
 // Negative pointer math recovers the header in 1 subtraction; Memory_type()
 // and Memory_length() are free O(1) reads with zero locking.
 
-#define MEMORY_HEADER_SIZE 16
+#define MEMORY_HEADER_SIZE 32
 #define MEMORY_MAGIC 0x56455821u // "VEX!"
 
 typedef struct MemoryHeader {
-    uint32_t typeId;
+    uint64_t typeId;
     uint32_t length;
     uint32_t slabIndex;
     uint32_t magic;
+    uint32_t reserved[3];
 } MemoryHeader;
-_Static_assert(sizeof(MemoryHeader) == 16, "MemoryHeader must stay 16 bytes");
+_Static_assert(sizeof(MemoryHeader) == 32, "MemoryHeader must stay 32 bytes");
 // 16-byte alignment holds by construction, not by attribute (this toolchain's
 // _Alignas rejects typedef application): master/slab arenas come from malloc
 // (16-aligned on arm64 macOS), every slot size and bump total is a multiple
 // of 16, so every payload pointer satisfies (u & 15) == 0 as mem.c guards.
 
-// Backward-compatibility struct alias
+// Backward-compatibility struct alias (legacy 32-bit type view; the live
+// header is MemoryHeader above — do not use Block for new code).
 typedef struct Block {
     struct Block *prev;
     struct Block *next;
@@ -47,9 +50,9 @@ typedef struct Block {
 // If not called explicitly, Memory_alloc initializes a 64MB arena lazily.
 bool Memory_init(size_t totalBytes);
 
-// Allocate nbytes with the given type id stamped in the 16-byte header.
+// Allocate nbytes with the given type id stamped in the 32-byte header.
 // Returns the aligned payload pointer, or nullptr on failure.
-void *Memory_alloc(uint32_t typeId, size_t numBytes);
+void *Memory_alloc(uint64_t typeId, size_t numBytes);
 
 // Grow/shrink a block, preserving contents and type. Returns the new payload
 // pointer (the old one is freed). nullptr on failure leaves the original intact.
@@ -63,27 +66,27 @@ void Memory_freeAll(void);
 
 // Metadata accessors: cost a single pointer subtract in O(1) without locks.
 size_t Memory_length(void *userPtr);
-uint32_t Memory_type(void *userPtr);
+uint64_t Memory_type(void *userPtr);
 
 // Search: Return the number of active blocks matching typeId.
 // If outArray is not NULL, fills it with up to maxCount payload pointers.
-size_t Memory_findAll(uint32_t typeId, void **outArray, size_t maxCount);
+size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount);
 
 // Phase-4 instancing (Arena-B): the process-global allocator above is the
 // DEFAULT arena. Secondary arenas are fully isolated slab sets carved from
 // their own malloc — allocate in B, verify, free B, default untouched.
-// Headers are unchanged (16B, no arena tag), so this is ABI-stable: free
+// Headers are unchanged (32B, no arena tag), so this is ABI-stable: free
 // routes by address-range lookup across a small registry (default + 3).
 // Registration happens pre-threads; the hot path takes no extra locks.
 typedef struct MemoryArena MemoryArena;
 
 MemoryArena *MemoryArena_create(size_t totalBytes);
 void MemoryArena_destroy(MemoryArena *a);
-void *MemoryArena_alloc(MemoryArena *a, uint32_t typeId, size_t numBytes);
+void *MemoryArena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes);
 void *MemoryArena_realloc(MemoryArena *a, void *userPtr, size_t newBytes);
 void MemoryArena_free(MemoryArena *a, void *userPtr);
 void MemoryArena_freeAll(MemoryArena *a);
-size_t MemoryArena_findAll(MemoryArena *a, uint32_t typeId, void **outArray, size_t maxCount);
+size_t MemoryArena_findAll(MemoryArena *a, uint64_t typeId, void **outArray, size_t maxCount);
 size_t MemoryArena_activeBytes(MemoryArena *a);
 size_t MemoryArena_capacity(MemoryArena *a);
 

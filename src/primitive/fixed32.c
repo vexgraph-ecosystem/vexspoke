@@ -63,7 +63,7 @@ void *Fixed32_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 4 != sizeof(int32_t))
         bytes = count * 4;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_FIXED32), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FIXED32), bytes);
 }
 
 void Fixed32_free(void *ptr) {
@@ -92,7 +92,7 @@ bool Fixed32_compareAndSet(void *ptr, int32_t expected, int32_t value) {
     return __atomic_compare_exchange_n((int32_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Fixed32_type(void *ptr) {
+uint64_t Fixed32_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_fixed32Pool, ptr)) return BitPool_type(&g_fixed32Pool, ptr);

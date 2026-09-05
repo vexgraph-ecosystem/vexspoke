@@ -67,7 +67,7 @@ Array *Array_2(uint32_t elementClass, size_t length) {
     (*c).head = 0;
 
     size_t bytes = length * stride;
-    uint32_t bufType = Type_make(FORM_ARRAY, elementClass);
+    uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
     if (!(*c).data) {
         Memory_free(array);

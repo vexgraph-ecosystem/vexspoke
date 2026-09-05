@@ -22,7 +22,7 @@ void Bool_free(void *ptr);
 bool Bool_get(void *ptr);
 void Bool_set(void *ptr, bool value);
 bool Bool_compareAndSet(void *ptr, bool expected, bool value);
-uint32_t Bool_type(void *ptr);
+uint64_t Bool_type(void *ptr);
 size_t Bool_length(void *ptr);
 
 

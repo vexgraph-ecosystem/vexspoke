@@ -66,7 +66,7 @@ static int isReferenceClass(uint32_t classId) {
 static uint64_t computeHash(uint32_t keyClass, uint64_t key) {
     if (key == 0) return 0;
     if (isReferenceClass(keyClass) && key >= 4096u) {
-        uint32_t inspected = Memory_type((void*) (uintptr_t)key);
+        uint64_t inspected = Memory_type((void*) (uintptr_t)key);
         if (inspected != 0) {
             size_t len = Memory_length((void*) (uintptr_t)key);
             if (len > 0)
@@ -82,8 +82,8 @@ static int keysEqual(uint32_t keyClass, uint64_t k1, uint64_t k2) {
     if (isReferenceClass(keyClass) && k1 >= 4096u && k2 >= 4096u) {
         void *p1 = (void*) (uintptr_t)k1;
         void *p2 = (void*) (uintptr_t)k2;
-        uint32_t t1 = Memory_type(p1);
-        uint32_t t2 = Memory_type(p2);
+        uint64_t t1 = Memory_type(p1);
+        uint64_t t2 = Memory_type(p2);
         if (t1 != 0 && t1 == t2) {
             size_t len1 = Memory_length(p1);
             size_t len2 = Memory_length(p2);
@@ -118,7 +118,7 @@ static void rehash(Collection *c, size_t newCap) {
     size_t oldCap = (*c).capacity;
     uint8_t *oldData = (*c).data;
     size_t bytes = newCap * SLOT_SIZE;
-    uint32_t bufType = Type_make(FORM_ARRAY, ID_MAP);
+    uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
     uint8_t *newData = (uint8_t*) Memory_alloc(bufType, bytes);
     if (!newData) return;
     memset(newData, 0, bytes);
@@ -163,7 +163,7 @@ Map *Map_3(uint32_t keyClass, uint32_t valClass, size_t capacity) {
     (*c).head = 0;
 
     size_t bytes = cap * SLOT_SIZE;
-    uint32_t bufType = Type_make(FORM_ARRAY, ID_MAP);
+    uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
     (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
     if (!(*c).data) {
         Memory_free(map);

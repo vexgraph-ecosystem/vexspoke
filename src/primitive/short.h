@@ -22,7 +22,7 @@ void Short_free(void *ptr);
 int16_t Short_get(void *ptr);
 void Short_set(void *ptr, int16_t value);
 bool Short_compareAndSet(void *ptr, int16_t expected, int16_t value);
-uint32_t Short_type(void *ptr);
+uint64_t Short_type(void *ptr);
 size_t Short_length(void *ptr);
 
 

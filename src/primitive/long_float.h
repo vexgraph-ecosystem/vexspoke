@@ -22,7 +22,7 @@ void LongFloat_free(void *ptr);
 int64_t LongFloat_get(void *ptr);
 void LongFloat_set(void *ptr, int64_t value);
 bool LongFloat_compareAndSet(void *ptr, int64_t expected, int64_t value);
-uint32_t LongFloat_type(void *ptr);
+uint64_t LongFloat_type(void *ptr);
 size_t LongFloat_length(void *ptr);
 
 

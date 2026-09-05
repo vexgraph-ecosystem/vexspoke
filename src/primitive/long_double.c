@@ -63,7 +63,7 @@ void *LongDouble_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 16 != sizeof(int64_t))
         bytes = count * 16;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_LONG_DOUBLE), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG_DOUBLE), bytes);
 }
 
 void LongDouble_free(void *ptr) {
@@ -92,7 +92,7 @@ bool LongDouble_compareAndSet(void *ptr, int64_t expected, int64_t value) {
     return __atomic_compare_exchange_n((int64_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t LongDouble_type(void *ptr) {
+uint64_t LongDouble_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_long_doublePool, ptr)) return BitPool_type(&g_long_doublePool, ptr);

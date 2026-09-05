@@ -63,7 +63,7 @@ void *Short_allocArray(size_t count) {
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 2 != sizeof(int16_t))
         bytes = count * 2;
-    return Memory_alloc(Type_make(FORM_ARRAY, ID_SHORT), bytes);
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SHORT), bytes);
 }
 
 void Short_free(void *ptr) {
@@ -92,7 +92,7 @@ bool Short_compareAndSet(void *ptr, int16_t expected, int16_t value) {
     return __atomic_compare_exchange_n((int16_t*) ptr, &expected, value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
-uint32_t Short_type(void *ptr) {
+uint64_t Short_type(void *ptr) {
     if (!ptr)
         return 0;
     if (BitPool_contains(&g_shortPool, ptr)) return BitPool_type(&g_shortPool, ptr);

@@ -22,7 +22,7 @@ void Fixed64_free(void *ptr);
 int64_t Fixed64_get(void *ptr);
 void Fixed64_set(void *ptr, int64_t value);
 bool Fixed64_compareAndSet(void *ptr, int64_t expected, int64_t value);
-uint32_t Fixed64_type(void *ptr);
+uint64_t Fixed64_type(void *ptr);
 size_t Fixed64_length(void *ptr);
 
 

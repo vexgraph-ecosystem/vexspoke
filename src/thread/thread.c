@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------------
  *   Thread {
  *     _Atomic int state;         // 0 = STOPPED, 1 = RUNNING
- *     uint32_t typeId;           // block-header class (ID_THREAD_*)
+ *     uint64_t typeId;           // block-header type (TYPE_THREAD_*)
  *     pthread_t platform;        // native platform thread handle
  *     bool platformStarted;      // platform thread spawned flag
  *     RingBuffer queue;          // void* task slot ring
@@ -59,7 +59,7 @@
 
 typedef struct Thread {
     _Atomic int state;        // 0 = STOPPED, 1 = RUNNING
-    uint32_t typeId;          // block header class (ID_THREAD_*)
+    uint64_t typeId;          // block header type (TYPE_THREAD_*)
     pthread_t platform;
     bool platformStarted;
     RingBuffer queue;         // void* task slots
@@ -82,7 +82,7 @@ static Map *workers(void) {
     return s_workers;
 }
 
-Thread *Thread_new(uint32_t typeId, Thread_Job job, size_t queueCapacity,
+Thread *Thread_new(uint64_t typeId, Thread_Job job, size_t queueCapacity,
                    bool tickWhenIdle, bool core) {
     if (!job || queueCapacity == 0)
         return nullptr;
@@ -168,7 +168,7 @@ RingBuffer *Thread_queue(Thread *self) {
     return self ? &(*self).queue : nullptr;
 }
 
-uint32_t Thread_purpose(Thread *self) {
+uint64_t Thread_purpose(Thread *self) {
     return self ? (*self).typeId : 0;
 }
 

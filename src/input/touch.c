@@ -106,11 +106,11 @@ static TouchPos s_pos[TOUCH_MAX];
 static RingBuffer s_queue;
 static bool s_ready = false;
 
-static const TouchEvent *s_listeners[64];
+static const TouchHandler *s_listeners[64];
 static int s_listenerCount = 0;
 
 // Window-scoped listeners: slot index IS the window id (0 reserved).
-static const TouchEvent *s_winListeners[TOUCH_MAX_WINDOWS][TOUCH_MAX_WINDOW_LISTENERS];
+static const TouchHandler *s_winListeners[TOUCH_MAX_WINDOWS][TOUCH_MAX_WINDOW_LISTENERS];
 static int s_winCounts[TOUCH_MAX_WINDOWS];
 
 void Touch_init(void) {
@@ -128,12 +128,12 @@ void Touch_shutdown(void) {
     s_ready = false;
 }
 
-void Touch_addListener(const TouchEvent *listener) {
+void Touch_addListener(const TouchHandler *listener) {
     if (!listener || s_listenerCount >= (int)(sizeof(s_listeners) / sizeof(s_listeners[0]))) return;
     s_listeners[s_listenerCount++] = listener;
 }
 
-bool Touch_removeListener(const TouchEvent *listener) {
+bool Touch_removeListener(const TouchHandler *listener) {
     for (int i = 0; i < s_listenerCount; i++) {
         if (s_listeners[i] == listener) {
             s_listeners[i] = s_listeners[--s_listenerCount];
@@ -143,13 +143,13 @@ bool Touch_removeListener(const TouchEvent *listener) {
     return false;
 }
 
-void Touch_attachWindow(uint32_t windowId, const TouchEvent *listener) {
+void Touch_attachWindow(uint32_t windowId, const TouchHandler *listener) {
     if (!listener || windowId == 0 || windowId >= TOUCH_MAX_WINDOWS) return;
     if (s_winCounts[windowId] >= TOUCH_MAX_WINDOW_LISTENERS) return;
     s_winListeners[windowId][s_winCounts[windowId]++] = listener;
 }
 
-bool Touch_detachWindow(uint32_t windowId, const TouchEvent *listener) {
+bool Touch_detachWindow(uint32_t windowId, const TouchHandler *listener) {
     if (!listener || windowId == 0 || windowId >= TOUCH_MAX_WINDOWS) return false;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
         if (s_winListeners[windowId][i] == listener) {
@@ -209,7 +209,7 @@ static void deliverTouch(uint32_t windowId, int action, int touchId,
                          double x, double y, double pressure, uint64_t exactNanos) {
     if (windowId == 0 || windowId >= TOUCH_MAX_WINDOWS) return;
     for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const TouchEvent *l = s_winListeners[windowId][i];
+        const TouchHandler *l = s_winListeners[windowId][i];
         void *self = (*l).self;
         if (action == TOUCH_DOWN && (*l).onTouchDown)
             (*l).onTouchDown(self, touchId, x, y, pressure, exactNanos);

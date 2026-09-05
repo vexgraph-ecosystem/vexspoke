@@ -66,7 +66,7 @@ static uint8_t *bufferGrow(Collection *c, size_t needed) {
     while (newCap < needed)
         newCap += DEFAULT_CAPACITY;
     size_t bytes = newCap * (*c).stride;
-    uint32_t bufType = Type_make(FORM_ARRAY, (*c).elementClass);
+    uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);
     if (!next)
         return nullptr;
@@ -94,7 +94,7 @@ static List *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).head = 0;
 
     size_t bytes = cap * stride;
-    uint32_t bufType = Type_make(FORM_ARRAY, elementClass);
+    uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
     if (!(*c).data) {
         Memory_free(list);

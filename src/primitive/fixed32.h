@@ -22,7 +22,7 @@ void Fixed32_free(void *ptr);
 int32_t Fixed32_get(void *ptr);
 void Fixed32_set(void *ptr, int32_t value);
 bool Fixed32_compareAndSet(void *ptr, int32_t expected, int32_t value);
-uint32_t Fixed32_type(void *ptr);
+uint64_t Fixed32_type(void *ptr);
 size_t Fixed32_length(void *ptr);
 
 

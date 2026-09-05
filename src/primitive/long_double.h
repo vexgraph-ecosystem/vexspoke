@@ -22,7 +22,7 @@ void LongDouble_free(void *ptr);
 int64_t LongDouble_get(void *ptr);
 void LongDouble_set(void *ptr, int64_t value);
 bool LongDouble_compareAndSet(void *ptr, int64_t expected, int64_t value);
-uint32_t LongDouble_type(void *ptr);
+uint64_t LongDouble_type(void *ptr);
 size_t LongDouble_length(void *ptr);
 
 

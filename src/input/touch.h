@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "event/touch.h"
+#include "event/touchhandler.h"
 
 // Window id carried by every queued event (0 = FOCUS_BROADCAST).
 #define TOUCH_MAX_WINDOWS 8
@@ -30,12 +30,12 @@ enum {
 
 void Touch_init(void);
 void Touch_shutdown(void);
-void Touch_addListener(const TouchEvent *listener);
-bool Touch_removeListener(const TouchEvent *listener);
+void Touch_addListener(const TouchHandler *listener);
+bool Touch_removeListener(const TouchHandler *listener);
 
 // Window-scoped registration (see input/key.h for the routing rules).
-void Touch_attachWindow(uint32_t windowId, const TouchEvent *listener);
-bool Touch_detachWindow(uint32_t windowId, const TouchEvent *listener);
+void Touch_attachWindow(uint32_t windowId, const TouchHandler *listener);
+bool Touch_detachWindow(uint32_t windowId, const TouchHandler *listener);
 void Touch_detachWindowAll(uint32_t windowId);
 
 // Producer: Thread 0 only. touchId is the slot (0..TOUCH_MAX-1); windowId

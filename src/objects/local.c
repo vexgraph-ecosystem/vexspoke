@@ -45,7 +45,7 @@ typedef struct Local {
 } Local;
 
 Local *Local_0(void) {
-    uint32_t type = Type_make(FORM_SINGLETON, ID_LOCAL) | MOD_LOCALE;
+    uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_LOCAL) | MOD_LOCALE;
     Local *local = (Local*) Memory_alloc(type, sizeof(Local));
     if (!local)
         return nullptr;
