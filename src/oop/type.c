@@ -93,7 +93,7 @@ uint64_t Type_arch(uint64_t classId) {
         return ARCH_HOTCWAP;
     if (proj == PROJ_DARLING)
         return ARCH_DARLING;
-    if (proj == PROJ_APIHAVEN)
+    if (proj == PROJ_API_HAVEN)
         return ARCH_APIHAVEN;
     // Bare ID_* constants carry no project byte: class-space ranges.
     // (Per-class ID_* constants live in their project's *-type.h, which
