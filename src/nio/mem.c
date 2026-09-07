@@ -443,20 +443,20 @@ void Memory_free(void *userPtr) {
     if (Transient_contains(userPtr))
         return;
 
-    uintptr_t u = (uintptr_t) userPtr;
-    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
+    const MemoryHeader *h = safe_header(userPtr);
+    if (!h)
         return;
 
-    MemoryArena *a = arena_for(userPtr);
-    if (!a) {
-        uint8_t *p = (uint8_t*) userPtr;
-        MemoryHeader *h = (MemoryHeader*) (p - sizeof(MemoryHeader));
-        if ((*h).magic == MEMORY_MAGIC && (*h).slabIndex == SLAB_SYSTEM) {
-            (*h).magic = 0;
-            free((void*) h);
-        }
+    if ((*h).slabIndex == SLAB_SYSTEM) {
+        MemoryHeader *mut_h = (MemoryHeader*) h;
+        (*mut_h).magic = 0;
+        free((void*) mut_h);
         return;
     }
+
+    MemoryArena *a = arena_for(userPtr);
+    if (!a)
+        return;
     arena_free(a, userPtr);
 }
 

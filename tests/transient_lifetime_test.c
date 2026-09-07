@@ -91,7 +91,12 @@ int main(void) {
     void *trans = Transient_alloc(2, 128);
     assert(trans != nullptr);
     assert(Memory_getLifetime(trans) == MEMORY_LIFETIME_TRANSIENT);
-    printf("  [PASS] 1. Safe classification: lit=UNKNOWN, stack=UNKNOWN, perm=PERMANENT, trans=TRANSIENT\n");
+
+    // Memory_free on literal/stack (UNKNOWN) and transient pointers must be safe no-ops (no UB)
+    Memory_free((void*) lit);
+    Memory_free((void*) stackBuf);
+    Memory_free(trans);
+    printf("  [PASS] 1. Safe classification & free: lit/stack=UNKNOWN, safe no-op on free\n");
 
     // 2. Auto-promote test: setting transient text promotes to permanent
     char *transStr = (char*) Transient_alloc(3, 32);
