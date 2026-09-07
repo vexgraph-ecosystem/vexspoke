@@ -1,18 +1,54 @@
-# Contributions & Engineering Manifest
+# Contributions & Engineering Manifesto (vexspoke)
 
-This project is a strictly solo development process (for now, not announcing any time soon).
+This project is a strictly solo development process conducted in tight pair-programming partnership with an AI coding assistant.
 
-It serves as a personal architectural manifesto of my own philosophies for what it is to make a C-based application regarding low-level systems, and a highly specific workspace tailored exactly to my preferences, workflows, and standards, within my reach and my research.
-
-Because of the rigid, self-describing and relational nature of the codebase — everything is a pointer, every block knows its own type, and the engine is written against my exact style rules — contributions introduce unnecessary friction.
-
-Therefore, **I do not accept any Pull Requests, feature requests, or external contributions of any kind. As of now.. (so yet, yes, yet.)**
-
-Feel free to fork the code however or use it as inspiration for your own zero-allocation experimentation, but this upstream repository will remain exclusively managed by its sole author.
+It serves as an architectural manifesto for **Level 4 Relational Memory Substrate**: an uncompromising low-level engine where **everything is a pointer**, every memory block carries a self-describing bit-packed header, and steady-state allocation is zero.
 
 ---
 
-## 1. Architectural Principles
+## 1. The AI-First Architecture Manifesto & Boilerplate Defense
+
+This codebase strictly enforces the verbose, explicit boilerplate required across the `vexgraph` ecosystem:
+- Strict prohibition of arrow syntax (`p->field` is banned; only explicit `(*p).field` is permitted).
+- Single Class Per File (the Java Law: one public `typedef struct` per `.h`/`.c` pair).
+- Arity-overloaded explicit constructor dispatch macros (`Class_0()`, `Class_1()`).
+- Complete, symmetric getters and setters for all struct fields.
+- Strict dest-last parameter ordering `(a, b, dest)`.
+- Two-layer member access cap (`(*layer1).layer2` maximum).
+- Exhaustive `;;OVERVIEW` blueprints mirrored at the top of every implementation file.
+
+### Why the Boilerplate Exists
+This boilerplate is **not** an accident, nor is it a misunderstanding of idiomatic C. It is an intentional, machine-verifiable scaffold built specifically for **AI-Human Pair Systems Programming**:
+1. **Machine Comprehension**: Eliminating `->` and isolating classes to single files allows an AI coding agent to reason over raw pointer offsets, bit-packed headers, and ring buffers with mathematical precision and zero aliasing.
+2. **Explicit Indirection**: `(*ptr).field` ensures every memory hop is laid bare in the source code.
+3. **AI-Maintained Rigor**: The AI agent authors and maintains the dense boilerplate, allowing human architectural guidance to focus on lockless concurrency, cache line alignment, and ABA prevention.
+
+---
+
+## 2. Sanity Warning for External Contributors
+
+> [!WARNING]
+> **SANITY NOTICE FOR EXTERNAL CONTRIBUTORS**
+> This repository is not designed for traditional C conveniences, casual hacking, or stylistic shortcuts. It is an unapologetic, machine-verifiable manifesto of AI-augmented systems architecture.
+>
+> **If you do not approve of this architecture or cannot find peace with this philosophy, consider leaving this repository for your own sanity.**
+>
+> We do not accept Pull Requests, issues, or unsolicited stylistic refactors attempting to re-introduce `->`, combine multiple classes into one file, or strip out memory headers. Upstream is maintained exclusively by the author and the AI agent.
+
+---
+
+## 3. Supreme Living Document: `preferences.md`
+
+All architectural rules and style invariants are governed by the central constitution in the root workspace:
+
+👉 **[vexgraph / preferences.md](../../preferences.md)**
+
+Whenever preferences or conventions evolve, [`../../preferences.md`](../../preferences.md) is updated and committed locally in the same cycle (Zero Drift Law).
+
+---
+
+## 4. Architectural Principles
+
 
 | Principle | Specification |
 | :--- |:---|
@@ -24,7 +60,7 @@ Feel free to fork the code however or use it as inspiration for your own zero-al
 
 ---
 
-## 2. Banned Patterns & Permitted Replacements
+## 5. Banned Patterns & Permitted Replacements
 
 | Banned Pattern | Reason for Ban | Permitted Replacement |
 |:---|:---|:---|
@@ -44,7 +80,7 @@ Feel free to fork the code however or use it as inspiration for your own zero-al
 
 ---
 
-## 3. Memory Tier Architecture
+## 6. Memory Tier Architecture
 
 | Pool | Slot Size | Managed Types |
 | :--- | :--- | :--- |
@@ -55,7 +91,7 @@ Feel free to fork the code however or use it as inspiration for your own zero-al
 
 ---
 
-## 4. Local Build & Verification Workflow
+## 7. Local Build & Verification Workflow
 
 | Step | Command | Expected Result |
 | :--- | :--- | :--- |
@@ -65,3 +101,4 @@ Feel free to fork the code however or use it as inspiration for your own zero-al
 
 Commit history is per-file and granular — "this is what I did" — even if
 intermediate commits don't compile. Pushing happens only on my explicit say-so.
+
