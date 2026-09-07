@@ -37,6 +37,8 @@ regurgitation/
 
 ### Tests (never committed — run/scratch material only) ###
 tests/
+!tests/class_relational_test.c
+!tests/transient_lifetime_test.c
 
 ### Private / agent-adjacent config ###
 hot/

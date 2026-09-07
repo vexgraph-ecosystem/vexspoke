@@ -78,6 +78,15 @@
  *   - MemoryArena_findAll(a, typeId, outArray, maxCount)
  *   - MemoryArena_activeBytes(a)
  *   - MemoryArena_capacity(a)
+ *
+ * Transient Functions (Dynamic Lifetime Verifier):
+ *   - Memory_initTransient(capacity)
+ *   - Transient_alloc(typeId, numBytes)
+ *   - Transient_reset(void)
+ *   - Transient_contains(ptr)
+ *   - Transient_getGeneration(void)
+ *   - Transient_getBuffer(void)
+ *   - Memory_getLifetime(ptr)
  * ============================================================================
  */
 
@@ -118,6 +127,27 @@ static uint32_t s_slabCaps[SLAB_COUNT] = { 32768, 32768, 16384, 8192, 4096, 2048
 static MemoryArena s_default = {0};
 static MemoryArena *s_registry[ARENA_REGISTRY_MAX] = { &s_default, nullptr, nullptr, nullptr };
 static SpinLock s_registryLock = SPIN_LOCK_INIT;
+
+#define ANTI_TRANSIENT_DEFAULT_SIZE (64 * 1024 * 1024) // 64 MB
+
+typedef struct TransientArena {
+    uint8_t *buffer;
+    size_t capacity;
+    size_t bumpOffset;
+    uint32_t generation;
+    SpinLock lock;
+    bool live;
+} TransientArena;
+
+static TransientArena s_transient = {
+    .buffer = nullptr,
+    .capacity = 0,
+    .bumpOffset = 0,
+    .generation = 1,
+    .lock = { 0 },
+    .live = false,
+};
+
 
 static inline int find_slab(size_t payload_bytes) {
     size_t needed = payload_bytes + sizeof(MemoryHeader);
@@ -212,6 +242,9 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
             (*h).length = (uint32_t) numBytes;
             (*h).slabIndex = (uint32_t) s_idx;
             (*h).magic = MEMORY_MAGIC;
+            (*h).reserved[0] = 0;
+            (*h).reserved[1] = 0;
+            (*h).reserved[2] = 0;
             return (void*) node;
         }
     }
@@ -230,6 +263,9 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
         (*h).length = (uint32_t) numBytes;
         (*h).slabIndex = SLAB_LARGE;
         (*h).magic = MEMORY_MAGIC;
+        (*h).reserved[0] = 0;
+        (*h).reserved[1] = 0;
+        (*h).reserved[2] = 0;
         return (void*) (slot_ptr + sizeof(MemoryHeader));
     }
     SpinLock_unlock(&(*a).bumpLock);
@@ -243,6 +279,9 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
     (*h).length = (uint32_t) numBytes;
     (*h).slabIndex = SLAB_SYSTEM;
     (*h).magic = MEMORY_MAGIC;
+    (*h).reserved[0] = 0;
+    (*h).reserved[1] = 0;
+    (*h).reserved[2] = 0;
     return (void*) (raw + sizeof(MemoryHeader));
 }
 
@@ -311,20 +350,55 @@ static void arena_freeAll(MemoryArena *a) {
 // create/destroy (pre-threads); reads are lock-free.
 static MemoryArena *arena_for(void *userPtr) {
     if (!userPtr)
-        return &s_default;
-    MemoryHeader *h = (MemoryHeader*) ((uint8_t*) userPtr - sizeof(MemoryHeader));
-    if ((*h).magic != MEMORY_MAGIC)
         return nullptr;
-    if ((*h).slabIndex == SLAB_SYSTEM)
+    uintptr_t u = (uintptr_t) userPtr;
+    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
         return nullptr;
-    uint8_t *slot = (uint8_t*) h;
+
+    uint8_t *p = (uint8_t*) userPtr;
+
     for (size_t i = 0; i < ARENA_REGISTRY_MAX; i++) {
         MemoryArena *a = s_registry[i];
-        if (a && (*a).live && slot >= (*a).masterArena && slot < (*a).masterArena + (*a).masterCapacity)
-            return a;
+        if (a && (*a).live && (*a).masterArena) {
+            uint8_t *base = (*a).masterArena;
+            if (p >= base + sizeof(MemoryHeader) && p < base + (*a).masterCapacity) {
+                MemoryHeader *h = (MemoryHeader*) (p - sizeof(MemoryHeader));
+                if ((*h).magic == MEMORY_MAGIC && (*h).slabIndex != SLAB_SYSTEM && (*h).slabIndex != SLAB_TRANSIENT)
+                    return a;
+            }
+        }
     }
-    // Valid magic but no live owner: destroyed arena or foreign block.
-    // Never touch the default freelist with a foreign node pointer.
+    return nullptr;
+}
+
+static const MemoryHeader *safe_header(const void *userPtr) {
+    if (!userPtr)
+        return nullptr;
+    uintptr_t u = (uintptr_t) userPtr;
+    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
+        return nullptr;
+
+    uint8_t *p = (uint8_t*) userPtr;
+
+    if (s_transient.live && s_transient.buffer) {
+        if (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.capacity) {
+            const MemoryHeader *h = (const MemoryHeader*) (p - sizeof(MemoryHeader));
+            if ((*h).magic == MEMORY_MAGIC)
+                return h;
+        }
+    }
+
+    for (size_t i = 0; i < ARENA_REGISTRY_MAX; i++) {
+        MemoryArena *a = s_registry[i];
+        if (a && (*a).live && (*a).masterArena) {
+            uint8_t *base = (*a).masterArena;
+            if (p >= base + sizeof(MemoryHeader) && p < base + (*a).masterCapacity) {
+                const MemoryHeader *h = (const MemoryHeader*) (p - sizeof(MemoryHeader));
+                if ((*h).magic == MEMORY_MAGIC)
+                    return h;
+            }
+        }
+    }
     return nullptr;
 }
 
@@ -366,17 +440,23 @@ void *Memory_realloc(void *userPtr, size_t newBytes) {
 void Memory_free(void *userPtr) {
     if (!userPtr)
         return;
-    MemoryHeader *h = (MemoryHeader*) ((uint8_t*) userPtr - sizeof(MemoryHeader));
-    if ((*h).magic != MEMORY_MAGIC)
+    if (Transient_contains(userPtr))
         return;
-    if ((*h).slabIndex == SLAB_SYSTEM) {
-        (*h).magic = 0;
-        free((void*) h);
+
+    uintptr_t u = (uintptr_t) userPtr;
+    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
+        return;
+
+    MemoryArena *a = arena_for(userPtr);
+    if (!a) {
+        uint8_t *p = (uint8_t*) userPtr;
+        MemoryHeader *h = (MemoryHeader*) (p - sizeof(MemoryHeader));
+        if ((*h).magic == MEMORY_MAGIC && (*h).slabIndex == SLAB_SYSTEM) {
+            (*h).magic = 0;
+            free((void*) h);
+        }
         return;
     }
-    MemoryArena *a = arena_for(userPtr);
-    if (!a)
-        return;
     arena_free(a, userPtr);
 }
 
@@ -385,34 +465,125 @@ void Memory_freeAll(void) {
 }
 
 size_t Memory_length(void *userPtr) {
-    if (!userPtr)
-        return 0;
-
-    uintptr_t u = (uintptr_t) userPtr;
-    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
-        return 0;
-
-    const MemoryHeader *h = (const MemoryHeader*) ((const uint8_t*) userPtr - sizeof(MemoryHeader));
-    if ((*h).magic == MEMORY_MAGIC) {
+    const MemoryHeader *h = safe_header(userPtr);
+    if (h)
         return (size_t) (*h).length;
-    }
     return 0;
 }
 
 uint64_t Memory_type(void *userPtr) {
-    if (!userPtr)
-        return 0;
-
-    uintptr_t u = (uintptr_t) userPtr;
-    if (u < sizeof(MemoryHeader) || (u & 15) != 0)
-        return 0;
-
-    const MemoryHeader *h = (const MemoryHeader*) ((const uint8_t*) userPtr - sizeof(MemoryHeader));
-    if ((*h).magic == MEMORY_MAGIC) {
+    const MemoryHeader *h = safe_header(userPtr);
+    if (h)
         return (*h).typeId;
-    }
     return 0;
 }
+
+bool Memory_initTransient(size_t capacity) {
+    SpinLock_lock(&s_transient.lock);
+    if (s_transient.live) {
+        SpinLock_unlock(&s_transient.lock);
+        return true;
+    }
+    if (capacity == 0)
+        capacity = ANTI_TRANSIENT_DEFAULT_SIZE;
+
+    size_t aligned_cap = (capacity + 15) & ~15ull;
+    s_transient.buffer = (uint8_t*) malloc(aligned_cap);
+    if (!s_transient.buffer) {
+        SpinLock_unlock(&s_transient.lock);
+        return false;
+    }
+
+    s_transient.capacity = aligned_cap;
+    s_transient.bumpOffset = 0;
+    s_transient.generation = 1;
+    s_transient.live = true;
+    SpinLock_unlock(&s_transient.lock);
+    return true;
+}
+
+static inline void ensure_transient_initialized(void) {
+    if (!s_transient.live)
+        Memory_initTransient(ANTI_TRANSIENT_DEFAULT_SIZE);
+}
+
+void *Transient_alloc(uint64_t typeId, size_t numBytes) {
+    ensure_transient_initialized();
+    if (!s_transient.live)
+        return nullptr;
+
+    size_t aligned_len = (numBytes + 15) & ~15ull;
+    size_t total = sizeof(MemoryHeader) + aligned_len;
+
+    SpinLock_lock(&s_transient.lock);
+    if (s_transient.bumpOffset + total > s_transient.capacity) {
+        SpinLock_unlock(&s_transient.lock);
+        return nullptr;
+    }
+
+    uint8_t *slot = s_transient.buffer + s_transient.bumpOffset;
+    s_transient.bumpOffset += total;
+    uint32_t gen = s_transient.generation;
+    SpinLock_unlock(&s_transient.lock);
+
+    MemoryHeader *h = (MemoryHeader*) slot;
+    (*h).typeId = typeId;
+    (*h).length = (uint32_t) numBytes;
+    (*h).slabIndex = SLAB_TRANSIENT;
+    (*h).magic = MEMORY_MAGIC;
+    (*h).reserved[0] = gen;
+    (*h).reserved[1] = 0;
+    (*h).reserved[2] = 0;
+
+    return (void*) (slot + sizeof(MemoryHeader));
+}
+
+void Transient_reset(void) {
+    if (!s_transient.live)
+        return;
+
+    SpinLock_lock(&s_transient.lock);
+#if defined(DEBUG_BORROW_CHECK)
+    size_t used = s_transient.bumpOffset;
+#endif
+    s_transient.bumpOffset = 0;
+    s_transient.generation++;
+    SpinLock_unlock(&s_transient.lock);
+
+#if defined(DEBUG_BORROW_CHECK)
+    if (used > 0 && s_transient.buffer) {
+        memset(s_transient.buffer, 0xDD, used);
+    }
+#endif
+}
+
+bool Transient_contains(const void *ptr) {
+    if (!ptr || !s_transient.live || !s_transient.buffer)
+        return false;
+    uint8_t *p = (uint8_t*) ptr;
+    return (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.capacity);
+}
+
+uint32_t Transient_getGeneration(void) {
+    return s_transient.generation;
+}
+
+#if defined(DEBUG_BORROW_CHECK)
+const uint8_t *Transient_getBuffer(void) {
+    return s_transient.buffer;
+}
+#endif
+
+MemoryLifetime Memory_getLifetime(const void *ptr) {
+    if (!ptr)
+        return MEMORY_LIFETIME_UNKNOWN;
+    if (Transient_contains(ptr))
+        return MEMORY_LIFETIME_TRANSIENT;
+    if (arena_for((void*) ptr) != nullptr)
+        return MEMORY_LIFETIME_PERMANENT;
+    return MEMORY_LIFETIME_UNKNOWN;
+}
+
 
 size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount) {
     return MemoryArena_findAll(&s_default, typeId, outArray, maxCount);

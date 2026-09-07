@@ -22,6 +22,8 @@
 
 #define MEMORY_HEADER_SIZE 32
 #define MEMORY_MAGIC 0x56455821u // "VEX!"
+#define SLAB_TRANSIENT 0xFFFFFFFDu
+
 
 typedef struct MemoryHeader {
     uint64_t typeId;
@@ -89,5 +91,23 @@ void MemoryArena_freeAll(MemoryArena *a);
 size_t MemoryArena_findAll(MemoryArena *a, uint64_t typeId, void **outArray, size_t maxCount);
 size_t MemoryArena_activeBytes(MemoryArena *a);
 size_t MemoryArena_capacity(MemoryArena *a);
+
+// Lifetime verification classification
+typedef enum MemoryLifetime {
+    MEMORY_LIFETIME_UNKNOWN = 0,
+    MEMORY_LIFETIME_PERMANENT,
+    MEMORY_LIFETIME_TRANSIENT,
+} MemoryLifetime;
+
+// Transient (Frame / Scratchpad) bump-only arena lifecycle
+bool Memory_initTransient(size_t capacity);
+void *Transient_alloc(uint64_t typeId, size_t numBytes);
+void Transient_reset(void);
+bool Transient_contains(const void *ptr);
+uint32_t Transient_getGeneration(void);
+#if defined(DEBUG_BORROW_CHECK)
+const uint8_t *Transient_getBuffer(void);
+#endif
+MemoryLifetime Memory_getLifetime(const void *ptr);
 
 #endif

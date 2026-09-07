@@ -122,6 +122,8 @@ target_include_directories(vexspoke PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+target_compile_definitions(vexspoke PUBLIC $<$<CONFIG:Debug>:DEBUG_BORROW_CHECK=1>)
+
 target_compile_options(vexspoke PRIVATE -Wall -Wextra -Werror -mcpu=native)
 target_link_libraries(vexspoke PUBLIC pthread)
 
@@ -213,3 +215,12 @@ add_executable(class_relational_test
     tests/class_relational_test.c
 )
 target_link_libraries(class_relational_test PRIVATE vexspoke)
+
+# Dynamic Lifetime Verifier Debug-only test
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_executable(transient_lifetime_test
+        tests/transient_lifetime_test.c
+    )
+    target_link_libraries(transient_lifetime_test PRIVATE vexspoke)
+endif()
+
