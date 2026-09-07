@@ -30,6 +30,7 @@ transition/
 *.md
 !README.md
 !CONTRIBUTING.md
+!preferences.md
 goals/
 scratch/
 regurgitation/
