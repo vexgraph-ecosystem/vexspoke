@@ -293,6 +293,22 @@ static void arena_free(MemoryArena *a, void *userPtr) {
     if (u < sizeof(MemoryHeader) || (u & 15) != 0)
         return;
 
+    // Validate the pointer is within this arena's known address range before
+    // performing the negative-offset header read.  MemoryArena_free calls us
+    // directly (bypassing safe_header / arena_for), so a foreign pointer that
+    // happens to be aligned would otherwise blindly dereference p-32, which
+    // can SIGSEGV when those bytes are in an unmapped page.
+    uint8_t *p = (uint8_t*) userPtr;
+    bool in_range = false;
+    if ((*a).masterArena && p >= (*a).masterArena + sizeof(MemoryHeader) && p < (*a).masterArena + (*a).masterCapacity)
+        in_range = true;
+    if (!in_range) {
+        // SLAB_SYSTEM blocks come from malloc and live outside the arena range.
+        // We can only accept them if we can safely read the header first, which
+        // we cannot without a range check.  Reject to avoid the blind read.
+        return;
+    }
+
     MemoryHeader *h = (MemoryHeader*) ((uint8_t*) userPtr - sizeof(MemoryHeader));
     if ((*h).magic != MEMORY_MAGIC)
         return;
@@ -381,7 +397,7 @@ static const MemoryHeader *safe_header(const void *userPtr) {
     uint8_t *p = (uint8_t*) userPtr;
 
     if (s_transient.live && s_transient.buffer) {
-        if (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.capacity) {
+        if (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.bumpOffset) {
             const MemoryHeader *h = (const MemoryHeader*) (p - sizeof(MemoryHeader));
             if ((*h).magic == MEMORY_MAGIC)
                 return h;
@@ -561,7 +577,7 @@ bool Transient_contains(const void *ptr) {
     if (!ptr || !s_transient.live || !s_transient.buffer)
         return false;
     uint8_t *p = (uint8_t*) ptr;
-    return (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.capacity);
+    return (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.bumpOffset);
 }
 
 uint32_t Transient_getGeneration(void) {
