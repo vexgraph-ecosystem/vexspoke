@@ -12,7 +12,7 @@ The result is a lock-free, cache-coherent core with predictable, microsecond-lev
 
 ## Workspace Integration & How to Use It
 
-`vexspoke` is designed to be consumed as the foundational Layer 1 bedrock library within a vertically integrated ecosystem (such as `vexgraph`) or embedded standalone into custom applications:
+`vexspoke` is the R1 Spoke in the supervisor order (Rule 17: `R0 hotcwap > R1 vexspoke > R1.5 graphvex > R2 features > R3 engines`) — the pure leaf shapes the R0 Kernel borrows (`MemoryArena`, events, math). Supervised by `hotcwap` at runtime, dependency of everything at compile-time. It is designed to be consumed as the foundational bedrock library within a vertically integrated ecosystem (such as `vexgraph`) or embedded standalone into custom applications:
 
 ```
 workspace/

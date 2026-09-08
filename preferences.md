@@ -9,12 +9,12 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (Four System Levels).
+   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R0–R4 Supervisor Order).
    - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, or un-bisectable repositories.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Rules*: Rule 9 (Dest-Last), Rule 10 (Two-Layer Access Cap), Rule 14 (Constructor Dispatch Macro), Rule 21 (API Independence), Rule 23 (;;OVERVIEW Living Blueprint), Rule 24 (Symmetric Getter/Setter Completeness), Rule 29 (Sub-Part Field Segregation & `Class_part_verb`), Rule 30 (Living Darling Docs), Rule 31 (AI-First Architecture Manifesto), Rule 32 (Living Preferences Law).
+   - *Rules*: Rule 9 (Dest-Last), Rule 10 (Two-Layer Access Cap), Rule 14 (Constructor Dispatch Macro), Rule 17 (Supervisor Order R0–R4), Rule 21 (API Independence), Rule 23 (;;OVERVIEW Living Blueprint), Rule 24 (Symmetric Getter/Setter Completeness), Rule 29 (Sub-Part Field Segregation & `Class_part_verb`), Rule 30 (Living Darling Docs), Rule 31 (AI-First Architecture Manifesto), Rule 32 (Living Preferences Law), Rule 33 (Conflict Triage — Managed Exception, Not Veto).
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -266,66 +266,82 @@ Declarators vs casts: `T *name` in declarations, `(T*) var` in casts — star bi
 
 ---
 
-## 17. Five-Repo Vertical Integration Architecture
-The engine stack is partitioned across 5 specialized repositories under `@vexgraph` / `vexgraph-dev` with a strict downward-only dependency hierarchy. Upstream layers **never** depend on downstream layers.
+## 17. Vertical Integration — Single Order To Follow (R0 > R1 > R1.5 > R2 > R3)
+The stack has ONE order. Lower R = boots earlier, more stable, tears down later. Follow this everywhere.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                              vexgraph                                  │
-│             Top-Level Orchestrator / Full-Stack Integration             │
-│                           (main/vk_test.c)                             │
+│ R0 hotcwap KERNEL — Host Supervisor                                    │
+│ Kernel {arena, transientArena, applications[]} / App + Window registry  │
+│ Hot / Manifest / VkLoader / Window (window_cocoa.m) / Application      │
+│ boots FIRST, tears down LAST. Window never hot-updates (OS-owned).     │
 └──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-       ┌───────────────────────────┼───────────────────────────┐
-       ▼                           ▼                           ▼
-┌──────────────┐            ┌──────────────┐            ┌──────────────┐
-│  api-haven   │            │   darling    │            │   hotcwap    │
-│  API Clients │            │ UI Toolkit & │            │  OS Window & │
-│  Discord API │            │ Render Nodes │            │ Hot-Swap Lib │
-└──────┬───────┘            └──────┬───────┘            └──────┬───────┘
-       │                           │                           │
-       └───────────────────────────┼───────────────────────────┘
-                                   ▼
-                            ┌──────────────┐
-                            │   graphvex   │
-                            │ Bespoke GPU  │
-                            │   Compute    │
-                            └──────┬───────┘
-                                   ▼
-                            ┌──────────────┐
-                            │   vexspoke   │
-                            │  (anti core) │
-                            │ C23 Runtime  │
-                            └──────────────┘
+     supervises ▼                   │ borrows shape ▲ (includes nio/mem.h, GPU types)
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ R1 vexspoke SPOKE — Relational types, MemoryArena, math, events, sync  │
+│ Variable / BitPool / Memory / RingBuffer / SpinLock / Type / Vec+Mat   │
+│ pure leaf: includes NOTHING above or below. Supervised by R0.          │
+└──────────────────────────────────┬─────────────────────────────────────┘
+     supervises ▼                   │ borrows shape ▲ (includes R1 only)
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ R1.5 graphvex — GPU compute, SPIR-V registry, font baking, SdfGpu      │
+│ Buffer family / Texture / Raster / FontBake / shader/spv               │
+│ no window, no UI tree, no services.                                    │
+└──────────────────────────────────┬─────────────────────────────────────┘
+     supervises ▼                   │ borrows shape ▲ (includes R0+R1+R1.5)
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ R2 FEATURES — dynamic, auto-updating via HotModule + SpvWatch          │
+│ darling UI tree | api-haven telemetry | database db-haven/darkbase     │
+│ lsps/languages grammars | tiny drawlings/samplerate/semicolon/freedom  │
+└──────────────────────────────────┬─────────────────────────────────────┘
+     supervises ▼                   │ registers ◀ (opaque handles + callbacks only)
+┌──────────────────────────────────┴─────────────────────────────────────┐
+│ R3/R4 PROJECTS + IN-ENGINE CODE — very large ambitious ones            │
+│ anti-engine / mini-ide / daw / drawing-app / viewer-3d / material-lab  │
+│ Each = Application {CLI/TUI/GUI} x windows[APP_MAX_WINDOWS] in Kernel. │
+│ R4 = scripts/quirks/mods/filter stacks, zero core rebuild.             │
+└────────────────────────────────────────────────────────────────────────┘
+│ vexgraph — umbrella integrator (projects/, main/vk_test.c, tooling)    │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **`vexspoke`** (Layer 1 — Foundation, formerly `anti`):
-   - Pure, zero-allocation C23 engine runtime.
-   - Owns: relational symbols (`Variable`), memory pools (`BitPool`, `Memory`), atomic synchronization (`RingBuffer`, `SpinLock`), BitPacked OOP (`Type`, `Class`), math primitives (`Vec2/3/4`, `Mat4`, `FastMath`), core networking (`http`, `json`), basic I/O (`VexHome`, `File`, `Log`), audio, and base Vulkan context.
-   - **Hard Rule**: Must NEVER include headers or link libraries from `graphvex`, `hotcwap`, `darling`, or `api-haven`. It is a pure leaf library.
+How to read the arrows (the only two directions in the whole repo):
+- `supervises ▼` (runtime): R0 boots R1/R1.5, loads R2 dylibs, registers R3 apps. Teardown runs reverse per Rule 26.
+- `borrows shape ▲` (compile-time): a file may only `#include` shapes from the allowlist below. Supervisor borrows leaf shapes; leaf never borrows supervisor shapes.
+- `registers ◀` (engines): R3 never gets `#include`d by R0. R0 holds `void*` + `AppRunFn`/`AppTickFn`/`AppHotReloadFn` + `HotModule`. Same feature, no circular link, Rule 19 standalone stays green.
 
-2. **`graphvex`** (Layer 1.5 — Bespoke Graphics Foundation):
-   - Pure GPU compute with no window, UI-tree, or service dependencies.
-    - Owns: centralized SPIR-V blobs (`spv/`), off-heap 2D raster buffers (`Buffer`, `ColorBuffer`, `Depth/Stencil/Frame/Height/Normal/Shadow` — moved down from `vexspoke`), the font engine (`Font`, `FontBake`, `src/objc/font_cocoa.m` CoreText bridge — moved down from `darling`), and (as migration lands) the GPU compute engines — SDF baker (`SdfGpu`), bindless texture registry (`Texture`), software rasterization (`Raster`).
-   - **Hard Rule**: Depends solely on `vexspoke` (core types/memory/math). Must NEVER include headers or link libraries from `hotcwap`, `darling`, or `api-haven`. `hotcwap` and `darling` link `graphvex`, never the reverse.
+Allowlist (only includes permitted — everything else is a defect):
+- R1 `vexspoke`: includes NOTHING from `graphvex`/`hotcwap`/`darling`/`api-haven`/engines.
+- R1.5 `graphvex`: includes `vexspoke` only. Never `hotcwap`/`darling`/`api-haven`/engines.
+- R0 `hotcwap`: includes `vexspoke` (arena/event/input/time) + `graphvex` (buffer/GPU) only. Never `darling`/`api-haven`/database/language/engine headers.
+- R2 `darling`: includes `vexspoke` + `graphvex` + `hotcwap` (`window/window.h`) only. Never `api-haven`/engines. `api-haven`: `vexspoke` only, no graphics. `database`/`lsps`/`tiny`: `vexspoke` (+ `graphvex` for GPU-backed ones) only, never engines.
+- R3/R4 engines: borrow shapes from R0/R1/R1.5/R2 to build; own no OS/window/memory management — borrow arenas, windows, GPU instances from R0. Standalone-capable or Kernel-registered.
 
-3. **`hotcwap`** (Layer 2 — OS-Stable Infrastructure):
-   - Owns: dynamic library hot-reloading (`Hot`, `Manifest`, `VkLoader`) and native OS windowing (`Window`, `window_cocoa.m`).
-   - A window never hot-updates; it is owned by the OS and persists across code swaps.
-    - **Hard Rule**: Depends on `vexspoke` (for event, input, and time types) and `graphvex` (for buffer types, GPU compute/shaders). Must NEVER depend on `darling` or `api-haven`.
+Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven`/database/lsps -> `vexgraph` projects. Boot order is the reverse crown: R0 first.
 
-4. **`darling`** (Layer 3 — UI API & Rendering Tree):
-   - Flexible node-oriented UI C API: `Canvas`, `Container`, `Panel`, `Picture`, `Label`, `RichLabel`, `Scene`, `Font` (including SDF font baking), `RichText`, software rasterization (`Raster`, `Surface`), and Vulkan UI pipelines (`VkIOSurface`, `VkScene`, `VkView`, `SdfGpu`, `Texture`).
-   - Connects UI panels to the OS window via `panel_bridge.c`.
-   - **Hard Rule**: Depends on `vexspoke` (core types/memory), `graphvex` (GPU compute/shaders), and `hotcwap` (`window/window.h`). Must NEVER depend on `api-haven`.
-    - Migration note: the `Buffer` family, `SdfGpu`, and `Texture` have landed in `graphvex` (darling consumes the latter two via link — `Texture_initModule` / `SdfGpu_initModule` in `compositor.c`); `Raster` / `Surface` (`render/`) remain darling-canonical until that move lands.
+1. **R0 `hotcwap` Kernel Host**:
+   - Owns: `Kernel` (`projects/hotcwap/kernel/kernel.h`), `Application` registry (`app/application.h`), `Window`, `Hot`/`Manifest`/`VkLoader`/`SpvWatch`.
+   - `Application` is final infrastructure — engines rely on it, it never relies on engines.
 
-5. **`api-haven`** (Layer 4 — Services & Endpoint Schemas):
-   - Zero-allocation API surface, off-heap telemetry, and Discord webhook integration.
-   - **Hard Rule**: Depends on `vexspoke` (`net`, `nio`, `primitive/string`). No graphics dependency.
+2. **R1 `vexspoke` Spoke**:
+   - Owns: `Variable`, `BitPool`, `Memory`/`MemoryArena`, `RingBuffer`/`SpinLock`, `Type`/`Class`, math, `http`/`json`, `VexHome`/`File`/`Log`, audio, base Vulkan context.
 
-6. **`vexgraph`** (Top-Level Integrator & Application Root):
-   - The umbrella project that nests the 5 repositories in `projects/` and builds unified binaries, probes (`main/vk_test.c`), and tooling.
+3. **R1.5 `graphvex`**:
+   - Owns: `spv/` blobs, `Buffer` family, `Font`/`FontBake`, `SdfGpu`, `Texture`, `Raster`.
+
+4. **R2 Features — darling | api-haven | database | lsps | tiny**:
+   - `darling`: `Canvas`/`Container`/`Panel`/widgets/compositor/`panel_bridge.c`.
+   - `api-haven`: API surface, telemetry, webhooks.
+   - `database` (`db-haven`/`darkbase`): `Database` interface, native vex store in-budget.
+   - `lsps`/`languages`: `Language` contract (`Lang_tokenize/parse/highlight/...`), each grammar a hot-swappable dylib.
+   - `tiny`: `drawlings`/`samplerate`/`semicolon`/`freedom` — prove one contract, fan out.
+
+5. **R3/R4 Future Projects + In-Engine Code**:
+   - R3: `anti-engine`, `mini-ide`, `daw`, `drawing-app`, `viewer-3d`, etc. from `_thoughts/`. N apps x M windows per `Kernel`.
+   - R4: scripts, quirks, mods, filter stacks. Swappable with zero window teardown.
+
+6. **`vexgraph` (Top-Level Integrator & Application Root)**:
+   - The umbrella project that nests the repositories in `projects/` and builds unified binaries, probes (`main/vk_test.c`), and tooling.
 
 ## 18. Canonical Include Paths (Zero Parent Hops)
 Headers must **never** traverse upwards with `../` or `../../` to cross module or repository boundaries. Every `#include` must be rooted at the canonical subsystem directory.
@@ -535,6 +551,11 @@ Window_destroy(w)            // detach adapters, close (never release-then-use)
   `close`.
 - A skipped step is a leak, not a shortcut. If a probe exits without
   `Window_destroy`, the `NSWindow` outlives the process as a ghost.
+- Multi-app Kernel order (`R0` supervisor, N apps x M windows): `Kernel_destroy`
+  stops all `Application`s (`running = false`) top-down (R3/R4 → R2 → R1.5),
+  destroys darling nodes per-panel, closes all windows, bounded-joins present/worker
+  threads per Rule 27, shuts down Vulkan, resets `transientArena`, destroys master
+  `arena` LAST. Never free `arena` while any `Application`/`Window` still runs.
 
 ---
 
@@ -561,10 +582,8 @@ if (WaitForFences_fn(dev, 1, &fence, VK_TRUE, 100000000ULL) != VK_SUCCESS)
 
 ---
 
-## 28. Four System Levels (Top = Replaceable, Bottom = Self-Managing)
-Every file lives on exactly one of four levels. Stability increases
-downward; replaceability increases upward. Upper levels depend on lower
-levels — never the reverse (same direction as Rule 17).
+## 28. Four System Levels L1–L4 (File Stability — NOT Runtime Rank R0–R4)
+Every file lives on exactly one L level. Stability increases downward; replaceability increases upward. `L` answers "how safe is it to edit this file?" `R` (Rule 17) answers "who boots/supervises whom at runtime?" Never mix them: `R0 hotcwap > R1 vexspoke > R1.5 graphvex > R2 features > R3 engines` is supervision; `L1–L4` below is edit-risk. A `Kernel` file is `LEVEL: L4` living at `R0` — write `LEVEL: L4`, never `LEVEL: R0`.
 
 ```
 L1  FILE METADATA ............ declarative, easily replaced custom stuff —
@@ -594,6 +613,7 @@ L4  SELF-MANAGEMENT .......... the bottom that manages everything above:
 - A file's `;;OVERVIEW` must declare its level: `LEVEL: L1 — File Metadata`
   (and so on) directly under the `CLASS:` line, so a reader knows instantly
   how stable vs replaceable the file is.
+- L-levels (file replaceability) are orthogonal to R-levels (Rule 17 runtime supervision R0–R4). A `Kernel` file is `LEVEL: L4 — Self-Management` living at `R0 Supervisor`. Never write `LEVEL: R0` — levels are L, supervision is R.
 - L4 files change rarely and review heavily: a bug at the bottom breaks
   every level above. L1 files change freely: a bad manifest only breaks
   one module load, caught by ABI verification before any swap.
@@ -717,3 +737,19 @@ In a multi-repository workspace consisting of independently versioned C and nati
    Every sub-repository must include a `CONTRIBUTING.md` that explicitly links back to `vexgraph/preferences.md` as its supreme guiding authority.
 3. **Subsystem Conformance**:
    Every implementation across `hotcwap`, `darling`, `vexspoke`, `graphvex`, and `api-haven` must adhere strictly to the rules codified herein. No repository is exempt.
+
+---
+
+## 33. Conflict Triage — Managed Exception, Not Veto
+### Definition:
+When rules conflict, or intent outgrows a rule, the answer is never a bare "this violates X." It is "unless you want it, here is how we manage it." The thought prevails; the rules adapt in the same cycle per Rule 32.
+
+### The Why:
+A veto-only system freezes ambition (multi-app Kernel, R0–R4 recharge, 30 grammars, game engines). Tier 1 exists to prevent crashes, not to prevent thinking. Every conflict is triaged, given a managed path, and codified so the next agent inherits the decision.
+
+### The Protocol:
+1. **Name the tiers:** Tier 1 (crash/leak/deadlock/memory/thread safety) beats Tier 2 (model/contracts) beats Tier 3 (syntax). State which tier each conflicting rule lives on.
+2. **Assess before blocking:** state applicability first — does the rule actually cover this case (link-time vs runtime, single-app vs Kernel multi-app, global vs per-arena)? A misapplied rule is not a violation.
+3. **Managed exception:** propose the indirection that preserves Tier 1 while granting intent. Canonical moves: opaque handle + callbacks instead of downstream `#include` (keeps Rule 17/19); fixed array + count + getter instead of `**` chains (keeps Rule 10); `MemoryArena_create/freeAll` + bounded-join instead of globals (keeps Rules 26/27); `;;INTENTION("reason")` + `;;DRAFT` markers for Tier 2/3 waivers.
+4. **Prefs patch in-cycle:** if intent prevails, draft the exact `preferences.md` wording change now. Tier 1 waivers additionally require an alternate safety proof (no unbounded wait, no use-after-free, no circular link) reviewed heavily. Tier 2/3 waivers require `;;INTENTION` + overview/docs update in the same commit.
+5. **Never silent drift:** a managed exception without its prefs + overview + docs update is a defect, same as stale prefs under Rule 32.
