@@ -656,6 +656,12 @@ typedef struct Input {
 - Every part field keeps symmetric getters/setters per Rule 24 — the part
   API is ergonomic precisely so nobody reaches for `->`.
 
+**Container-vs-Panel law:** a Container is a multi-child layer-owner (owns N child
+layers, manages attach/detach/surfaces, Rule 29 parts); a Panel is a single-surface
+leaf painter (one IOSurface, no child layer management). Multi-child managers are
+named *Container and embed Panel as first member; leaf painters are named *Panel
+or own widget class. TabbedContainer is banned — tabs are a mode of SectionContainer.
+
 ---
 
 ## 30. Living Darling Docs (Zero Drift Between Code and `_docs/darling.md`)
