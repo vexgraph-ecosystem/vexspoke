@@ -739,17 +739,35 @@ In a multi-repository workspace consisting of independently versioned C and nati
    Every implementation across `hotcwap`, `darling`, `vexspoke`, `graphvex`, and `api-haven` must adhere strictly to the rules codified herein. No repository is exempt.
 
 ---
-
+ 
 ## 33. Conflict Triage — Managed Exception, Not Veto
 ### Definition:
 When rules conflict, or intent outgrows a rule, the answer is never a bare "this violates X." It is "unless you want it, here is how we manage it." The thought prevails; the rules adapt in the same cycle per Rule 32.
-
+ 
 ### The Why:
 A veto-only system freezes ambition (multi-app Kernel, R0–R4 recharge, 30 grammars, game engines). Tier 1 exists to prevent crashes, not to prevent thinking. Every conflict is triaged, given a managed path, and codified so the next agent inherits the decision.
-
+ 
 ### The Protocol:
 1. **Name the tiers:** Tier 1 (crash/leak/deadlock/memory/thread safety) beats Tier 2 (model/contracts) beats Tier 3 (syntax). State which tier each conflicting rule lives on.
 2. **Assess before blocking:** state applicability first — does the rule actually cover this case (link-time vs runtime, single-app vs Kernel multi-app, global vs per-arena)? A misapplied rule is not a violation.
 3. **Managed exception:** propose the indirection that preserves Tier 1 while granting intent. Canonical moves: opaque handle + callbacks instead of downstream `#include` (keeps Rule 17/19); fixed array + count + getter instead of `**` chains (keeps Rule 10); `MemoryArena_create/freeAll` + bounded-join instead of globals (keeps Rules 26/27); `;;INTENTION("reason")` + `;;DRAFT` markers for Tier 2/3 waivers.
 4. **Prefs patch in-cycle:** if intent prevails, draft the exact `preferences.md` wording change now. Tier 1 waivers additionally require an alternate safety proof (no unbounded wait, no use-after-free, no circular link) reviewed heavily. Tier 2/3 waivers require `;;INTENTION` + overview/docs update in the same commit.
 5. **Never silent drift:** a managed exception without its prefs + overview + docs update is a defect, same as stale prefs under Rule 32.
+ 
+---
+ 
+## 34. Asset Sourcing — Legal-Sense, First-Class In-App Marketplace Policy
+### Definition:
+Every external asset source (images, 3D, textures, audio) is a row in api-haven's AssetProvider descriptor registry. Only blessed public APIs and direct-download URLs offered by the source are wired. Sources without a public search API are catalog-only rows with curated static manifests and hand-verified URLs, or excluded. Interface scraping — parsing another service's HTML/JSON to fake a search API, or bypassing auth — is a defect, always.
+ 
+### The Why:
+Legal exposure, broken trust, and brittle integrations come from scraping. A first-class in-app marketplace must be built on explicit contracts, normalized shapes, and license-aware flows — not on reverse-engineered endpoints that vanish or change without notice.
+ 
+### The Rule:
+- **Catalog, not scraping.** Blessed providers: Unsplash, Pexels, Pixabay, Openverse, Wikimedia Commons, Sketchfab, Freesound, Poly Haven, AmbientCG, OpenGameArt, Google Custom Search JSON API. Each is a row in the AssetProvider registry with its public search API. Sources without a public search API (Pinterest, raw Google Images, Kenney, Quaternius, itch.io packs) are catalog-only rows with curated static manifests and hand-verified URLs, or excluded. Interface scraping is a defect.
+- **One normalized contract.** Every search result is an AssetRow (provider slug, id, title, author, license family, preview/download URLs, attribution, dimensions/duration, size). The UI never sees provider-specific shapes.
+- **License is a field, not a footnote.** Every row carries a license family; attribution is rendered before import; project export fails closed on UNKNOWN license.
+- **Downloads land in the cache.** AssetBroker_download streams into VexHome_cache(<subsystem>) with bounded timeouts (Rule 27); cache files are shim state tracked and closed before Memory_freeAll (Rule 26). No exec, no writes outside the cache.
+- **The UI seam is fn-pointers.** darling hosts AssetBrowser and never includes api-haven (Rule 17); the R3 app binds an AssetSource fn-pointer table (opaque handle + callbacks — the Rule 33 canonical move).
+- **MCP surface.** asset_source_lookup / asset_search / asset_download hosted by McpServer; writes cache-confined, timeouts bounded, no exec.
+- **Credentials.** API keys via vexspoke Keychain or ASSET_KEY_<SLUG> env rendered by ApiAuth; never stored in the arena, prefs, or repo.
