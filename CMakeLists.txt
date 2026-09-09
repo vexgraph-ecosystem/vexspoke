@@ -116,6 +116,9 @@ add_library(vexspoke STATIC
     src/system/display_info.c
     src/system/hardware_info.c
     src/system/graphics_info.c
+    src/system/app_detect.c
+    src/system/process_probe.c
+    src/system/capture_tool.c
 )
 
 target_include_directories(vexspoke PUBLIC
@@ -179,6 +182,17 @@ add_executable(system_test
     tests/system_test.c
 )
 target_link_libraries(system_test PRIVATE vexspoke)
+
+# App + capture registry / live-probe targets (AppDetect, CaptureTool)
+add_executable(app_detect_test
+    tests/app_detect_test.c
+)
+target_link_libraries(app_detect_test PRIVATE vexspoke)
+
+add_executable(capture_tool_test
+    tests/capture_tool_test.c
+)
+target_link_libraries(capture_tool_test PRIVATE vexspoke)
 
 # TouchID Demo Target
 add_executable(touchid_demo

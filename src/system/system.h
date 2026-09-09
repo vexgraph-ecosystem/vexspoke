@@ -9,6 +9,9 @@
 #include "system/display_monitor.h"
 #include "system/hardware_info.h"
 #include "system/graphics_info.h"
+#include "system/app_detect.h"
+#include "system/capture_tool.h"
+#include "system/process_probe.h"
 
 // Master initializer: boots all core engine subsystems (time, input, cli, io).
 // Called exactly once at process start.
