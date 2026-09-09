@@ -224,6 +224,12 @@ add_executable(input_test
 )
 target_link_libraries(input_test PRIVATE vexspoke)
 
+# VexHome cache factory test
+add_executable(vexhome_test
+    tests/vexhome_test.c
+)
+target_link_libraries(vexhome_test PRIVATE vexspoke)
+
 # Class relational test
 add_executable(class_relational_test
     tests/class_relational_test.c
