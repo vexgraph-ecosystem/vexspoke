@@ -9,7 +9,15 @@
 // Per-user VexHome layout, created once so the engine always has a stable
 // place to write before any subsystem touches the disk.
 //
-//   ~/vex/
+// Root resolution precedence (VexHome_root):
+//   1. $VEX_HOME (non-empty) — test seam, overrides everything
+//   2. macOS: $HOME/Library/Application Support/vexgraph
+//   3. Windows: %LOCALAPPDATA%\vexgraph (fallback %USERPROFILE%\vexgraph)
+//   4. Linux/other: $XDG_DATA_HOME/vexgraph (fallback $HOME/.local/share/vexgraph)
+//   5. Final fallback: $HOME/vex  (ROOT_NAME "vex" used only here)
+//
+// Layout under the resolved root:
+//   <root>/
 //     projects/    - user project workspaces
 //     logs/        - engine binary logs (Log default sink)
 //     fonts/       - baked font store (FontBake .vexfont files)
@@ -27,7 +35,7 @@ const char *VexHome_fonts(void);
 const char *VexHome_placeholder(void);
 
 // Per-subsystem cache accessors (static buffers, valid until next VexHome call).
-// NULL or empty subsystem falls back to the root cache dir (~/vex/cache/).
+// NULL or empty subsystem falls back to the root cache dir (<root>/cache/).
 const char *VexHome_cache(const char *subsystem);
 const char *VexHome_cacheIndex(const char *subsystem);
 
@@ -38,7 +46,7 @@ bool VexHome_cacheEnsure(const char *subsystem);
 // Create the full layout; idempotent. Returns true when every dir exists.
 bool VexHome_ensure(void);
 
-// Default log file: ~/vex/logs/engine.bin (truncated every run by Log).
+// Default log file: <root>/logs/engine.bin (truncated every run by Log).
 const char *VexHome_defaultLogPath(void);
 
 #endif

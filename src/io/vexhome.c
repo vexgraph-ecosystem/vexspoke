@@ -17,6 +17,16 @@
  * The VexHome class (was AntiHome, renamed on the vexspoke/darling split).
  * Manages the per-user engine home directory layout on disk.
  *
+ * Root resolution precedence (implemented in resolve_base):
+ *   1. $VEX_HOME (non-empty) — documented test seam, overrides everything
+ *   2. macOS (__APPLE__): $HOME/Library/Application Support/vexgraph
+ *   3. Windows (_WIN32): %LOCALAPPDATA%\vexgraph (fallback %USERPROFILE%\vexgraph)
+ *   4. Linux/other: $XDG_DATA_HOME/vexgraph (fallback $HOME/.local/share/vexgraph)
+ *   5. Final fallback: $HOME/vex  (ROOT_NAME "vex" used only for this fallback)
+ *
+ * Cache paths derive from the resolved root: <root>/cache/<subsystem>/
+ * with dictionary.ini created by VexHome_cacheEnsure (never clobbered).
+ *
  * STRUCT FIELDS: none — procedural (operates on VexHome directory layout on disk)
  *
  * PRIVATE HELPERS:
@@ -46,7 +56,8 @@
  * ============================================================================
  */
 
-// vexhome.c — VexHome port (was AntiHome; Legacy: io/AntiHome.java). ~/vex layout.
+// vexhome.c — VexHome port (was AntiHome; Legacy: io/AntiHome.java).
+// Root resolved per-platform; legacy ~/vex and ~/anti never migrated or deleted.
 
 #define ROOT_NAME      "vex"
 #define PROJECTS_NAME  "projects"
@@ -66,24 +77,63 @@ static char cache_buf[FILE_PATH_MAX];
 static char cache_index_buf[FILE_PATH_MAX];
 static bool ensured;
 
-static void build_path(char *out, const char *sub) {
+static void resolve_base(char *out) {
+    // 1. $VEX_HOME override (test seam)
+    const char *vex_home = getenv("VEX_HOME");
+    if (vex_home && *vex_home != '\0') {
+        snprintf(out, FILE_PATH_MAX, "%s", vex_home);
+        return;
+    }
+
     const char *home = getenv("HOME");
     if (!home || *home == '\0')
         home = ".";
-    if (*sub == '\0')
-        snprintf(out, FILE_PATH_MAX, "%s/%s", home, ROOT_NAME);
-    else
-        snprintf(out, FILE_PATH_MAX, "%s/%s/%s", home, ROOT_NAME, sub);
+
+#if defined(__APPLE__)
+    // 2. macOS: ~/Library/Application Support/vexgraph
+    snprintf(out, FILE_PATH_MAX, "%s/Library/Application Support/vexgraph", home);
+#elif defined(_WIN32)
+    // 3. Windows: %LOCALAPPDATA%\vexgraph (fallback %USERPROFILE%\vexgraph)
+    const char *localappdata = getenv("LOCALAPPDATA");
+    if (localappdata && *localappdata != '\0') {
+        snprintf(out, FILE_PATH_MAX, "%s\\vexgraph", localappdata);
+    } else {
+        const char *userprofile = getenv("USERPROFILE");
+        if (userprofile && *userprofile != '\0')
+            snprintf(out, FILE_PATH_MAX, "%s\\vexgraph", userprofile);
+        else
+            snprintf(out, FILE_PATH_MAX, "%s/%s", home, ROOT_NAME);
+    }
+#else
+    // 4. Linux/other: $XDG_DATA_HOME/vexgraph (fallback $HOME/.local/share/vexgraph)
+    const char *xdg_data_home = getenv("XDG_DATA_HOME");
+    if (xdg_data_home && *xdg_data_home != '\0') {
+        snprintf(out, FILE_PATH_MAX, "%s/vexgraph", xdg_data_home);
+    } else {
+        snprintf(out, FILE_PATH_MAX, "%s/.local/share/vexgraph", home);
+    }
+#endif
+
+    // 5. Final fallback (handled by the else branches above using ROOT_NAME)
+    // ROOT_NAME "vex" is now used ONLY for the final fallback when canonical
+    // base is unavailable (e.g. no HOME on non-macOS/non-Windows).
+}
+
+static void build_path(char *out, const char *sub) {
+    resolve_base(out);
+    if (*sub != '\0') {
+        size_t len = strlen(out);
+        snprintf(out + len, FILE_PATH_MAX - len, "/%s", sub);
+    }
 }
 
 static void build_cache_path(char *out, const char *subsystem) {
-    const char *home = getenv("HOME");
-    if (!home || *home == '\0')
-        home = ".";
+    resolve_base(out);
+    size_t len = strlen(out);
     if (!subsystem || *subsystem == '\0')
-        snprintf(out, FILE_PATH_MAX, "%s/%s/%s", home, ROOT_NAME, CACHE_NAME);
+        snprintf(out + len, FILE_PATH_MAX - len, "/%s", CACHE_NAME);
     else
-        snprintf(out, FILE_PATH_MAX, "%s/%s/%s/%s", home, ROOT_NAME, CACHE_NAME, subsystem);
+        snprintf(out + len, FILE_PATH_MAX - len, "/%s/%s", CACHE_NAME, subsystem);
 }
 
 const char *VexHome_root(void) {

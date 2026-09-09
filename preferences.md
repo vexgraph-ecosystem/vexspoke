@@ -415,7 +415,7 @@ The top-level `vexgraph` CMake build staging copies all `.spv` blobs from `proje
 ## 22. Identity & Naming Transition (Anti → Vexspoke / VexHome)
 The codebase is actively transitioning from the initial `anti` prototype name to the permanent **`vex`** family identity:
 - Engine core: `anti` → `vexspoke` (the central spoke of the graph).
-- Engine home directory: `AntiHome` → `VexHome` (`~/anti` → `~/vex` or `~/vexhome`). Call `VexHome_ensure()`, `VexHome_fonts()`, etc.
+- Engine home directory: `AntiHome` → `VexHome`. Canonical per-platform root (created by `VexHome_ensure()`; `VexHome_cache(subsystem)` builds `<root>/cache/<subsystem>/` with `dictionary.ini` via `VexHome_cacheEnsure`): macOS `~/Library/Application Support/vexgraph`; Linux `$XDG_DATA_HOME/vexgraph` (≈ `~/.local/share/vexgraph`); Windows `%LOCALAPPDATA%\vexgraph`; fallback `$HOME/vex` when the canonical base is unavailable. `$VEX_HOME`, when set and non-empty, overrides all of the above (test seam). Never delete or migrate legacy `~/anti` or `~/vex` automatically.
 - Preprocessor definitions: prefer `VEX_*` alongside backwards-compatible `ANTI_*` defines (e.g., `ANTI_SPV_DIR` / `VEX_SPV_DIR`).
 - Executable names: `anti` remains the name of the headless test harness inside `vexspoke`, while `vk_test` and full applications live in `vexgraph`.
 
