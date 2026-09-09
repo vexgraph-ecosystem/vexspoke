@@ -645,7 +645,7 @@ typedef struct Input {
 
 - Owner core first, then one banner per part, in the order the parts are
   documented in the `;;OVERVIEW`. A part that forwards to another node
-  (e.g. ScrollPanel's `panel_*` over content) owns NO fields — say so in a
+  (e.g. ScrollContainer's `panel_*` over content) owns NO fields — say so in a
   `NOTE:` line, since new stored state there is a design smell.
 - Sub-object pointers are.views.: borrowed, detach-only, never freed or
   reparented by the owner. Replacing a view (`scrollbar_setBar`,
@@ -672,7 +672,7 @@ same as a stale `;;OVERVIEW` under Rule 23.
 
 - **Scope — every class root in darling.** Each class struct / file pair under
   `projects/darling/` is a root: `Container`, `Panel`, `Canvas`, every widget
-  (`ListPanel`, `GridPanel`, `ScrollPanel`, `SectionPanel`, `LayeredPanel`,
+  (`ListContainer`, `GridContainer`, `ScrollContainer`, `SectionContainer`, `LayeredContainer`, `SplitContainer`,
   `MarkdownPanel`, `RichTextPanel`, `Button`, `Switch`, `Checkbox`,
   `RadioGroup`, `Slider`, `Knob`, `Input`, `Textarea`, `InputOTP`, `Select`,
   `DatePicker`, `ColorPicker`, `ColorSwatch`, `ScrollBar`, `Label`,
