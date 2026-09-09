@@ -314,7 +314,7 @@ Allowlist (only includes permitted — everything else is a defect):
 - R1 `vexspoke`: includes NOTHING from `graphvex`/`hotcwap`/`darling`/`api-haven`/engines.
 - R1.5 `graphvex`: includes `vexspoke` only. Never `hotcwap`/`darling`/`api-haven`/engines.
 - R0 `hotcwap`: includes `vexspoke` (arena/event/input/time) + `graphvex` (buffer/GPU) only. Never `darling`/`api-haven`/database/language/engine headers.
-- R2 `darling`: includes `vexspoke` + `graphvex` + `hotcwap` (`window/window.h`) only. Never `api-haven`/engines. `api-haven`: `vexspoke` only, no graphics. `database`/`lsps`/`tiny`: `vexspoke` (+ `graphvex` for GPU-backed ones) only, never engines.
+- R2 `darling`: includes `vexspoke` + `graphvex` + `hotcwap` (`window/window.h`) only. Never `api-haven`/engines. `api-haven`: `vexspoke` only, no graphics; may define pure connector contracts — descriptor registries plus fn-pointer client shapes (e.g. `AiProvider`, `AppDetect`, `DbCatalog`/`DbConnector`) — with zero vendor/database includes; contract class names never collide with owner interfaces (the `Database` interface stays with db-haven/darkbase). `database`/`lsps`/`tiny`: `vexspoke` (+ `graphvex` for GPU-backed ones) only, never engines.
 - R3/R4 engines: borrow shapes from R0/R1/R1.5/R2 to build; own no OS/window/memory management — borrow arenas, windows, GPU instances from R0. Standalone-capable or Kernel-registered.
 
 Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven`/database/lsps -> `vexgraph` projects. Boot order is the reverse crown: R0 first.
@@ -331,7 +331,7 @@ Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -
 
 4. **R2 Features — darling | api-haven | database | lsps | tiny**:
    - `darling`: `Canvas`/`Container`/`Panel`/widgets/compositor/`panel_bridge.c`.
-   - `api-haven`: API surface, telemetry, webhooks.
+   - `api-haven`: API surface, telemetry, webhooks + connector contracts (AI providers, app detection, database catalog/connector shapes).
    - `database` (`db-haven`/`darkbase`): `Database` interface, native vex store in-budget.
    - `lsps`/`languages`: `Language` contract (`Lang_tokenize/parse/highlight/...`), each grammar a hot-swappable dylib.
    - `tiny`: `drawlings`/`samplerate`/`semicolon`/`freedom` — prove one contract, fan out.
