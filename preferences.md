@@ -177,6 +177,60 @@ Window Frame        ← NSWindow chrome / traffic lights
 - Calling `Window_setBlur(w, value > 0)` **must** also mark the window transparent
   so Vulkan rebuilds the swapchain with `VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR`.
   This is done automatically inside `Window_setBlur`.
+- **Pane-of-glass rule (Rule 11.5):** a scene child may own a "pane" — its OWN
+  `CAMetalLayer` + dedicated per-pane Vulkan swapchain (`VkPane` registry in
+  hotcwap, `PanelCocoa_newMetal` in darling) — instead of an IOSurface blit.
+  Each pane's layer frame is a logical-points rect pinned by `selfAnchor`
+  (Rule 13 gravity applies identically). The pane renders at 60fps into its own
+  swapchain (`VkPane_presentAll` from `Kernel_tick`); the board swapchain is
+  never rebuilt by a pane. A pane's pixel size is FIXED at
+  register/resize time — `VkPane_resize` is a no-op when the requested size is
+  unchanged, so fixed panes never rebuild.
+- **Live resize is layer-motion only on thread 0, and the scenes stay alive
+  on the present worker (Rule 11.6):** during an active AppKit drag
+  (`NSViewLiveResize`) thread 0 is inside the modal tracking loop — it moves
+  CALayer frames and nothing else. Presentation runs on a dedicated present
+  worker (`Kernel`'s `kernel_present_job` / `Application`'s `app_present_job`,
+  spawned after window warm-up): it keeps presenting what Vulkan already has —
+  the board swapchain stays at its current extent and the `CAMetalLayer`
+  scales it to the live frame, and the panes keep RENDERING + presenting at
+  60fps into their fixed chains (`VkPane_presentAll` never pauses), so the
+  four scenes keep animating the whole drag. The board layer's
+  `contentsGravity` flips to `kCAGravityResize` for the drag — the frozen
+  board frame STRETCHES to cover the live bounds every drag step, so the
+  interior tracks the window edges (no empty gorge past the frozen extent,
+  no perceived resize lag); it flips back to `kCAGravityTopLeft` on settle
+  for the exact-size rebuild. Static IOSurface children hold
+  their last render. Pane/corner anchor motion during the drag is
+  WindowServer-accelerated: `PanelCocoa_setAnchors` sets each layer's
+  `autoresizingMask` + `anchorPoint` at attach, so CoreAnimation lays the
+  sublayers out INSIDE the window-resize transaction — edge-locked on the
+  same vsync as the window edge, zero CPU math, zero catch-up.
+  `Window_compositeIOSurfaceChildren` early-returns while
+  `Window_isLiveResizing` (a per-event explicit frame would fight the
+  accelerated autoresize pass and trail the live edge by a beat — the
+  right/bottom "catching up" artifact); exact frames are re-applied at
+  settle. `Darling_preFrame` still
+  early-returns while `Window_isLiveResizing`, so the worker never mutates
+  container layout or composites concurrently — a worker/thread-0 layout race
+  tears the `selfAnchor` math and pane layers drift from their pinned corners.
+  Zero swapchain rebuilds and zero IOSurface re-records
+  per drag frame (`Window_isLiveResizing` gates both `presentFrameLocked`,
+  `renderNativeContent`, and `Darling_preFrame`; `Window_width/height` are
+  atomic caches written
+  by thread 0 in `setFrameSize`/`windowWillResize`/`windowDidResize`/the
+  pollEvents pump and read by the worker). On settle
+  (`viewDidEndLiveResize`) the flag clears, the final drawableSize lands, and
+  the next pass runs exactly ONE rebuild + ONE re-record at the true final
+  size. Rebuilding or re-recording per drag frame is the
+  size-proportional-lag defect — large windows lag more. `Kernel_run`
+  bounded-joins the worker (`Thread_stop`) before teardown per Rule 26/27.
+- Pane register timing: `Darling_initCompositor` runs `Vk_init` first; child
+  attach happens inside `Darling_preFrame` → `renderNativeContent` →
+  `Window_attachPanelIOSurface`, so `VkPane_register` always finds a live
+  device. Metal layers are attached before the composite frame is set, so a
+  zero-extent capability report falls back to the registered pixel size —
+  never fail registration on a frameless layer.
 
 ## 12. IOSurface / Native Pixel Rule
 All `IOSurface` allocations and Vulkan renders into them must use **native hardware
@@ -225,7 +279,10 @@ When `nativeContent` mode is active (IOSurface children), the Vulkan swapchain
 blit loop (`presentFrameTail`) **must skip** all non-scene panels. They are
 already composited natively by AppKit. Only `TYPE_SCENE3D_SINGLETON`,
 `TYPE_SCENE2D_SINGLETON`, and `TYPE_SCENE_SINGLETON` children may be stamped
-onto the swapchain.
+onto the swapchain, and **only if they are not pane-backed**: a scene child
+holding its own `CAMetalLayer` pane (`PanelCocoa_isMetal`) is composited by
+WindowServer and must never be stamped onto the board either — it renders
+through `VkPane_presentAll` only. Fixed-size panes never rebuild.
 
 ## 15. Commit and Push Discipline
 - **Never push unless explicitly asked.** A push request is a one-time button press; do not auto-push subsequent changes.
@@ -417,7 +474,7 @@ The codebase is actively transitioning from the initial `anti` prototype name to
 - Engine core: `anti` → `vexspoke` (the central spoke of the graph).
 - Engine home directory: `AntiHome` → `VexHome`. Canonical per-platform root (created by `VexHome_ensure()`; `VexHome_cache(subsystem)` builds `<root>/cache/<subsystem>/` with `dictionary.ini` via `VexHome_cacheEnsure`): macOS `~/Library/Application Support/vexgraph`; Linux `$XDG_DATA_HOME/vexgraph` (≈ `~/.local/share/vexgraph`); Windows `%LOCALAPPDATA%\vexgraph`; fallback `$HOME/vex` when the canonical base is unavailable. `$VEX_HOME`, when set and non-empty, overrides all of the above (test seam). Never delete or migrate legacy `~/anti` or `~/vex` automatically.
 - Preprocessor definitions: prefer `VEX_*` alongside backwards-compatible `ANTI_*` defines (e.g., `ANTI_SPV_DIR` / `VEX_SPV_DIR`).
-- Executable names: `anti` remains the name of the headless test harness inside `vexspoke`, while `vk_test` and full applications live in `vexgraph`.
+- Executable names: `vexspoke_demo` (formerly `anti`) is the headless demo harness inside `vexspoke`, while `vk_test` and full applications live in `vexgraph`.
 
 ## 23. The `;;OVERVIEW` Documentation & File Layout Standard
 Every `.c` (and `.m` where applicable) must be self-contained so that a developer can understand the class, its memory layout, and all its capabilities from the **first 100–150 lines** of the implementation file without having to tab back and forth to the `.h` file.
