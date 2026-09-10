@@ -7,8 +7,8 @@
 
 // nio/mem.h — the ForeignMemory API (Legacy: nio/ForeignMemory.java).
 //
-// 16-BYTE ARENA DOCTRINE (Anti Paradigm):
-// In standard C, programs malloc/free constantly. In anti, the engine carves
+// 16-BYTE ARENA DOCTRINE (Vex Paradigm):
+// In standard C, programs malloc/free constantly. In vex, the engine carves
 // out one massive master arena at startup. Memory is partitioned into
 // size-class slabs for O(1) slot claiming and cache-hot recycling.
 //

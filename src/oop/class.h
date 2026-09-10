@@ -11,7 +11,7 @@
 //
 // A Class is a runtime struct schema defining field sizes, offsets, names,
 // and dual-stream partitioning (Stream 1 for hot flat primitives, Stream 2 for nested structs).
-// Reserved constructor is Class() — anti style, struct-like.
+// Reserved constructor is Class() — vex style, struct-like.
 
 typedef struct Class {
     uint32_t genericId;        // ID_CUSTOM_STRUCT + n
@@ -46,7 +46,7 @@ typedef Field StructField;
 // Build a Fields schema from an array of sizes or class IDs
 Fields *Fields_create(const size_t *sizesOrClasses, size_t count);
 
-// Named Class constructor — anti reserved word Class()
+// Named Class constructor — vex reserved word Class()
 // Usage:
 //   Class *player = Class(TYPE_VEC3, "position", TYPE_INT, "health", TYPE_STRING, "name");
 //   Class *mat = Class(TYPE_FLOAT, "albedo", TYPE_FLOAT, "roughness");

@@ -354,7 +354,7 @@ The stack has ONE order. Lower R = boots earlier, more stable, tears down later.
      supervises ▼                   │ registers ◀ (opaque handles + callbacks only)
 ┌──────────────────────────────────┴─────────────────────────────────────┐
 │ R3/R4 PROJECTS + IN-ENGINE CODE — very large ambitious ones            │
-│ anti-engine / mini-ide / daw / drawing-app / viewer-3d / material-lab  │
+│ vex-engine / mini-ide / daw / drawing-app / viewer-3d / material-lab  │
 │ Each = Application {CLI/TUI/GUI} x windows[APP_MAX_WINDOWS] in Kernel. │
 │ R4 = scripts/quirks/mods/filter stacks, zero core rebuild.             │
 └────────────────────────────────────────────────────────────────────────┘
@@ -394,7 +394,7 @@ Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -
    - `tiny`: `drawlings`/`samplerate`/`semicolon`/`freedom` — prove one contract, fan out.
 
 5. **R3/R4 Future Projects + In-Engine Code**:
-   - R3: `anti-engine`, `mini-ide`, `daw`, `drawing-app`, `viewer-3d`, etc. from `_thoughts/`. N apps x M windows per `Kernel`.
+   - R3: `vex-engine`, `mini-ide`, `daw`, `drawing-app`, `viewer-3d`, etc. from `_thoughts/`. N apps x M windows per `Kernel`.
    - R4: scripts, quirks, mods, filter stacks. Swappable with zero window teardown.
 
 6. **`vexgraph` (Top-Level Integrator & Application Root)**:

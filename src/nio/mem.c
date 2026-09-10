@@ -14,7 +14,7 @@
  * LEVEL: L4 — Self-Management (arena/slab memory manager)
  * ============================================================================
  * Pre-allocated Master Arena and Size-Class Slab Allocator fulfilling the
- * Anti Paradigm: zero steady-state malloc, cache-hot slot recycling, and
+ * Vex Paradigm: zero steady-state malloc, cache-hot slot recycling, and
  * 32-byte negative pointer math.
  *
  * Phase-4 instancing: globals are the DEFAULT MemoryArena; secondaries

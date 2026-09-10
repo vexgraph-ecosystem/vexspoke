@@ -122,17 +122,17 @@ To build and run the standalone verification harness directly within `vexspoke`:
 ```bash
 mkdir build-debug && cd build-debug
 /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug
-cmake --build . --target anti
-./anti
+cmake --build . --target vexspoke_demo
+./vexspoke_demo
 ```
 
 **Expected output:**
 ```
-== anti memory ==
+== vex memory ==
 type=0x20000001 len=16
-== anti bit pool ==
+== vex bit pool ==
 recycled a => c=0x10199ec60 (same=1)
-== anti ring + spin + loop ==
+== vex ring + spin + loop ==
 ...
 received=100/100 ticks=1
 ```

@@ -226,7 +226,7 @@ int main(void) {
     File_close(f);
     File_delete(demo_path);
 
-    // VexHome: per-user ~/anti layout.
+    // VexHome: per-user home layout.
     printf("== vexspoke io: VexHome ==\n");
     printf("ensure=%d root=%s\n", VexHome_ensure(), VexHome_root());
     printf("logs=%s projects=%s\n", VexHome_logs(), VexHome_projects());

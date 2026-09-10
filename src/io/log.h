@@ -53,7 +53,7 @@ typedef struct Log {
 // to a power of two). Spawns the writer thread. Returns false on failure.
 bool Log_init(Log *log, const char *path, size_t slot_count);
 
-// Log to the default sink: ~/anti/logs/engine.bin.
+// Log to the default sink (see VexHome_defaultLogPath()).
 bool Log_initDefault(Log *log);
 
 // Stop the writer, drain remaining records, close the file, free the ring.

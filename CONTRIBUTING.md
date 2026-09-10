@@ -97,7 +97,7 @@ Whenever preferences or conventions evolve, [`preferences.md`](preferences.md) i
 | :--- | :--- | :--- |
 | **1. Configure** | `cmake .. -DCMAKE_BUILD_TYPE=Debug` | configure succeeds. |
 | **2. Build (strict)** | `cmake --build .` | all targets, `-Werror`, zero warnings. |
-| **3. Engine Demo** | `./anti` | `received=100/100 ticks=N`. |
+| **3. Engine Demo** | `./vexspoke_demo` | `received=100/100 ticks=N`. |
 
 Commit history is per-file and granular — "this is what I did" — even if
 intermediate commits don't compile. Pushing happens only on my explicit say-so.

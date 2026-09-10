@@ -3,7 +3,7 @@
 
 // c23/free.h — The Relational Destructor Dispatcher.
 // 
-// In anti, everything is a pointer and every block carries its type in a header.
+// In vex, everything is a pointer and every block carries its type in a header.
 // This function overloads the standard free(void*), automatically routing to the 
 // correct destructor (e.g. Probable_free) based on the runtime type ID, before 
 // actually reclaiming the memory block via Memory_free.
