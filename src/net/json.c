@@ -61,9 +61,17 @@
  *   - Json_number(doc, ref)
  *   - Json_string(doc, ref, lengthOut)
  *   - Json_key(doc, ref, lengthOut)
+ *   - Json_has(doc, obj, key)
+ *   - Json_path(doc, root, path)
+ *   - Json_getBool(doc, ref, def)
+ *   - Json_getNumber(doc, ref, def)
+ *   - Json_getString(doc, ref, dest)
  *   - Json_writeNumber(out, cap, v)
  *   - Json_writeString(out, cap, s)
  *   - Json_writeBool(out, cap, v)
+ *   - JsonWriter_init(w, out, cap) + JsonWriter_ok/used
+ *   - Json_beginObject/endObject, Json_beginArray/endArray
+ *   - Json_addKey(w, k) + Json_stringVal/numberVal/boolVal/nullVal/rawVal
  * ============================================================================
  */
 
@@ -463,4 +471,321 @@ int64_t Json_writeString(char *out, size_t cap, const char *s) {
 
 int64_t Json_writeBool(char *out, size_t cap, bool v) {
     return (int64_t)snprintf(out, cap, "%s", v ? "true" : "false");
+}
+
+// --- JS-flex helpers (defaults + paths, still zero-alloc) ---
+
+bool Json_has(const JsonDoc *doc, JsonRef obj, const char *key) {
+    if (!doc || obj < 0 || !key)
+        return false;
+    return Json_member(doc, obj, key) >= 0;
+}
+
+JsonRef Json_path(const JsonDoc *doc, JsonRef root, const char *path) {
+    if (!doc || root < 0 || !path || (*path) == '\0')
+        return -1;
+    JsonRef cur = root;
+    const char *p = path;
+    char keyBuf[128];
+    while (*p) {
+        if ((*p) == '.') {
+            p++;
+            continue;
+        }
+        if ((*p) != '[') {
+            size_t klen = 0;
+            while (*p && (*p) != '.' && (*p) != '[') {
+                if (klen + 1 < sizeof(keyBuf))
+                    keyBuf[klen++] = *p;
+                else
+                    return -1;
+                p++;
+            }
+            keyBuf[klen] = '\0';
+            if (klen > 0) {
+                if (cur < 0 || (*doc).nodes[cur].type != JSON_OBJECT)
+                    return -1;
+                cur = Json_member(doc, cur, keyBuf);
+                if (cur < 0)
+                    return -1;
+            }
+            continue;
+        }
+        p++;
+        uint32_t idx = 0;
+        bool anyDigit = false;
+        while (*p >= '0' && (*p) <= '9') {
+            anyDigit = true;
+            idx = idx * 10 + (uint32_t)((*p) - '0');
+            p++;
+        }
+        if (!anyDigit || (*p) != ']')
+            return -1;
+        p++;
+        cur = Json_at(doc, cur, idx);
+        if (cur < 0)
+            return -1;
+    }
+    return cur;
+}
+
+bool Json_getBool(const JsonDoc *doc, JsonRef ref, bool def) {
+    if (!doc || ref < 0)
+        return def;
+    JsonType t = (*doc).nodes[ref].type;
+    if (t == JSON_TRUE)
+        return true;
+    if (t == JSON_FALSE)
+        return false;
+    return def;
+}
+
+double Json_getNumber(const JsonDoc *doc, JsonRef ref, double def) {
+    if (!doc || ref < 0)
+        return def;
+    if ((*doc).nodes[ref].type != JSON_NUMBER)
+        return def;
+    return (*doc).nodes[ref].number;
+}
+
+bool Json_getString(const JsonDoc *doc, JsonRef ref, char *dest, size_t cap) {
+    if (!doc || !dest || cap == 0)
+        return false;
+    if (ref < 0 || (*doc).nodes[ref].type != JSON_STRING)
+        return false;
+    uint32_t len = 0;
+    const char *view = Json_string(doc, ref, &len);
+    if ((size_t)len + 1 > cap)
+        return false;
+    memcpy(dest, view, len);
+    dest[len] = '\0';
+    return true;
+}
+
+// --- Streaming builder (~ JSON.stringify) ---
+
+static bool writerFail(JsonWriter *w) {
+    (*w).ok = false;
+    return false;
+}
+
+static bool writerReserve(JsonWriter *w, size_t n) {
+    if (!(*w).ok)
+        return false;
+    if (!(*w).out || (*w).used + n >= (*w).cap)
+        return writerFail(w);
+    return true;
+}
+
+static bool writerPut(JsonWriter *w, char c) {
+    if (!writerReserve(w, 1))
+        return false;
+    (*w).out[(*w).used++] = c;
+    (*w).out[(*w).used] = '\0';
+    return true;
+}
+
+static bool writerAppend(JsonWriter *w, const char *s, size_t n) {
+    if (n == 0)
+        return true;
+    if (!writerReserve(w, n))
+        return false;
+    memcpy((*w).out + (*w).used, s, n);
+    (*w).used += n;
+    (*w).out[(*w).used] = '\0';
+    return true;
+}
+
+static bool writerStringBody(JsonWriter *w, const char *s) {
+    for (const char *p = s; *p; p++) {
+        char c = *p;
+        const char *esc = NULL;
+        switch (c) {
+            case '"': esc = "\\\""; break;
+            case '\\': esc = "\\\\"; break;
+            case '\n': esc = "\\n"; break;
+            case '\r': esc = "\\r"; break;
+            case '\t': esc = "\\t"; break;
+            case '\b': esc = "\\b"; break;
+            case '\f': esc = "\\f"; break;
+            default: break;
+        }
+        if (esc) {
+            if (!writerAppend(w, esc, strlen(esc)))
+                return false;
+        } else {
+            if (!writerPut(w, c))
+                return false;
+        }
+    }
+    return true;
+}
+
+void JsonWriter_init(JsonWriter *w, char *out, size_t cap) {
+    if (!w)
+        return;
+    (*w).out = out;
+    (*w).cap = cap;
+    (*w).used = 0;
+    (*w).ok = (out != NULL && cap > 0);
+    (*w).depth = 0;
+    for (int i = 0; i < JSON_MAX_DEPTH; i++)
+        (*w).needComma[i] = false;
+    if ((*w).ok)
+        out[0] = '\0';
+}
+
+bool JsonWriter_ok(const JsonWriter *w) {
+    if (!w)
+        return false;
+    return (*w).ok;
+}
+
+size_t JsonWriter_used(const JsonWriter *w) {
+    if (!w)
+        return 0;
+    return (*w).used;
+}
+
+static bool writerValueOpen(JsonWriter *w) {
+    if (!(*w).ok)
+        return false;
+    if ((*w).depth == 0)
+        return true;
+    if ((*w).depth < 0 || (*w).depth > JSON_MAX_DEPTH)
+        return writerFail(w);
+    int parent = (*w).depth - 1;
+    if ((*w).needComma[parent]) {
+        if (!writerPut(w, ','))
+            return false;
+        (*w).needComma[parent] = false;
+    }
+    return true;
+}
+
+static bool writerValueClose(JsonWriter *w) {
+    if ((*w).depth == 0)
+        return (*w).ok;
+    int parent = (*w).depth - 1;
+    (*w).needComma[parent] = true;
+    return (*w).ok;
+}
+
+bool Json_beginObject(JsonWriter *w) {
+    if (!w || !writerValueOpen(w))
+        return false;
+    if (!writerPut(w, '{'))
+        return false;
+    if ((*w).depth < 0 || (*w).depth >= JSON_MAX_DEPTH)
+        return writerFail(w);
+    (*w).needComma[(*w).depth] = false;
+    (*w).depth++;
+    return true;
+}
+
+bool Json_endObject(JsonWriter *w) {
+    if (!w || !(*w).ok)
+        return false;
+    if ((*w).depth <= 0)
+        return writerFail(w);
+    if (!writerPut(w, '}'))
+        return false;
+    (*w).depth--;
+    return writerValueClose(w);
+}
+
+bool Json_beginArray(JsonWriter *w) {
+    if (!w || !writerValueOpen(w))
+        return false;
+    if (!writerPut(w, '['))
+        return false;
+    if ((*w).depth < 0 || (*w).depth >= JSON_MAX_DEPTH)
+        return writerFail(w);
+    (*w).needComma[(*w).depth] = false;
+    (*w).depth++;
+    return true;
+}
+
+bool Json_endArray(JsonWriter *w) {
+    if (!w || !(*w).ok)
+        return false;
+    if ((*w).depth <= 0)
+        return writerFail(w);
+    if (!writerPut(w, ']'))
+        return false;
+    (*w).depth--;
+    return writerValueClose(w);
+}
+
+bool Json_addKey(JsonWriter *w, const char *k) {
+    if (!w || !k || !(*w).ok)
+        return false;
+    if ((*w).depth <= 0)
+        return writerFail(w);
+    int idx = (*w).depth - 1;
+    if ((*w).needComma[idx]) {
+        if (!writerPut(w, ','))
+            return false;
+    }
+    if (!writerPut(w, '"'))
+        return false;
+    if (!writerStringBody(w, k))
+        return false;
+    if (!writerAppend(w, "\":", 2))
+        return false;
+    (*w).needComma[idx] = false;
+    return true;
+}
+
+bool Json_stringVal(JsonWriter *w, const char *s) {
+    if (!w || !s || !writerValueOpen(w))
+        return false;
+    if (!writerPut(w, '"'))
+        return false;
+    if (!writerStringBody(w, s))
+        return false;
+    if (!writerPut(w, '"'))
+        return false;
+    return writerValueClose(w);
+}
+
+bool Json_numberVal(JsonWriter *w, double v) {
+    if (!w || !writerValueOpen(w))
+        return false;
+    char tmp[32];
+    long long asInt = (long long)v;
+    int n = 0;
+    if ((double)asInt == v)
+        n = snprintf(tmp, sizeof(tmp), "%lld", asInt);
+    else
+        n = snprintf(tmp, sizeof(tmp), "%.17g", v);
+    if (n <= 0 || (size_t)n >= sizeof(tmp))
+        return writerFail(w);
+    if (!writerAppend(w, tmp, (size_t)n))
+        return false;
+    return writerValueClose(w);
+}
+
+bool Json_boolVal(JsonWriter *w, bool v) {
+    if (!w || !writerValueOpen(w))
+        return false;
+    if (!writerAppend(w, v ? "true" : "false", v ? 4 : 5))
+        return false;
+    return writerValueClose(w);
+}
+
+bool Json_nullVal(JsonWriter *w) {
+    if (!w || !writerValueOpen(w))
+        return false;
+    if (!writerAppend(w, "null", 4))
+        return false;
+    return writerValueClose(w);
+}
+
+bool Json_rawVal(JsonWriter *w, const char *raw) {
+    if (!w || !raw || !writerValueOpen(w))
+        return false;
+    if (!writerAppend(w, raw, strlen(raw)))
+        return false;
+    return writerValueClose(w);
 }

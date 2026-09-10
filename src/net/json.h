@@ -75,11 +75,49 @@ const char *Json_string(const JsonDoc *doc, JsonRef ref, uint32_t *lengthOut);
 // Object member key of a node.
 const char *Json_key(const JsonDoc *doc, JsonRef ref, uint32_t *lengthOut);
 
+// --- JS-flex helpers (defaults + paths, still zero-alloc) ---
+// Member-exists check (objects only). False on NULL/missing/wrong type.
+bool Json_has(const JsonDoc *doc, JsonRef obj, const char *key);
+// Dotted path lookup: "a.b[0].c" (~ _.get). Array suffixes repeat
+// ("m[0][1]"). Returns value ref or -1 when any hop misses.
+JsonRef Json_path(const JsonDoc *doc, JsonRef root, const char *path);
+// Value getters with JS `??` defaults: wrong-type/missing ref -> def.
+bool Json_getBool(const JsonDoc *doc, JsonRef ref, bool def);
+double Json_getNumber(const JsonDoc *doc, JsonRef ref, double def);
+// Copies a JSON_STRING view into dest (NUL-terminated, dest-last).
+// False on type mismatch, NULL dest, zero cap, or truncation.
+bool Json_getString(const JsonDoc *doc, JsonRef ref, char *dest, size_t cap);
+
 // --- Writer ---
 // Appends a JSON rendering of value into _out (NUL-terminated). Strings are
 // escaped. Returns bytes written (excluding NUL) or -1 when _out ran _out.
 int64_t Json_writeNumber(char *out, size_t cap, double v);
 int64_t Json_writeString(char *out, size_t cap, const char *s);
 int64_t Json_writeBool(char *out, size_t cap, bool v);
+
+// Streaming builder (~ JSON.stringify): appends into caller storage,
+// bounded, zero-alloc. Any overflow flips ok once and later calls no-op.
+typedef struct JsonWriter {
+    char *out;
+    size_t cap;
+    size_t used;
+    bool ok;
+    int depth;
+    bool needComma[JSON_MAX_DEPTH];
+} JsonWriter;
+
+void JsonWriter_init(JsonWriter *w, char *out, size_t cap);
+bool JsonWriter_ok(const JsonWriter *w);
+size_t JsonWriter_used(const JsonWriter *w);
+bool Json_beginObject(JsonWriter *w);
+bool Json_endObject(JsonWriter *w);
+bool Json_beginArray(JsonWriter *w);
+bool Json_endArray(JsonWriter *w);
+bool Json_addKey(JsonWriter *w, const char *k);
+bool Json_stringVal(JsonWriter *w, const char *s);
+bool Json_numberVal(JsonWriter *w, double v);
+bool Json_boolVal(JsonWriter *w, bool v);
+bool Json_nullVal(JsonWriter *w);
+bool Json_rawVal(JsonWriter *w, const char *raw);
 
 #endif
