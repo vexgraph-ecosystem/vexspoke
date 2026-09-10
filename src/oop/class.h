@@ -7,7 +7,7 @@
 
 #include "oop/field.h"
 
-// oop/Class.h — Dynamic Class Schema Engine (Legacy: oop/Fields, now Class).
+// oop/class.h — Dynamic Class Schema Engine (Legacy: oop/Fields, now Class).
 //
 // A Class is a runtime struct schema defining field sizes, offsets, names,
 // and dual-stream partitioning (Stream 1 for hot flat primitives, Stream 2 for nested structs).

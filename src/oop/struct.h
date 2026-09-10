@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "c23/constructor.h"
-#include "oop/Class.h"
+#include "oop/class.h"
 
 // oop/struct.h — Dynamic Struct Instance & Allocation Engine.
 //

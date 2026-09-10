@@ -1,4 +1,4 @@
-#include "oop/Class.h"
+#include "oop/class.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -10,12 +10,12 @@
 ;;OVERVIEW
 /**
  * ============================================================================
- * CLASS: Class (oop/Class.c)
+ * CLASS: Class (oop/class.c)
  * LEVEL: L1 — File Metadata (class schema registry)
  * ============================================================================
  * Dynamic Class Schema Engine (Legacy: oop/Fields, now Class).
  *
- * STRUCT FIELDS (Mirroring oop/Class.h):
+ * STRUCT FIELDS (Mirroring oop/class.h):
  * ----------------------------------------------------------------------------
  *   Class {
  *     uint32_t genericId; // ID_CUSTOM_STRUCT + n

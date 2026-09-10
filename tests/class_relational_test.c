@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "oop/Class.h"
+#include "oop/class.h"
 #include "oop/type.h"
 #include "oop/struct.h"
 #include "relational/variable.h"

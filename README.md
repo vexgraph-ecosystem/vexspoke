@@ -80,7 +80,7 @@ target_link_libraries(my_app PRIVATE vexspoke)
 * **`src/nio/mem.h/.c`** — The self-describing memory lens (`Memory`). Every allocation carries `[type_id][length][payload]`. Walking back 16 bytes yields the header; `Memory_type()` and `Memory_length()` are free pointer subtractions.
 * **`src/bit/bit.h/.c`** — The lockless width pool (`BitPool`). ABA-tagged freelists recycle slots; freed slots return at the *exact same address*.
 * **`src/oop/type.h`** — Bit-packed type system (`Type`). One 32-bit masked ID encodes form, class, and variant.
-* **`src/oop/Class.h/.c`** — Reflection and stride tables for off-heap structs.
+* **`src/oop/class.h/.c`** — Reflection and stride tables for off-heap structs.
 * **`src/atomic/ring.h/.c`** — Lockless MPMC ring buffer (`RingBuffer`), the inter-thread messaging highway.
 * **`src/atomic/spin.h/.c`** — C23 `stdatomic` ticket locks (`SpinLock`) with bounded spin backoff.
 * **`src/relational/variable.h/.c`** — Relational symbol registry (`Variable`). Name $\rightarrow$ `(classId, targetPointer)`.
