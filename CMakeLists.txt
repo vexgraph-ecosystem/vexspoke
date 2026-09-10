@@ -28,7 +28,7 @@ add_library(vexspoke STATIC
     src/c23/equals.c
     src/c23/free.c
     src/oop/type.c
-    src/oop/Class.c
+    src/oop/class.c
     src/oop/field.c
     src/oop/stride.c
     src/oop/struct.c
@@ -170,11 +170,11 @@ endif()
 endif() # NOT TARGET vexspoke
 
 # Headless demo target
-if(NOT TARGET anti)
-    add_executable(anti
+if(NOT TARGET vexspoke_demo)
+    add_executable(vexspoke_demo
         src/main/main.c
     )
-    target_link_libraries(anti PRIVATE vexspoke)
+    target_link_libraries(vexspoke_demo PRIVATE vexspoke)
 endif()
 
 # System Discovery & Hardware / Display probe target

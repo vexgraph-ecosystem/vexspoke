@@ -72,7 +72,7 @@
 ;;OVERVIEW
 /**
  * ============================================================================
- * MODULE: AntiRuntimeDemo (src/main/main.c — headless `anti` harness)
+ * MODULE: VexSpokeDemo (src/main/main.c — headless `vexspoke_demo` harness)
  * LEVEL: L3 — Module Code (headless demo harness)
  * ============================================================================
  * End-to-end demo tying the C23 subsystems together with no window:
@@ -180,13 +180,13 @@ static void engine_tick(void *userdata) {
 
 int main(void) {
     // Memory: allocate a typed block, prove the header round-trips.
-    printf("== anti memory ==\n");
+    printf("== vexspoke memory ==\n");
     void *blk = Memory_alloc(TYPE_INT_ARRAY, 4 * sizeof(int32_t));
     printf("type=0x%08X len=%zu\n", Memory_type(blk), Memory_length(blk));
     Memory_free(blk);
 
     // FastMath: fast 32-bit approximations and bitwise ops.
-    printf("== anti lang: FastMath ==\n");
+    printf("== vexspoke lang: FastMath ==\n");
     printf("abs(-3.5)=%.4f absInt(-7)=%d round(2.4)=%.1f round(2.6)=%.1f\n",
            (double)FastMath_abs(-3.5f), FastMath_absInt(-7),
            (double)FastMath_round(2.4f), (double)FastMath_round(2.6f));
@@ -204,11 +204,11 @@ int main(void) {
            (double)FastMath_cosFromSin(0.5f, FastMath_HALF_PI));
 
     // File: off-heap file handle (stdio-backed).
-    printf("== anti io: File ==\n");
-    const char *demo_path = "/tmp/anti_demo.bin";
+    printf("== vexspoke io: File ==\n");
+    const char *demo_path = "/tmp/vexspoke_demo.bin";
     File_delete(demo_path);
     File *f = File_open(demo_path, FILE_MODE_WRITE | FILE_MODE_CREATE | FILE_MODE_TRUNCATE);
-    const char greeting[] = "anti zero-alloc";
+    const char greeting[] = "vexspoke zero-alloc";
     File_write(f, greeting, (int64_t)(sizeof(greeting) - 1));
     printf("wrote %lld bytes size=%lld pos=%lld\n",
            (long long)(sizeof(greeting) - 1), (long long)File_size(f),
@@ -226,16 +226,16 @@ int main(void) {
     File_close(f);
     File_delete(demo_path);
 
-    // AntiHome: per-user ~/anti layout.
-    printf("== anti io: AntiHome ==\n");
+    // VexHome: per-user ~/anti layout.
+    printf("== vexspoke io: VexHome ==\n");
     printf("ensure=%d root=%s\n", VexHome_ensure(), VexHome_root());
     printf("logs=%s projects=%s\n", VexHome_logs(), VexHome_projects());
     printf("defaultLog=%s\n", VexHome_defaultLogPath());
 
     // FileWriter: buffered binary writer.
-    printf("== anti io: FileWriter ==\n");
+    printf("== vexspoke io: FileWriter ==\n");
     FileWriter w;
-    if (FileWriter_open(&w, "/tmp/anti_demo_w.bin")) {
+    if (FileWriter_open(&w, "/tmp/vexspoke_demo_w.bin")) {
         uint8_t data[3] = { 0x41, 0x4E, 0x54 };
         FileWriter_write(&w, data, 3);
         FileWriter_flush(&w);
@@ -245,11 +245,11 @@ int main(void) {
     } else {
         printf("open=failed\n");
     }
-    File_delete("/tmp/anti_demo_w.bin");
+    File_delete("/tmp/vexspoke_demo_w.bin");
 
     // Log: lockless MPSC ring logger with a writer daemon.
-    printf("== anti io: Log ==\n");
-    const char *log_path = "/tmp/anti_demo.log";
+    printf("== vexspoke io: Log ==\n");
+    const char *log_path = "/tmp/vexspoke_demo.log";
     File_delete(log_path);
     Log log;
     if (Log_init(&log, log_path, 1 << 8)) {
@@ -280,7 +280,7 @@ int main(void) {
     }
 
     // Console: ring-backed string sink, drained later by the console loop.
-    printf("== anti cli: Console ==\n");
+    printf("== vexspoke cli: Console ==\n");
     Console_init();
     Console_log("hello from the engine console");
     Console_log("a second queued message");
@@ -288,9 +288,9 @@ int main(void) {
     Console_shutdown();
 
     // Console session: Scanner + CommandParser + CommandRegistry over a script.
-    printf("== anti cli: Console session ==\n");
-    const char *cmd_log = "/tmp/anti_cmd.log";
-    const char *cmd_script = "/tmp/anti_script.txt";
+    printf("== vexspoke cli: Console session ==\n");
+    const char *cmd_log = "/tmp/vexspoke_cmd.log";
+    const char *cmd_script = "/tmp/vexspoke_script.txt";
     File_delete(cmd_log);
     Log clog;
     if (Log_init(&clog, cmd_log, 1 << 6)) {
@@ -302,8 +302,8 @@ int main(void) {
     File *csf = File_open(cmd_script, FILE_MODE_WRITE | FILE_MODE_TRUNCATE);
     if (csf) {
         const char *lines =
-            "log /tmp/anti_cmd.log\n"
-            "cat /tmp/anti_cmd.log\n"
+            "log /tmp/vexspoke_cmd.log\n"
+            "cat /tmp/vexspoke_cmd.log\n"
             "bogus 1 2\n"
             "quit\n";
         File_write(csf, lines, (int64_t)strlen(lines));
@@ -342,7 +342,7 @@ int main(void) {
     File_delete(cmd_log);
 
     // Vec2: off-heap 2D vector ops.
-    printf("== anti lang: Vec2 ==\n");
+    printf("== vexspoke lang: Vec2 ==\n");
     Vec2 *va = Vec2(3.0f, 4.0f);
     Vec2 *vb = Vec2(1.0f, 2.0f);
     Vec2 tmp;
@@ -361,7 +361,7 @@ int main(void) {
     Vec2_free(vb);
 
     // Vec3: off-heap 3D vector ops (cross, normalize, reflect).
-    printf("== anti lang: Vec3 ==\n");
+    printf("== vexspoke lang: Vec3 ==\n");
     Vec3 *v3a = Vec3(1.0f, 0.0f, 0.0f);
     Vec3 *v3b = Vec3(0.0f, 1.0f, 0.0f);
     Vec3 r3;
@@ -383,7 +383,7 @@ int main(void) {
     Vec3_free(incident);
 
     // Vec4: off-heap 4D vector ops.
-    printf("== anti lang: Vec4 ==\n");
+    printf("== vexspoke lang: Vec4 ==\n");
     Vec4 *v4a = Vec4(1.0f, 2.0f, 3.0f, 4.0f);
     Vec4 *v4b = Vec4(2.0f, 0.0f, 0.0f, 1.0f);
     Vec4 r4;
@@ -398,7 +398,7 @@ int main(void) {
     Vec4_free(v4b);
 
     // Mat4: column-major 4x4 transforms.
-    printf("== anti lang: Mat4 ==\n");
+    printf("== vexspoke lang: Mat4 ==\n");
     Mat4 *m = Mat4();
     Mat4 *mi = Mat4_identityAlloc();
     printf("identity m00=%f m11=%f m33=%f m30=%f\n", (double)Mat4_get(m, 0, 0),
@@ -431,7 +431,7 @@ int main(void) {
     Vec3_free(pt3);
 
     // BitPool: allocation a, free a, allocate again => the SAME address comes back.
-    printf("== anti bit pool ==\n");
+    printf("== vexspoke bit pool ==\n");
     BitPool pool;
     BitPool_init(&pool, 8, 4);
     void *a = BitPool_alloc(&pool, TYPE_INT_SINGLETON);
@@ -443,7 +443,7 @@ int main(void) {
     BitPool_shutdown(&pool);
 
     // Variable: relational symbol registry — every name maps to a typed pointer.
-    printf("== anti relational: Variable ==\n");
+    printf("== vexspoke relational: Variable ==\n");
     Variable vars;
     Variable_init(&vars);
 
@@ -472,13 +472,13 @@ int main(void) {
     Variable_shutdown(&vars);
 
     // Stride: byte width per class id.
-    printf("== anti stride ==\n");
+    printf("== vexspoke stride ==\n");
     printf("int=%zu long=%zu double=%zu variable=%zu list=%zu\n",
            Stride_get(ID_INT), Stride_get(ID_LONG), Stride_get(ID_DOUBLE),
            Stride_get(ID_VARIABLE), Stride_get(ID_LIST));
 
     // List: dynamic stride-based list.
-    printf("== anti struct: List ==\n");
+    printf("== vexspoke struct: List ==\n");
     List *list = List(ID_INT, 16);
     for (uint64_t i = 0; i < 10; i++)
         List_add(list, i * 10);
@@ -491,7 +491,7 @@ int main(void) {
     List_free(list);
 
     // Array: fixed stride-based array.
-    printf("== anti struct: Array ==\n");
+    printf("== vexspoke struct: Array ==\n");
     Array *arr = Array(ID_LONG, 5);
     for (size_t i = 0; i < 5; i++)
         Array_set(arr, i, 100 + i);
@@ -502,7 +502,7 @@ int main(void) {
     Array_free(arr);
 
     // Stack: LIFO.
-    printf("== anti struct: Stack ==\n");
+    printf("== vexspoke struct: Stack ==\n");
     Stack *stack = Stack(ID_INT, 4);
     Stack_push(stack, 1);
     Stack_push(stack, 2);
@@ -512,7 +512,7 @@ int main(void) {
     Stack_free(stack);
 
     // Deque: circular double-ended.
-    printf("== anti struct: Deque ==\n");
+    printf("== vexspoke struct: Deque ==\n");
     Deque *deque = Deque(ID_INT, 4);
     Deque_addFirst(deque, 1);
     Deque_addLast(deque, 2);
@@ -526,7 +526,7 @@ int main(void) {
     Deque_free(deque);
 
     // Queue: FIFO.
-    printf("== anti struct: Queue ==\n");
+    printf("== vexspoke struct: Queue ==\n");
     Queue *queue = Queue(ID_INT, 4);
     Queue_push(queue, 7);
     Queue_push(queue, 8);
@@ -536,7 +536,7 @@ int main(void) {
     Queue_free(queue);
 
     // Map: open-addressing int => int.
-    printf("== anti struct: Map ==\n");
+    printf("== vexspoke struct: Map ==\n");
     Map *map = Map(ID_INT, ID_LONG, 8);
     for (uint64_t k = 1; k <= 20; k++)
         Map_put(map, k, k * k);
@@ -552,7 +552,7 @@ int main(void) {
     Map_free(map);
 
     // Set: unique elements.
-    printf("== anti struct: Set ==\n");
+    printf("== vexspoke struct: Set ==\n");
     Set *set = Set(ID_INT, 8);
     for (int32_t i = 0; i < 12; i++)
         Set_add(set, (uint64_t)(i % 6));
@@ -570,7 +570,7 @@ int main(void) {
     Set_free(set);
 
     // MinHeap: priority queue.
-    printf("== anti struct: MinHeap ==\n");
+    printf("== vexspoke struct: MinHeap ==\n");
     MinHeap *heap = MinHeap(8);
     MinHeap_push(heap, 10, 5.0f);
     MinHeap_push(heap, 20, 1.0f);
@@ -580,7 +580,7 @@ int main(void) {
     MinHeap_free(heap);
 
     // SparseSet: ECS-style entity => component.
-    printf("== anti struct: SparseSet ==\n");
+    printf("== vexspoke struct: SparseSet ==\n");
     SparseSet *ss = SparseSet(8, 100, (size_t)sizeof(int32_t));
     uint8_t *comp = SparseSet_add(ss, 42);
     *(int32_t*) comp = 4242;
@@ -592,13 +592,13 @@ int main(void) {
     SparseSet_free(ss);
 
     // Hash: FNV + Murmur3.
-    printf("== anti util: Hash ==\n");
-    printf("fnv(\"anti\")=%016llX mix32(7)=%08X\n",
-           (unsigned long long)Hash_fnv1a64((const uint8_t*) "anti", 4),
+    printf("== vexspoke util: Hash ==\n");
+    printf("fnv(\"vexspoke\")=%016llX mix32(7)=%08X\n",
+           (unsigned long long)Hash_fnv1a64((const uint8_t*) "vexspoke", 8),
            Hash_murmur3Mix32(7));
 
     // Random: chaotic PRNG + weighted draws.
-    printf("== anti util: Random ==\n");
+    printf("== vexspoke util: Random ==\n");
     Random *rng = Random(12345);
     printf("r0=%016llX f1=%f d1=%f\n", (unsigned long long)Random_nextLong(rng),
            (double)Random_nextFloat(rng), Random_nextDouble(rng));
@@ -625,14 +625,14 @@ int main(void) {
     Random_free(rng);
 
     // Arrays: sort + search.
-    printf("== anti util: Arrays ==\n");
+    printf("== vexspoke util: Arrays ==\n");
     int32_t buf[6] = { 5, 2, 9, 1, 7, 3 };
     Arrays_sortInt(buf, 6);
     printf("sorted: %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
     printf("search7=%ld\n", (long)Arrays_binarySearchInt(buf, 6, 7));
 
     // Struct & Fields: size-based dynamic schema and polymorphic allocator.
-    printf("== anti oop: Struct ==\n");
+    printf("== vexspoke oop: Struct ==\n");
     Fields *pointFields = Fields(sizeof(int32_t), sizeof(int64_t), sizeof(float));
     printf("generic=0x%X stride=%zu\n", (*pointFields).genericId, (*pointFields).stride);
     printf("stride_via_registry=%zu\n", Stride_get((*pointFields).genericId));
@@ -653,7 +653,7 @@ int main(void) {
     Struct_free(pts);
 
     // Objects: Future, Reactive, Passive, Choice, Global, Local
-    printf("== anti objects: Future & Reactive & Passive & Global ==\n");
+    printf("== vexspoke objects: Future & Reactive & Passive & Global ==\n");
     Future *fut = Future();
     printf("future isGiven=%d\n", Future_isGiven(fut));
     Future_setDesiredValue(fut, 4242);
@@ -676,7 +676,7 @@ int main(void) {
     Global_free(g);
 
     // RingBuffer + Loop: 4 producers, 1 consumer loop, expect 100 jobs.
-    printf("== anti ring + spin + loop ==\n");
+    printf("== vexspoke ring + spin + loop ==\n");
     RingBuffer ring;
     RingBuffer_init(&ring, sizeof(job_t), RING_CAP);
 
