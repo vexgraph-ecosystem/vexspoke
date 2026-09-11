@@ -74,6 +74,7 @@ add_library(vexspoke STATIC
     src/io/file.c
     src/io/filewriter.c
     src/io/ws_client.c
+    src/io/process_spawn.c
     src/io/log.c
     src/io/logparser.c
     src/io/hot_file.c
