@@ -9,12 +9,12 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R0–R4 Supervisor Order).
+   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R0–R4 Supervisor Order), Rule 35 (Cold-Strict Crash-Guard half: never crash/block/allocate/use-after-free).
    - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, or un-bisectable repositories.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Rules*: Rule 9 (Dest-Last), Rule 10 (Two-Layer Access Cap), Rule 14 (Constructor Dispatch Macro), Rule 17 (Supervisor Order R0–R4), Rule 21 (API Independence), Rule 23 (;;OVERVIEW Living Blueprint), Rule 24 (Symmetric Getter/Setter Completeness), Rule 29 (Sub-Part Field Segregation & `Class_part_verb`), Rule 30 (Living Darling Docs), Rule 31 (AI-First Architecture Manifesto), Rule 32 (Living Preferences Law), Rule 33 (Conflict Triage — Managed Exception, Not Veto).
+   - *Rules*: Rule 9 (Dest-Last), Rule 10 (Two-Layer Access Cap), Rule 14 (Constructor Dispatch Macro), Rule 17 (Supervisor Order R0–R4), Rule 21 (API Independence), Rule 23 (;;OVERVIEW Living Blueprint), Rule 24 (Symmetric Getter/Setter Completeness), Rule 29 (Sub-Part Field Segregation & `Class_part_verb`), Rule 30 (Living Darling Docs), Rule 31 (AI-First Architecture Manifesto), Rule 32 (Living Preferences Law), Rule 33 (Conflict Triage — Managed Exception, Not Veto), Rule 35 (Hot-Minimal contract half: setter validation policy, truncation flag, seam tests).
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -852,3 +852,50 @@ Legal exposure, broken trust, and brittle integrations come from scraping. A fir
 - **The UI seam is fn-pointers.** darling hosts AssetBrowser and never includes api-haven (Rule 17); the R3 app binds an AssetSource fn-pointer table (opaque handle + callbacks — the Rule 33 canonical move).
 - **MCP surface.** asset_source_lookup / asset_search / asset_download hosted by McpServer; writes cache-confined, timeouts bounded, no exec.
 - **Credentials.** API keys via vexspoke Keychain or ASSET_KEY_<SLUG> env rendered by ApiAuth; never stored in the arena, prefs, or repo.
+
+---
+
+## 35. Cold-Strict, Hot-Minimal Validation (Crash-Guard Split)
+### Definition:
+Validation splits by path temperature. The Tier-1 crash-guard half: no function
+ever crashes, blocks unboundedly, allocates, or use-after-frees on null,
+out-of-bounds, overflow, cancelled, or timed-out input — it returns `false` or
+a Rule 24 safe default instead. The Tier-2 contract half: setters validate at
+least as strictly as getters, with the reject-or-clamp policy stated in the
+`;;OVERVIEW`; getters return safe defaults per Rule 24.
+
+### The Why:
+Unvalidated cold input (network bytes, JSON, spawned output, checksums) is how
+null dereferences and overflows enter the system; re-validating every element
+on a 60fps hot path is how frames die. Validate once where input enters, trust
+the validated handle where pixels move. A silent truncation or an unlogged
+cold drop corrupts state; a log line per hot frame corrupts performance.
+
+### The Rule:
+1. **Cold paths validate exhaustively, once.** R1-entry / R2-boundary seams
+   (`AiProvider_get`, `ApiAuth_apply`, `Rest_postJson`,
+   `McpServer_handleLine`, `HavenWsFanout_pollStep`, `ProcessSpawn_spawn`,
+   checksums) check every hostile input: null, empty, wrong-id, bounds,
+   integer overflow, cancelled, timeout. One `Log_warn` per failure at most,
+   then drop-degrade per Rule 27 (return `false`, keep old content, move on).
+2. **Hot paths guard minimally, never log.** Vk present, `Raster`, `SdfGpu`,
+   darling layout, `Kernel_tick`, `presentFrameLocked`: at most one `nullptr`
+   entry guard returning `false`, zero per-element revalidation, zero logging,
+   zero allocation. The hot path trusts the cold-validated handle. Deeper
+   invariants are proven at compile time (`_Static_assert`) or declared as
+   `;;INTENTION("reason")` + `;;DRAFT` per Rule 33, never re-checked per frame.
+   ```c
+   if (self == nullptr)
+       return false;
+   ```
+3. **Truncation is never silent.** Copying into a bounded buffer takes
+   `(src, dest, destCap, outTruncated)` — dest-last per Rule 9, flag last.
+   On cut: return `false` and set the flag so the caller degrades loudly.
+   ```c
+   bool Class_copyText(const char *src, char *dest, size_t destCap, bool *outTruncated);
+   ```
+4. **Seam tests at cold boundaries only.** The full
+   nullptr / empty / wrong-id / overflow / truncation / cancelled / timeout
+   matrix lives at public cold seams in `tests/*.c` `MODULE` harnesses. Hot
+   paths carry `nullptr`-guard-only tests — no per-element matrix, no timing
+   harness on the frame path.
