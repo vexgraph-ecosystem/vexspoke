@@ -1,6 +1,8 @@
 #include "oop/type.h"
 #include "annotation/overview.h"
 
+#include <stddef.h>
+
 ;;OVERVIEW
 /**
  * ============================================================================
@@ -12,9 +14,21 @@
  * STRUCT FIELDS (Mirroring oop/type.h):
  * ----------------------------------------------------------------------------
  *   TypeHeader {
- *     uint32_t typeId; // block-header type id
+ *     uint64_t typeId; // block-header type id (project | form | class)
  *     uint32_t length; // payload length
+ *     uint32_t pad;    // pad to 16, keeps 8-byte payloads aligned
  *   }
+ *
+ * PRIVATE HELPERS (kept file-local pure-data only, Rule 3):
+ * ----------------------------------------------------------------------------
+ *   TypeParentsRow {              // one registered project's parent chain
+ *     uint64_t proj;              // owning project byte (0 = empty slot)
+ *     const uint32_t *parents;    // parents[i] = parent class # of class # i
+ *     uint32_t count;             // 0 = root; rows past count = root
+ *   }
+ *   g_typeTables[8]               // bounded registration slate, first-match
+ *   findTable(proj)               // row lookup for the project byte
+ *   vexspokeParent(cls)           // bare-id / PROJ_VEXSPOKE chain resolution
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -22,6 +36,7 @@
  *   - Type_make(proj, form, classId)
  *   - Type_class(typeId)
  *   - Type_form(typeId)
+ *   - Type_registerParents(proj, parents, count)   // seam: downstream chains
  *
  * Getters:
  *   - Type_isStruct(form)
@@ -53,34 +68,72 @@
 
 // type.c — TypeRegister port (Legacy: oop/TypeRegister.java).
 //
-// The class table lives in type.h as macros; this file carries only the two
-// parent-chain helpers that need real code.
+// The class table lives in type.h as macros; this file carries the
+// parent-chain helpers. Downstream projects ship their own *-type.h with
+// per-project class numbers starting at 1 and grant central logic their
+// chains once via Type_registerParents — vexspoke resolves them by project
+// byte and never includes a downstream header (Rule 17).
+
+typedef struct TypeParentsRow {
+    uint64_t proj;               // owning project byte; 0 = empty slot
+    const uint32_t *parents;     // parents[i] = parent class # of class # i
+    uint32_t count;              // 0 row = root; rows past count = root
+} TypeParentsRow;
+
+static TypeParentsRow g_typeTables[TYPE_MAX_REGISTERED_PROJECTS];
+
+static const TypeParentsRow *findTable(uint64_t proj) {
+    for (size_t i = 0; i < TYPE_MAX_REGISTERED_PROJECTS; ++i) {
+        const TypeParentsRow *row = &g_typeTables[i];
+        if ((*row).proj == proj)
+            return row;
+    }
+    return nullptr;
+}
+
+bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count) {
+    if (proj == 0u)
+        return false;
+    if ((proj & MASK_PROJECT) != proj)
+        return false;
+    if (proj == PROJ_VEXSPOKE)
+        return false;
+    if (parents == nullptr && count != 0u)
+        return false;
+    for (size_t i = 0; i < TYPE_MAX_REGISTERED_PROJECTS; ++i) {
+        TypeParentsRow *row = &g_typeTables[i];
+        if ((*row).proj == proj) {
+            (*row).parents = parents;
+            (*row).count = count;
+            return true;
+        }
+        if ((*row).proj == 0u) {
+            (*row).proj = proj;
+            (*row).parents = parents;
+            (*row).count = count;
+            return true;
+        }
+    }
+    return false;
+}
+
+static uint64_t vexspokeParent(uint64_t cls) {
+    if (cls >= 0x0050u && cls <= 0x0063u)          // buffer family: all->ID_BUFFER
+        return ID_BUFFER;
+    return cls;                                    // everything else is a root
+}
 
 uint64_t Type_getParentClass(uint64_t classId) {
+    uint64_t proj = classId & MASK_PROJECT;
+    if (proj == 0u || proj == PROJ_VEXSPOKE)
+        return vexspokeParent(classId & MASK_CLASS);
     uint64_t cls = classId & MASK_CLASS;
-    // Buffer family: 0x50..0x63 in legacy all descend from ID_BUFFER.
-    if (cls >= 0x0050u && cls <= 0x0063u)
-        return ID_BUFFER;
-    // Darling class space (0x0065-0x00FF, see darling/darling-type.h):
-    // everything panels-up descends from Panel. Raw numbers mirror that
-    // file — central logic may not include downstream ID headers.
-    if (cls == 0x0079u)             // ID_CONTAINER
-        return 0x0079u;             // root
-    if (cls == 0x0065u)             // ID_CANVAS
-        return 0x0065u;             // root
-    if (cls == 0x00C1u)             // ID_RICHTEXT
-        return 0x00C1u;             // root (text engine object, not a node)
-    if (cls == 0x0078u)             // ID_PANEL
-        return 0x0079u;             // ID_CONTAINER
-    if (cls == 0x007Du || cls == 0x007Eu)  // ID_SCENE2D/ID_SCENE3D
-        return 0x007Cu;             // ID_SCENE
-    if (cls == 0x00A1u)             // ID_ALERTDIALOG
-        return 0x00A0u;             // ID_DIALOG
-    if (cls == 0x009Eu)             // ID_COLORDIALOG
-        return 0x00A0u;             // ID_DIALOG
-    if (cls >= 0x0065u && cls <= 0x00FFu)
-        return 0x0078u;             // ID_PANEL
-    return cls;
+    const TypeParentsRow *row = findTable(proj);
+    if (row != nullptr && cls != 0u && cls < (*row).count) {
+        uint32_t parent = (*row).parents[cls];
+        return parent != 0u ? (uint64_t) parent : cls;   // table 0 row = root
+    }
+    return cls;                                    // unregistered project = root
 }
 
 uint64_t Type_arch(uint64_t classId) {
@@ -95,35 +148,21 @@ uint64_t Type_arch(uint64_t classId) {
         return ARCH_DARLING;
     if (proj == PROJ_API_HAVEN)
         return ARCH_APIHAVEN;
-    // Bare ID_* constants carry no project byte: class-space ranges.
-    // (Per-class ID_* constants live in their project's *-type.h, which
-    // central logic may not include — ranges only here.)
-    uint64_t cls = classId & MASK_CLASS;
-    if (cls >= 0x0065u && cls <= 0x00FFu)
-        return ARCH_DARLING;
-    if (cls >= 0x0100u && cls <= 0x01FFu)
-        return ARCH_GRAPHVEX;
-    switch (cls) {
-        case ID_THREAD:
-        case ID_THREAD_NETWORKING:
-        case ID_THREAD_EVENT:
-        case ID_THREAD_DRAW:
-        case ID_THREAD_SCRIPTING:
-        case ID_THREAD_UI:
-            return ARCH_HOTCWAP;
-        default:
-            return ARCH_VEXSPOKE;
-    }
+    // Bare ids carry no project byte: with per-project numbering they can
+    // only mean vexspoke's own class space (see oop/type.h). Cross-project
+    // code must pass full TYPE_*_SINGLETON ids.
+    return ARCH_VEXSPOKE;
 }
 
 int Type_isA(uint64_t classId, uint64_t ancestorId) {
-    uint64_t current = classId & MASK_CLASS;
+    uint64_t proj = classId & MASK_PROJECT;
     uint64_t target = ancestorId & MASK_CLASS;
-    while (current != target) {
+    uint64_t current = classId;
+    while ((current & MASK_CLASS) != target) {
         uint64_t parent = Type_getParentClass(current);
-        if (parent == current)
-            return 0;
-        current = parent;
+        if ((parent & MASK_CLASS) == (current & MASK_CLASS))
+            return 0;                              // root reached, not target
+        current = (parent & MASK_CLASS) | proj;    // walk stays in-project
     }
     return 1;
 }

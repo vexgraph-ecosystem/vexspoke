@@ -1,6 +1,7 @@
 #ifndef OOP_TYPE_H
 #define OOP_TYPE_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // oop/type.h — the TypeRegister, ported from oop/TypeRegister.java.
@@ -16,7 +17,7 @@
 //        | |    | `------------------- wrapper 1    (proactive/reactive)
 //        | |    `---------------------- modifier     (global/locale/transient)
 //        | `--------------------------- project      (8 bits: owning repo;
-//        |                                            64+ projects per stack)
+//        |                                            256 projects per stack)
 //        `------------------------------ form         (singleton/array/...,
 //                                                      struct layouts)
 //
@@ -27,11 +28,17 @@
 // is what lets one allocator serve every type across the whole stack
 // (see nio/mem.h).
 //
-// Previous layout was 32-bit (0x F M W1 W2 CCCC); the project byte and
-// the 32-bit class space are new. Bare ID_* constants carry no project
-// bits — Type_arch falls back to the legacy class-range table for them,
-// so old call sites keep working while TYPE_* macros carry explicit
-// PROJ_* bits.
+// Uniform per-project numbering (uniform type rule): every project ships
+// its own *-type.h registry and numbers its classes starting at 1.
+// vexspoke's oop/type.h keeps the legacy 1-based list below; darling's
+// c23/darling-type.h and graphvex's graphvex/type.h mirror that shape for
+// their own classes. id #1 in vexspoke (ID_INT) and id #1 in darling
+// (ID_PANEL) coexist because the project byte differs. Bare ID_* constants
+// carry no project byte and therefore name vexspoke's own class space
+// only — cross-project dispatch must ship full type ids, built with
+// PROJ_* | FORM_* | class id (the TYPE_*_SINGLETON macros), never bare
+// ids. Runtime parent chains resolve through Type_registerParents, which
+// names a per-project table; the project byte picks the table.
 
 #define MASK_FORM       0xF'00'0'0'0'00'00000000ULL
 #define MASK_PROJECT    0x0'FF'0'0'0'00'00000000ULL
@@ -52,7 +59,8 @@
 #define FORM_STRUCT_COEXISTENT  0x9'00'0'0'0'00'00000000ULL
 
 // Project byte: which repo owns the class. Matches ARCH_* numbering;
-// 256 projects fit the same stack (relentless dogfooding).
+// 256 projects fit the same stack (relentless dogfooding). Each project
+// numbers its own classes from 1; the byte disambiguates every registry.
 #define PROJ_GENERIC    0x0'00'0'0'0'00'00000000ULL  // zero lol
 #define PROJ_VEXSPOKE   0x0'01'0'0'0'00'00000000ULL
 #define PROJ_GRAPHVEX   0x0'02'0'0'0'00'00000000ULL
@@ -195,21 +203,24 @@
 #define TYPE_AUDIO_SINGLETON        (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO)
 
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
-// Darling classes (0x0065-0x00FF) live in darling/darling-type.h;
-// graphvex classes (0x0100-0x01FF) live in graphvex/src/graphvex/type.h;
-// hotcwap module constants live in hotcwap/hotcwap-type.h. This file
-// keeps vexspoke-owned IDs only. Rule 17: central logic below dispatches
-// on project byte + class ranges and must never include downstream ID
-// files (upstream builds standalone). New projects claim a class range
-// here and ship their own *-type.h. Bare-ID fallback ranges live in
-// Type_arch; parent defaults live in Type_getParentClass.
+// Every project ships its own *-type.h registry and numbers its classes
+// from 1: darling classes live in darling/c23/darling-type.h, graphvex in
+// graphvex/src/graphvex/type.h, hotcwap module constants in
+// hotcwap/hotcwap-type.h. This file keeps vexspoke-owned IDs only, in the
+// legacy 1-based list that predates the project byte (vexspoke primitives
+// pass bare ids to the allocator's BitPool keyed by these numbers). Rule
+// 17: central logic below must never include downstream ID files (upstream
+// builds standalone) — parent chains resolve through the Type_registerParents
+// seam, keyed by the project byte, never by class ranges. Thread constants
+// stay here (vexspoke's thread.c may not include hotcwap) but carry
+// PROJ_HOTCWAP in their TYPE_* macros.
 
 // --- ARCHITECTURE LAYER (which repo owns the class) ---
 // Primary key is the project byte (PROJ_* above): one macro, no table.
-// Bare ID_* constants carry no project byte, so Type_arch falls back to
-// class ranges (vexspoke 0x0001-0x0064, darling 0x0065-0x00FF, threads
-// by exact id). Range fallback exists for compat only — new code ships
-// full TYPE_* ids.
+// Bare ID_* constants carry no project byte — with per-project numbering
+// they are ambiguous by definition, so Type_arch reports ARCH_VEXSPOKE
+// for them (bare ids name vexspoke's own class space). Cross-project
+// code ships full TYPE_*_SINGLETON ids and Type_arch reads the byte back.
 #define ARCH_VEXSPOKE  1u
 #define ARCH_HOTCWAP   2u
 #define ARCH_DARLING   3u
@@ -382,14 +393,33 @@ static inline int Type_isChoice(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_CHOICE;
 }
 
-// Parent-class walk (Legacy getParentClass). Takes a full id or a bare
-// class id (masks to class first); returns the parent class id, or the
-// class id itself when it is a root. Used by Type_isA.
+// Bounded registration slate for per-project parent tables (Rule 36:
+// flat index-keyed storage). Downstream repos register their class chains
+// here once; vexspoke resolves them without ever including their headers.
+#define TYPE_MAX_REGISTERED_PROJECTS 8u
+
+// Register a project's parent table: parents[i] = parent class number of
+// class number i, 0 = root (the class is its own parent). Row 0 (the
+// entry for class 0) is unused. Class number indexes the row; the project
+// byte picks the table, so the same number space means different things in
+// every repo. Registration is idempotent (re-registering the same project
+// replaces its table) and bounded to TYPE_MAX_REGISTERED_PROJECTS entries.
+// Returns false on invalid proj (zero, non-project bits, PROJ_VEXSPOKE) or
+// when the slate is full. vexspoke's own classes need no registration —
+// their chains are the legacy bare-id rules below.
+bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count);
+
+// Parent-class walk. Bare id or PROJ_VEXSPOKE class -> vexspoke's own
+// legacy classes (buffer family + roots); a registered downstream project
+// -> that project's table (row 0 = root). Unregistered project byte ->
+// root. Returns the parent class id, or the class id itself when the
+// class is a root. Used by Type_isA — the walk keeps the project byte so
+// parents always resolve in the class's own registry.
 uint64_t Type_getParentClass(uint64_t classId);
 
 // Architecture layer owning an id (ARCH_* — one per project byte).
-// Reads the project byte when present; falls back to the legacy
-// class-range table for bare ID_* constants (project byte zero).
+// Reads the project byte; bare ids (no byte) report ARCH_VEXSPOKE since
+// bare numbers always mean vexspoke's own class space.
 // Used by Darling_addAny.
 uint64_t Type_arch(uint64_t classId);
 
@@ -406,8 +436,10 @@ static inline int Type_isDarling(uint64_t classId) {
     return Type_arch(classId) == ARCH_DARLING;
 }
 
-// True if classId is ancestorId or any descendant of it (walks parents;
-// both sides masked to class first so full and bare ids mix freely).
+// True if classId is ancestorId or any descendant of it. Walks the parent
+// chain WITH the project byte intact (Type_getParentClass picks the
+// project's table; the ancestor target is masked to class only, so the
+// walk stays project-invariant and full/bare ids mix freely).
 int Type_isA(uint64_t classId, uint64_t ancestorId);
 
 #endif
