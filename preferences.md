@@ -984,3 +984,19 @@ they are complementary halves of a modern C23 collection design.
 5. **FileList is composition, not a separate class.** A file tree viewer
    composes `ExpandableListContainer` with R2 `File`/`VFS` data — never a
    standalone `FileList` class. The data is R2; the widget is R4 darling.
+
+---
+
+## 37. The Living Feature Readiness Checklist (Zero Drift for Status)
+### Definition:
+Each repository's feature readiness matrix lives at the umbrella's `_checklist/<repo>.md`, one row per feature (container/widget/module/command), each carrying a scope line and a status emoji. The matrix is a **living inventory**, not a snapshot: its status column is the machine-readable handshake the ecosystem uses to know what is real vs stubbed vs absent.
+
+### The Why:
+Multi-repo ecosystems rot silently — a header-only dialog or a half-stubbed picker looks "implemented" from the call site until someone depends on it and hits the empty paint. A single, always-current matrix — one row per unit, read by machines and humans alike — makes build-readiness legible at a glance, keeps scope lines honest, and exposes the next structural wedge (the largest contiguous 🟥 block) the moment it appears.
+
+### The Rule:
+1. **Same-cycle status law, per file pair.** Any commit that ships, stubs, retires, or re-scopes a feature **must move its `_checklist/<repo>.md` row in the same commit** — same minimal commit, never a follow-up "update checklist" blob (Rule 6/15). A green-on-disk row that is stale-red on the sheet is a broken intermediate state.
+2. **Status legend (canonical):** 💚 implemented & polishing · 🟩 implemented · 🟨 incomplete but proven by tests · 🟧 draft/unwired · 🟥 not started · ⬜ dropped/archived. A row's scope line is rewritten when the actor or deliverable changes, not just the emoji.
+3. **Test proof gates the status.** 🟨 rows carry test names in the scope column (`tests/<name>_test`); a row is never 🟩 before its unit tests pass under `-Wall -Wextra -Werror` (Rule 6). Moving a row up without its proof is inflation; use Rule 33 (`;;INTENTION`) instead of silently overstating.
+4. **Commits are per-checklist-file, per-repo.** The matrix lives as one row-write inside its feature commit; cross-repo rows never bundle (Rule 20).
+5. **The spearhead is the wedge, not the tail.** The next work item is chosen as the structural keystone that unblocks the largest contiguous block of 🟥 rows (e.g. `OverlayRoot` unblocking the dialog/dropdown family), then the block collapses down the matrix — mirrors the upstream-first law (Rule 20).
