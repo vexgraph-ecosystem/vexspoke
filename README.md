@@ -106,6 +106,54 @@ target_link_libraries(my_app PRIVATE vexspoke)
 
 ---
 
+## Embracing the Pointer & Banning Pointer Chasing (The Java Reference Law)
+
+In high-level languages like Java, developers write:
+```java
+Car car = new Car();
+```
+Beginners often treat `car` as if it were a direct, inlined struct. But in the JVM and physical hardware registers, **`car` is never a struct—it is purely an object reference, a pointer under the hood**. 
+
+In `vexspoke`, we stop pretending and **embrace the pointer directly**. Everything is a pointer.
+
+### The Pointer Chasing Trap
+When languages allow unchecked dot-chaining (`car.engine.turbo.valve.pressure`), software falls into the trap of **pointer chasing**:
+* Pointer A hops to pointer B...
+* Pointer B hops to pointer C...
+* Pointer C hops to pointer D across distant, unpredictable cache lines.
+
+Every hop in that chain is an unmeasured memory dereference that risks CPU pipeline stalls, cache line thrashing, and cognitive drift where the developer forgets the physical cost of memory traversal.
+
+### One Level + Offset: That's How Simple It Is
+In physical hardware, the fastest, most predictable memory access is fundamentally:
+$$\text{Effective Address} = \text{Base Pointer} + \text{Offset}$$
+
+That is precisely what `(*ptr).field` expresses:
+1. `*ptr` explicitly dereferences the base pointer once to anchor the record.
+2. `.field` applies the compile-time struct byte offset to reach the value.
+
+### The Two-Layer Access Cap (Rule 10)
+To eliminate pointer chasing across the entire ecosystem, `vexspoke` strictly enforces the **Two-Layer Access Cap**:
+```c
+(*layer1).layer2             // yes — base hop + offset (one level + offset)
+(*p).items[i]                // yes — base hop + indexed offset
+(*(*ptr).field).field2       // NO — three layers (pointer chasing)
+obj.field.field2.field3      // NO — three layers (pointer chasing)
+```
+
+If you need a member from an inner record, you **must hoist the intermediate into a local variable first**:
+```c
+Engine *e = (*car).engine;
+Valve *v = (*e).valve;
+(*v).pressure = 120.0f;
+```
+By forcing the intermediate pointer into a local:
+1. **Explicit Cost**: Every memory boundary crossed is physically visible to both the human architect and the AI agent.
+2. **Register Locality**: Intermediate base pointers are hoisted into CPU registers, avoiding redundant indirection.
+3. **Zero Mental Drift**: You never chase pointers into the dark; memory remains mechanical, observable, and cache-coherent. That's how simple it is.
+
+---
+
 ## Requirements
 
 * A modern C23 compiler (Clang recommended, `-std=gnu23` enabled).
