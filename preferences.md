@@ -374,6 +374,24 @@ Allowlist (only includes permitted — everything else is a defect):
 - R2 `darling`: includes `vexspoke` + `graphvex` + `hotcwap` (`window/window.h`) only. Never `api-haven`/engines. `api-haven`: `vexspoke` only, no graphics; may define pure connector contracts — descriptor registries plus fn-pointer client shapes (e.g. `AiProvider`, `DbProvider`, `McpServer` — `AppDetect`/`CaptureTool`/`ProcessProbe` live in vexspoke R1 and are consumed, never re-implemented) — with zero vendor/database includes; contract class names never collide with owner interfaces (the `Database` interface stays with db-haven/darkbase). MCP tool/resource surfaces (stdio JSON-RPC engines and their `mcp_server` runners) are connector-shape hosting and live in api-haven; they host handler closures over those registries/probes only — no exec, no writes, no vendor SDKs. `database`/`lsps`/`tiny`: `vexspoke` (+ `graphvex` for GPU-backed ones) only, never engines.
 - R3/R4 engines: borrow shapes from R0/R1/R1.5/R2 to build; own no OS/window/memory management — borrow arenas, windows, GPU instances from R0. Standalone-capable or Kernel-registered.
 
+Managed exceptions — socket/spawn/decode seams (Rule 33, Tier 1 preserved):
+- R1 `vexspoke` owns the `WsClient` + `ProcessSpawn` leaf drivers. `WsClient`
+  is a bounded frame slot (fixed rx buffer, state, cancel flag, timeoutNs):
+  no threads, no owned sockets — the R0 driver owns the socket and feeds
+  bytes in; `WsClient_poll` waits at most 100ms in ~1ms cancel-checked
+  slices (Rule 27, drop-degrade false). `ProcessSpawn` is a bounded
+  child-job table (fixed slots, cancel flag): `posix_spawnp` launch (never
+  `system()`), non-blocking `waitpid` reap slices bounded to 100ms, `SIGTERM`
+  cancel — no blocking wait, no `UINT64_MAX`, zero threads.
+- R1.5 `graphvex` owns `FrameImporter` (pure RGBA8→`Image` upload via
+  `Image_upload`): no `popen`, no `libav*` include/link, no threads; callers
+  decode through the `ProcessSpawn` shape and never call it from
+  tick/render paths.
+- R2 `api-haven` owns `HavenWsFanout` (16-slot fan-out registry over opaque
+  `void*` handles + `WsSource` fn-table `{connect, poll, send, close}`,
+  `pollStep` budget-driven by R0): zero `pthread_*`, zero socket syscalls;
+  transports stay in R1, driven by R0 callbacks only.
+
 Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven`/database/lsps -> `vexgraph` projects. Boot order is the reverse crown: R0 first.
 
 1. **R0 `hotcwap` Kernel Host**:
