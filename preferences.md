@@ -107,6 +107,7 @@ Commits must be strictly cohesive and buildable: **one logical feature or subsys
   - Tightly coupled class pairs or cohesive subsystems landing together (e.g. `mesh` + `meshlet`, `brush` + `raster_brush`, `fence` + `semaphore` + `command_buffer`) commit together as a unified functional unit: `feat(mesh): ...`, `feat(paint): ...`, `feat(sync): ...`.
   - Never bundle multiple unrelated subsystems into a single untracked omnibus blob.
 - Cross-cutting dependencies commit **upstream-first** per Rule 20 (`vexspoke` -> `graphvex`/`api-haven`/`language`/`darkbase` -> `hotcwap` -> `darling-framework`/`sesh` -> `vexgraph`).
+Per-file means per-class file pair: one commit lands the owning `.h` plus its `.c` plus build wiring plus its `;;OVERVIEW` update together and must compile `-Wall -Wextra -Werror`. A literal single-file behavior commit that leaves its pair unbuildable is a defect. Exception (L1-only, Rule 33): comment/docs/manifest-only single-file commits with zero struct/API change that compile cleanly are permitted with class scope. Stack large pairs instead of splitting them.
 
 
 ## 7. No auto-pushing
@@ -497,6 +498,7 @@ Rule 6 (Cohesive Commits: Per Feature, Per Subsystem/Class, Per Repository) and 
 The old order (`vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven` -> `vexgraph`) is retired; `darling` is now a symlink to `darling-framework`.
 - **Zero Giant Blobs**: Assessors evaluate each repository's commit history independently. Grouping unrelated subsystems or multiple repos destroys reviewability.
 - **Never Auto-Push**: Rule 7 remains absolute. Commit locally, never push unless explicitly requested.
+Upstream-first ordering applies to file-pair commits; each repo-local commit is one file pair per above.
 
 
 ## 21. SPIR-V Shader Partitioning & Deployment
@@ -632,6 +634,7 @@ The scope in parens names the *class, subsystem, or seam* within the repo
 (`window`, `cursor`, `label`, `mesh`, `paint`, `sync`, `compositor`), following Rule 6:
 **one logical feature or cohesive subsystem per repository**. Cross-cutting changes still commit
 upstream-first per Rule 20, each with its own repo-local message.
+Scope names the class/subsystem; the unit shipped is its file pair (`.h+.c`).
 
 ---
 
@@ -806,6 +809,7 @@ same as a stale `;;OVERVIEW` under Rule 23.
   2. `_docs/darling.md` section mirrors the new fields/functions/compartments?
   3. Stub-vs-live status corrected (`;;INCOMPLETE` gained or retired)?
   4. Backend sections (§41–§48) touched if pixels, events, or teardown changed?
+Same-commit law is per file pair: code pair plus overview plus the matching `_docs/darling.md` section land together; splitting them across commits is a broken intermediate state.
 
 ---
 
@@ -927,3 +931,41 @@ cold drop corrupts state; a log line per hot frame corrupts performance.
    matrix lives at public cold seams in `tests/*.c` `MODULE` harnesses. Hot
    paths carry `nullptr`-guard-only tests — no per-element matrix, no timing
    harness on the frame path.
+
+---
+
+## 36. Data-Oriented Storage, Object-Oriented Ergonomics
+### Definition:
+Collection patterns (nodes, lists, tables, trees) use data-oriented storage — flat
+arrays, index-based relationships, zero pointer chasing — with object-oriented
+ergonomic API: class methods, part verbs (Rule 29), symmetric getters/setters
+(Rule 24), dest-last parameters (Rule 9). This is the default for any
+collection of records.
+
+### The Why:
+Index-based flat arrays keep CPU cache lines hot and make bulk traversal
+mechanically simple; object-oriented ergonomics (methods, getters/setters,
+dest-last) make the resulting API feel familiar to anyone trained in Java or C#,
+without sacrificing hardware-level performance. The two are not in tension —
+they are complementary halves of a modern C23 collection design.
+
+### The Rule:
+1. **Storage is flat and index-based.** Parent/child relationships are encoded
+   as integer indices into a flat array, never as pointer-chased linked lists.
+   Pre-order array layout is the canonical form for trees: a node's entire
+   subtree occupies a contiguous range `[nodeIndex, nodeIndex + subtreeSize)`,
+   so bulk traversal never jumps.
+2. **API is object-oriented.** Every collection is a class (Rule 3) with
+   constructors, part verbs (Rule 29), symmetric getters/setters (Rule 24), and
+   dest-last output parameters (Rule 9). Consumers never pierce internals.
+3. **`ExpandableListContainer` + `ExpandableNode` is the canonical instance**
+   for hierarchical/nested lists: file trees, task checklists, outlines, mind
+   maps, schema viewers. `ExpandableNode` is a behaviourless slot record
+   (Rule 3 SLOT RECORD) owned by `ExpandableListContainer`.
+4. **Checklists are not a separate class.** A checklist is an
+   `ExpandableListContainer` instance with `checklistMode` enabled — never a
+   distinct `Checklist` or `TaskList` type. The checkbox lives at child slot 1
+   within the row panel, toggled via `setChecked`/`isChecked`.
+5. **FileList is composition, not a separate class.** A file tree viewer
+   composes `ExpandableListContainer` with R2 `File`/`VFS` data — never a
+   standalone `FileList` class. The data is R2; the widget is R4 darling.
