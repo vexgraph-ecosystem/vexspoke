@@ -389,8 +389,20 @@ Managed exceptions — socket/spawn/decode seams (Rule 33, Tier 1 preserved):
   tick/render paths.
 - R2 `api-haven` owns `HavenWsFanout` (16-slot fan-out registry over opaque
   `void*` handles + `WsSource` fn-table `{connect, poll, send, close}`,
-  `pollStep` budget-driven by R0): zero `pthread_*`, zero socket syscalls;
-  transports stay in R1, driven by R0 callbacks only.
+  `pollStep` budget-driven by R0) + `AiSse` (pure caller-fed incremental
+  SSE `data:`/`event:` state machine bound explicitly to one fanout slot
+  via the existing `WsSource` table, R0-budgeted `pollStep`, 100ms slices,
+  drop-degrade false, zero socket/thread/alloc, truncation flag per
+  Rule 35.3) + `DbProvider` catalog-only read-only SQLite file row
+  (`DbSqliteFile`: path, caps, bounds, fn-table only, zero `sqlite3.h`
+  include/link — execution delegates via opaque handle to the database
+  owner / vexspoke File/VFS) + `AssetBroker`
+  (`AssetBroker_downloadToCache` bounded chunked-copy
+  `(srcChunk, dest, destCap, outTruncated)` dest-last, per-chunk 100ms
+  budget + cancel flag, never a whole-file budget, `VexHome_cache`-confined,
+  closed before `Memory_freeAll`): zero `pthread_*`, zero socket syscalls,
+  no scraping, no exec, no vendor SDK; transports stay in R1, driven by
+  R0 callbacks only.
 
 Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven`/database/lsps -> `vexgraph` projects. Boot order is the reverse crown: R0 first.
 
