@@ -10,21 +10,27 @@
 // relational/relational.h — spotlight relational facade over Variable (Legacy: relational/RelationalEngine.java).
 //
 // RELATIONAL ENGINE PHILOSOPHY: this engine refuses the textbook trilemma —
-// book-OOP vs DOD vs ECS — because none of them answers the question it
-// exists for: "find the thing called X, right now, from anywhere."
+// textbook OOP vs textbook DOD vs textbook ECS — because none of them, as
+// taught, answers the question it exists for: "find the thing called X,
+// right now, from anywhere." The argument is with formula-following, not
+// the underlying ideas (hot iteration stays DOD where it belongs — see
+// below); a book pattern applied without asking what question it answers
+// is how systems rot from the inside.
 //
-//   Book-OOP binds names at COMPILE time (identifiers vanish into addresses)
+//   Textbook OOP binds names at COMPILE time (identifiers vanish into addresses)
 //     and hides state behind encapsulation. At runtime nothing is findable
 //     except by walking graphs you must already hold. Query cost: O(graph).
-//   DOD answers "process everything fast" (sweeps over flat arrays). It
-//     never answers "find one thing now" — you rebuild that per case. The
-//     engine does not compete: hot iteration stays DOD (scene graphs, SoA
-//     physics); cold rendezvous comes here. Complementary axes.
-//   ECS answers "all entities with [A,B,C]" — sets by signature, entities
-//     as numbers. It never answers "the thing called character.position.x"
-//     without a bolted-on name table, i.e. this engine reinvented badly.
-//     ECS shards values for systems slicing; the engine maps names to whole
-//     values for authors addressing things. Different questions.
+//   Textbook DOD answers "process everything fast" (sweeps over flat
+//     arrays). It never answers "find one thing now" — you rebuild that per
+//     case, usually as a shadow naming system that drifts. The engine does
+//     not compete: hot iteration stays DOD (scene graphs, SoA physics);
+//     cold rendezvous comes here. Complementary axes.
+//   Textbook ECS answers "all entities with [A,B,C]" — sets by signature,
+//     entities as numbers. It never answers "the thing called
+//     character.position.x" without a bolted-on name table, i.e. this engine
+//     reinvented badly. ECS shards values for systems slicing; the engine
+//     maps names to whole values for authors addressing things. Different
+//     questions.
 //
 // The thesis: OOP names things for the compiler, ECS numbers things for the
 // scheduler — the relational engine names things for everyone at runtime
@@ -33,6 +39,14 @@
 // filters. One primitive (name => value, globally findable) underlies N
 // features — spotlight, live inspectors, script binding, save/load walks,
 // swap rebinding — instead of N bespoke lookup systems.
+//
+// CONSTRUCTOR VS SET (the pool-uniqueness law): the pool holds each name
+// exactly once, so construction is create-or-FAIL — instant() on a taken
+// name prints and yields -1, never updates, never duplicates. Changing a
+// value is setPointer()/setValue()'s job, never the constructor's: create
+// brings things into being, set mutates what exists, and confusing the two
+// is how stale entries resurrect under typos. Rename is its own explicit
+// operation with the same collision rule.
 //
 // Honest costs, paid deliberately:
 //   - Runtime names mean runtime typos (the compiler stops checking so the
