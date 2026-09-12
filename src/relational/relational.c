@@ -6,6 +6,7 @@
 #include "nio/mem.h"
 #include "primitive/string.h"
 #include "annotation/overview.h"
+#include "annotation/intention.h"
 
 ;;OVERVIEW
 /**
@@ -14,6 +15,46 @@
  * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
  * spotlight relational facade over Variable (Legacy: relational/RelationalEngine.java).
+ *
+ * How the relational engine works with memory blocks — three block kinds,
+ * three sizes, three jobs. Identity is stated once per layer and never
+ * duplicated:
+ *
+ *   ARENA BLOCKS — [16B header][payload], header read backwards.
+ *     {self u64, length u32, sugar u32}: self-describing identity, inline
+ *     size, hash-clarification veto over (self, length). Frozen forever:
+ *     the envelope never moves, so payloads stay versioned — detectable
+ *     per object via length, refused at the manifest gate on mismatch,
+ *     migrated across restarts via snapshots. Values in this engine are
+ *     headed blocks (or raw tagged bits whose class says how to read
+ *     them) — never bare unheaded memory.
+ *
+ *   POOL SLOTS — 32B [ptr][str1][str2][str3], one process-wide table.
+ *     Names stated once, shared by pointer. The self link makes any slot
+ *     self-validating O(1) with no side tables; the sorted index makes
+ *     lookup O(log n); slot indices never invalidate (raw pointers hold
+ *     until grow). Immutability is the point: a name means the same thing
+ *     in every scope, forever. 23 chars max — longer names rejected cold,
+ *     because silent truncation would corrupt identity.
+ *
+ *   VARIABLE ROWS — 16B [slot u32][classId u32][pointer u64], per scope.
+ *     Bindings (mutable) over names (immutable): rebinding changes the
+ *     row, never the pool. Class pins at creation so typed gathers
+ *     (character.position.x AS a float) fail closed on mismatch instead
+ *     of misreading. Queries filter rows — one structure, no segregated
+ *     lists to desync; the class field is segregation data, not storage.
+ *
+ * Gather paths: by name (pool binary search -> sparse hop -> row, O(log n));
+ * by class (row filter, O(n) integer compares — cold sweeps only). Cold
+ * mutations print loud to stderr on rejection; lookups stay silent because
+ * speculative probing (spotlight) must never log. Teardown composes
+ * bottom-up: rows free per scope, pool strings die with their arena, arenas
+ * die last. Darling widgets are never rows here — the engine is substrate;
+ * the UI borrows arenas and interns through these seams and keeps its own
+ * storage (Rule 36: OO ergonomics over data-oriented memory, never inside
+ * the variable table).
+ *
+ * STRUCT FIELDS: none — procedural (operates on Variable scope tables (global/local))
  *
  * STRUCT FIELDS: none — procedural (operates on Variable scope tables (global/local))
  *
@@ -39,6 +80,8 @@
  *   - Relational_getFunction(scope, name)
  * ============================================================================
  */
+
+;;INTENTION("identity stated once per layer (header self, pool slot, row class) so no layer duplicates another; fixed sizes keep every hop O(1) or O(log n) with zero side tables; mutations loud, lookups silent, teardown composed; UI borrows, never rows")
 
 
 // helpers — one level only, dest last where it matters
