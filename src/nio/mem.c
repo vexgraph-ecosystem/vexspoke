@@ -64,6 +64,7 @@
  * Core Functions:
  *   - Memory_init(totalBytes)
  *   - Memory_alloc(typeId, numBytes)
+ *   - Memory_defaultArena(void)
  *   - Memory_realloc(userPtr, newBytes)
  *   - Memory_free(userPtr)
  *   - Memory_freeAll(void)
@@ -448,6 +449,11 @@ bool Memory_init(size_t totalBytes) {
 void *Memory_alloc(uint64_t typeId, size_t numBytes) {
     ensure_initialized();
     return arena_alloc(&s_default, typeId, numBytes);
+}
+
+MemoryArena *Memory_defaultArena(void) {
+    ensure_initialized();
+    return &s_default;
 }
 
 void *Memory_realloc(void *userPtr, size_t newBytes) {

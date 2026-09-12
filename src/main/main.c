@@ -50,6 +50,7 @@
 #include "oop/type.h"
 #include "primitive/string.h"
 #include "relational/variable.h"
+#include "relational/variable_pool.h"
 #include "struct/array.h"
 #include "struct/deque.h"
 #include "struct/list.h"
@@ -456,7 +457,7 @@ int main(void) {
            Variable_getActiveCount(&vars));
 
     int32_t resolved = Variable_getId(&vars, "player_score");
-    char name_buf[VARIABLE_NAME_SIZE + 1];
+    char name_buf[STRING_POOL_NAME_MAX + 1];
     Variable_getName(&vars, resolved, name_buf, sizeof(name_buf));
     printf("resolved=%d class=0x%08X ptr=%p name=\"%s\"\n", resolved,
            Variable_getClassId(&vars, resolved),

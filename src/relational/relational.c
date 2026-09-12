@@ -114,8 +114,14 @@ void *Relational_getValueById(Variable *scope, int32_t varId) {
 bool Relational_setValue(Variable *scope, const char *name, uint32_t classId, void *ptr) {
     if (!scope || !name)
         return false;
-    int32_t varId = Variable_instant(scope, name, classId, (uintptr_t) ptr);
-    return varId >= 0;
+    // Create-or-fail constructor: rebind existing names explicitly so a
+    // typo never silently resurrects a stale entry. Class pins at creation.
+    int32_t varId = Variable_getId(scope, name);
+    if (varId >= 0) {
+        Variable_setPointer(scope, varId, (uintptr_t) ptr);
+        return true;
+    }
+    return Variable_instant(scope, name, classId, (uintptr_t) ptr) >= 0;
 }
 
 bool Relational_setValueById(Variable *scope, int32_t varId, void *ptr) {
@@ -137,20 +143,20 @@ const char *Relational_getString(Variable *scope, const char *name) {
 void Relational_setString(Variable *scope, const char *name, const char *value) {
     if (!scope || !name || !value)
         return;
-    int32_t varId = Variable_getId(scope, name);
-    void *oldPtr = nullptr;
-    if (varId >= 0)
-        oldPtr = (void*) Variable_getPointer(scope, varId);
     uint8_t *newPtr = string_allocate(value);
     if (!newPtr)
         return;
-    int32_t assigned = Variable_instant(scope, name, string_classId(), (uintptr_t) newPtr);
-    if (assigned < 0) {
-        string_free(newPtr);
+    int32_t varId = Variable_getId(scope, name);
+    if (varId >= 0) {
+        void *oldPtr = (void*) Variable_getPointer(scope, varId);
+        Variable_setPointer(scope, varId, (uintptr_t) newPtr);
+        if (oldPtr)
+            string_free((uint8_t*) oldPtr);
         return;
     }
-    if (oldPtr)
-        string_free((uint8_t*) oldPtr);
+    int32_t assigned = Variable_instant(scope, name, string_classId(), (uintptr_t) newPtr);
+    if (assigned < 0)
+        string_free(newPtr);
 }
 
 // function pointers — same as value, typed helper
@@ -163,8 +169,12 @@ bool Relational_setFunction(Variable *scope, const char *name, void *fn) {
     if (!scope || !name || !fn)
         return false;
     // classId 0 = raw function pointer; caller may pass ID_FUNCTION if defined
-    int32_t varId = Variable_instant(scope, name, 0, (uintptr_t) fn);
-    return varId >= 0;
+    int32_t varId = Variable_getId(scope, name);
+    if (varId >= 0) {
+        Variable_setPointer(scope, varId, (uintptr_t) fn);
+        return true;
+    }
+    return Variable_instant(scope, name, 0, (uintptr_t) fn) >= 0;
 }
 
 // spotlight — linear scan, ranked exact > prefix > substring

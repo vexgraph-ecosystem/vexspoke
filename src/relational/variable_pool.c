@@ -118,7 +118,7 @@ bool StringPool_init(MemoryArena *arena) {
     SpinLock_lock(&s_lock);
     if (s_pool.magic == STRING_POOL_MAGIC) {
         SpinLock_unlock(&s_lock);
-        return false;
+        return true;
     }
     s_pool.magic = 0;
     s_pool.arena = arena;

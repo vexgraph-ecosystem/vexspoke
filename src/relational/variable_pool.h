@@ -35,7 +35,8 @@ typedef struct StringSlot {
 } StringSlot;
 
 // One-time setup on an arena (allocates the initial slots + index).
-// Returns false on null arena, OOM, or when already live (shutdown first).
+// Idempotent success like Memory_init: live already returns true (shared
+// bring-up must not fail). False on null arena or OOM.
 bool StringPool_init(MemoryArena *arena);
 
 // Release slots and index back to the arena. Safe to call twice; safe

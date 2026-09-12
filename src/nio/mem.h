@@ -85,6 +85,12 @@ size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount);
 // Registration happens pre-threads; the hot path takes no extra locks.
 typedef struct MemoryArena MemoryArena;
 
+// The process-global (default) arena, lazily initialized like Memory_alloc.
+// Borrowed — never destroy it (destroy guards the default). Exists so
+// leaf-global services (the string pool) can anchor backing without
+// threading arena handles through every caller.
+MemoryArena *Memory_defaultArena(void);
+
 MemoryArena *MemoryArena_create(size_t totalBytes);
 void MemoryArena_destroy(MemoryArena *a);
 void *MemoryArena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes);

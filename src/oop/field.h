@@ -10,7 +10,7 @@
 // oop/field.h — Field descriptor (one column in a Class).
 
 typedef struct Field {
-    char name[32];           // field name for spotlight search (VARIABLE_NAME_SIZE)
+    char name[32];           // field name for spotlight search (own 32B width)
     uint32_t size;           // byte size or classId for isStruct
     uint32_t offset;         // unified singleton offset
     uint32_t stream1Offset;  // hot primitive stream offset

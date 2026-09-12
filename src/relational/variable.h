@@ -7,48 +7,70 @@
 
 // relational/variable.h — the relational symbol registry (Legacy: variable/Variable.java).
 //
-// Maps a lowercase 32-char name to a (classId, targetPointer) payload. Every
-// registered symbol is a row: the name is the key, the pointer is the value.
-// This is the heart of "everything is a pointer" — an off-heap key/value table
-// whose values are themselves addresses of other typed blocks.
+// Maps a name to a (classId, targetPointer) payload. Every registered symbol
+// is a row: the name lives in the shared string pool (referenced by slot,
+// never copied), the pointer is the value. This is the heart of "everything
+// is a pointer" — a name/pointer table whose values are themselves addresses
+// of other headed blocks.
 //
-// Slot layout (48 bytes):
-//   [ 32B name ][ 4B classId ][ 4B pad ][ 8B pointer ]
-//   `----------- packed into 4 uint64 words, lowercase ----------'
+// Row layout (16 bytes): [slot u32][classId u32][pointer u64]. Class is
+// pinned at creation (no setter by design — rebind the value, not the kind).
+// Lookup by name goes pool-first (binary search, shared globally), then one
+// sparse hop (slot -> var id). Typed queries filter rows by classId
+// (Variable_findByClass) — one structure, no segregated lists to desync.
 //
-// Name lookup goes through an open-addressing hash map (40-byte slots:
-// 4 longs of name + a var id). -1 is the empty sentinel.
+// Name policy (enforced cold, printed loud): ASCII alnum plus underscore
+// and dot ([A-Za-z0-9_.], folded to lowercase), 1..23 chars. Anything else
+// — empty, overlong, multibyte/UTF-16 garbage — is rejected. Mutations
+// (instant, rename) print to stderr on rejection; lookups fail silent (-1),
+// because speculative probing (spotlight) must never log.
+//
+// SLOT RECORD (owned by Variable, behaviorless):
+//   VariableRow slot;     // int32_t + pool slot index (name lives in pool)
+//   VariableRow classId;  // uint32_t + value class, pinned at creation
+//   VariableRow pointer;  // uintptr_t + the value (everything is a pointer)
 
-#define VARIABLE_NAME_SIZE 32
-#define VARIABLE_SLOT_SIZE 48
-#define VARIABLE_MAP_SLOT_SIZE 40
 #define VARIABLE_DEFAULT_CAPACITY 1024
 
+typedef struct VariableRow {
+    int32_t slot;       // pool slot index (name lives in the pool)
+    uint32_t classId;   // value class, pinned at creation
+    uintptr_t pointer;  // the value (everything is a pointer)
+} VariableRow;
+
 typedef struct Variable {
-    uint8_t *arena;        // slot arena (activeCount * SLOT_SIZE)
-    size_t capacity;       // slot count
-    size_t activeCount;    // registered symbols
-    uint8_t *map;          // open-addressing name hash map
-    size_t mapCapacity;    // map slot count
-    bool active;
+    bool active;            // runtime-active flag
+    VariableRow *rows;      // dense rows, varId == index (append-only)
+    uint32_t count;         // live rows
+    uint32_t capacity;      // allocated rows
+    int32_t *bySlot;        // pool slot -> varId, -1 empty (sparse, grown)
+    uint32_t bySlotCap;     // bySlot slots allocated
 } Variable;
 
-// Set up the registry (allocates the initial arena + map). Returns false on OOM.
+// Set up the registry (brings the shared pool up on the default arena,
+// allocates rows). Returns false on OOM.
 bool Variable_init(Variable *v);
 
-// Release all memory. Safe to call twice.
+// Release rows and index. Safe to call twice. Never touches the pool.
 void Variable_shutdown(Variable *v);
 
-// Register name => (classId, targetPointer), or update the payload if the name
-// already exists. Returns the assigned var id, or -1 on invalid input.
+// Register name => (classId, targetPointer). Create-or-FAIL: an existing
+// name prints an error and yields -1 (never updates — rebind via
+// setPointer, rename via rename). Empty/overlong/illegal names print and
+// yield -1. Returns the assigned var id on success.
 int32_t Variable_instant(Variable *v, const char *name, uint32_t classId, uintptr_t targetPointer);
 
-// Rename an existing symbol. Fails (false) if oldName is absent or newName is
-// already taken.
+// Rename an existing symbol (class and pointer follow the name). New-name
+// collisions, unknown olds, and bad names print and yield false.
 bool Variable_rename(Variable *v, const char *oldName, const char *newName);
 
-// Resolve a name to its var id. Returns -1 if not registered.
+// Resolve a name to its var id. Returns -1 if absent (silent —
+// speculative probing must never log).
 int32_t Variable_getId(Variable *v, const char *name);
+
+// Collect var ids holding a class (insertion order). Fills at most cap;
+// returns the total match count even when truncated (never silent).
+size_t Variable_findByClass(Variable *v, uint32_t classId, int32_t *outIds, size_t cap);
 
 // Payload accessors. varId must be a valid registered id.
 uintptr_t Variable_getPointer(Variable *v, int32_t varId);
