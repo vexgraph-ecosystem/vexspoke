@@ -95,6 +95,7 @@ add_library(vexspoke STATIC
     src/objects/probable_objects.c
     src/objects/reactive.c
     src/relational/variable.c
+    src/relational/variable_pool.c
     src/relational/relational.c
     src/atomic/atomic.c
     src/atomic/ring.c

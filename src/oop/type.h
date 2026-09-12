@@ -1,7 +1,6 @@
 #ifndef OOP_TYPE_H
 #define OOP_TYPE_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 // oop/type.h — the TypeRegister, ported from oop/TypeRegister.java.
@@ -121,6 +120,7 @@
 #define ID_FIXED32      0x0033u
 #define ID_WS_CLIENT    0x0034u
 #define ID_PROCESS_SPAWN 0x0035u
+#define ID_STRING_POOL  0x0036u
 #define ID_COMMAND      0x0064u
 
 // --- COLLECTION CLASSES ---
@@ -206,7 +206,7 @@
 // Every project ships its own *-type.h registry and numbers its classes
 // from 1: darling classes live in darling/c23/darling-type.h, graphvex in
 // graphvex/src/graphvex/type.h, hotcwap module constants in
-// hotcwap/hotcwap-type.h. This file keeps vexspoke-owned IDs only, in the
+// hotcwap/oop/hotcwap-type.h. This file keeps vexspoke-owned IDs only, in the
 // legacy 1-based list that predates the project byte (vexspoke primitives
 // pass bare ids to the allocator's BitPool keyed by these numbers). Rule
 // 17: central logic below must never include downstream ID files (upstream
@@ -235,6 +235,7 @@
 #define TYPE_DOUBLE_ARRAY   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_DOUBLE)
 #define TYPE_BYTE_ARRAY     (PROJ_VEXSPOKE | FORM_ARRAY     | ID_BYTE)
 #define TYPE_STRING_ARRAY   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STRING)
+#define TYPE_STRING_POOL    (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STRING_POOL)
 
 #define TYPE_SPIN_LOCK               (PROJ_VEXSPOKE | FORM_SINGLETON | ID_SPINLOCK)
 #define TYPE_RING_BUFFER             (PROJ_VEXSPOKE | FORM_ARRAY     | ID_RING_BUFFER)
