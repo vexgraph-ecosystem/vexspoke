@@ -21,6 +21,7 @@
  * duplicated:
  *
  *   ARENA BLOCKS — [16B header][payload], header read backwards.
+ *
  *     {self u64, length u32, sugar u32}: self-describing identity, inline
  *     size, hash-clarification veto over (self, length). Frozen forever:
  *     the envelope never moves, so payloads stay versioned — detectable
@@ -30,6 +31,7 @@
  *     them) — never bare unheaded memory.
  *
  *   POOL SLOTS — 32B [ptr][str1][str2][str3], one process-wide table.
+ *
  *     Names stated once, shared by pointer. The self link makes any slot
  *     self-validating O(1) with no side tables; the sorted index makes
  *     lookup O(log n); slot indices never invalidate (raw pointers hold
@@ -38,6 +40,7 @@
  *     because silent truncation would corrupt identity.
  *
  *   VARIABLE ROWS — 16B [slot u32][classId u32][pointer u64], per scope.
+ *   
  *     Bindings (mutable) over names (immutable): rebinding changes the
  *     row, never the pool. Class pins at creation so typed gathers
  *     (character.position.x AS a float) fail closed on mismatch instead
@@ -81,7 +84,10 @@
  * ============================================================================
  */
 
-;;INTENTION("identity stated once per layer (header self, pool slot, row class) so no layer duplicates another; fixed sizes keep every hop O(1) or O(log n) with zero side tables; mutations loud, lookups silent, teardown composed; UI borrows, never rows")
+;;INTENTION("identity stated once per layer (header self, pool slot, row class)"
+            " so no layer duplicates another; fixed sizes keep every hop "
+            "O(1) or O(log n) with zero side tables; mutations loud, lookups silent, "
+            "teardown composed; UI borrows, never rows")
 
 
 // helpers — one level only, dest last where it matters

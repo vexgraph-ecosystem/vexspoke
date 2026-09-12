@@ -9,6 +9,42 @@
 
 // relational/relational.h — spotlight relational facade over Variable (Legacy: relational/RelationalEngine.java).
 //
+// RELATIONAL ENGINE PHILOSOPHY: this engine refuses the textbook trilemma —
+// book-OOP vs DOD vs ECS — because none of them answers the question it
+// exists for: "find the thing called X, right now, from anywhere."
+//
+//   Book-OOP binds names at COMPILE time (identifiers vanish into addresses)
+//     and hides state behind encapsulation. At runtime nothing is findable
+//     except by walking graphs you must already hold. Query cost: O(graph).
+//   DOD answers "process everything fast" (sweeps over flat arrays). It
+//     never answers "find one thing now" — you rebuild that per case. The
+//     engine does not compete: hot iteration stays DOD (scene graphs, SoA
+//     physics); cold rendezvous comes here. Complementary axes.
+//   ECS answers "all entities with [A,B,C]" — sets by signature, entities
+//     as numbers. It never answers "the thing called character.position.x"
+//     without a bolted-on name table, i.e. this engine reinvented badly.
+//     ECS shards values for systems slicing; the engine maps names to whole
+//     values for authors addressing things. Different questions.
+//
+// The thesis: OOP names things for the compiler, ECS numbers things for the
+// scheduler — the relational engine names things for everyone at runtime
+// (authors, debuggers, scripts, search boxes, hot-swap, telemetry), with
+// O(log n) name resolution plus O(1) slot->row->value hops and O(n) class
+// filters. One primitive (name => value, globally findable) underlies N
+// features — spotlight, live inspectors, script binding, save/load walks,
+// swap rebinding — instead of N bespoke lookup systems.
+//
+// Honest costs, paid deliberately:
+//   - Runtime names mean runtime typos (the compiler stops checking so the
+//     runtime can start finding). Paid with: strict charset, fail-closed
+//     lookups, class tags pinned at creation, loud constructor errors.
+//   - A global writable namespace invites spooky action. Paid with scopes:
+//     search spans global+local, mutation stays scope-local, and the strict
+//     constructor refuses silent resurrection.
+//   - No overclaim: gather-by-name is O(log n), not O(1) end to end; class
+//     filters are O(n) integer scans for cold sweeps only. Hot per-frame
+//     typed iteration belongs to scene graphs, never here.
+//
 // Two Variable tables are the scopes: global and local. Every symbol is a row
 // name => (classId, targetPointer). The pointer is the value — a string block,
 // a typed struct, a Map, or a function address. Search is the spotlight: query
