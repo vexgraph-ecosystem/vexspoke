@@ -23,12 +23,15 @@
  * STRUCT FIELDS (Mirroring nio/mem.h + local to this file):
  * ----------------------------------------------------------------------------
  *   MemoryHeader {
- *     uint64_t typeId; // block-header type id
- *     uint32_t length; // payload length
- *     uint32_t slabIndex; // slab index
- *     uint32_t magic; // block magic cookie
- *     uint32_t reserved[3]; // zeroed future flags
+ *     uint64_t typeId; // block-header self id (identity core)
+ *     uint32_t length; // payload length (identity core)
+ *     uint32_t sugar;  // hash-clarification veto over (self, length)
  *   }
+ *   Zones: identity (self+length, stated), provenance (sugar veto +
+ *   arena-range gate, no magic cookie), allocator (size class is a pure
+ *   function of length — no stored index), future (none in-band; struct
+ *   evolution is detected per object via length + refused at the manifest
+ *   gate). The header is frozen at 16 bytes, read backwards.
  *   Block {
  *     struct Block *prev; // instance state
  *     struct Block *next; // next sibling ref
@@ -66,6 +69,7 @@
  *   - Memory_freeAll(void)
  *   - Memory_length(userPtr)
  *   - Memory_type(userPtr)
+ *   - Memory_similar(a, b)
  *   - Memory_findAll(typeId, outArray, maxCount)
  *
  * Arena Functions (Phase-4):
@@ -91,10 +95,28 @@
  */
 
 #define SLAB_COUNT 7
-#define SLAB_LARGE 0xFFFFFFFFu
-#define SLAB_SYSTEM 0xFFFFFFFEu
 #define ANTI_ARENA_DEFAULT_SIZE (64 * 1024 * 1024) // 64 MB master arena
 #define ARENA_REGISTRY_MAX 4
+
+// Hash-clarification veto over the identity core, fed little-endian (never
+// serialized, but explicit anyway). LSB forced so a stored sugar is never 0:
+// cleared (zeroed) headers always fail verification with no special case.
+static uint32_t header_sugar(uint64_t typeId, uint32_t length) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < 8; i++) {
+        hash ^= (uint32_t) ((typeId >> (i * 8)) & 0xFFu);
+        hash *= 16777619u;
+    }
+    for (int i = 0; i < 4; i++) {
+        hash ^= (uint32_t) ((length >> (i * 8)) & 0xFFu);
+        hash *= 16777619u;
+    }
+    return hash | 1u;
+}
+
+static bool header_valid(const MemoryHeader *h) {
+    return h && (*h).sugar == header_sugar((*h).typeId, (*h).length);
+}
 
 typedef struct FreeNode {
     struct FreeNode *next;
@@ -200,7 +222,7 @@ static bool arena_init(MemoryArena *a, size_t totalBytes) {
         for (size_t i = (*slab).capacity; i > 0; i--) {
             uint8_t *slot_ptr = (*slab).arena + (i - 1) * sz;
             MemoryHeader *h = (MemoryHeader*) slot_ptr;
-            (*h).magic = 0;
+            (*h).sugar = 0;
             FreeNode *node = (FreeNode*) (slot_ptr + sizeof(MemoryHeader));
             (*node).next = (*slab).free_head;
             (*slab).free_head = node;
@@ -240,11 +262,7 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
             MemoryHeader *h = (MemoryHeader*) slot_ptr;
             (*h).typeId = typeId;
             (*h).length = (uint32_t) numBytes;
-            (*h).slabIndex = (uint32_t) s_idx;
-            (*h).magic = MEMORY_MAGIC;
-            (*h).reserved[0] = 0;
-            (*h).reserved[1] = 0;
-            (*h).reserved[2] = 0;
+            (*h).sugar = header_sugar(typeId, (uint32_t) numBytes);
             return (void*) node;
         }
     }
@@ -261,11 +279,7 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
         MemoryHeader *h = (MemoryHeader*) slot_ptr;
         (*h).typeId = typeId;
         (*h).length = (uint32_t) numBytes;
-        (*h).slabIndex = SLAB_LARGE;
-        (*h).magic = MEMORY_MAGIC;
-        (*h).reserved[0] = 0;
-        (*h).reserved[1] = 0;
-        (*h).reserved[2] = 0;
+        (*h).sugar = header_sugar(typeId, (uint32_t) numBytes);
         return (void*) (slot_ptr + sizeof(MemoryHeader));
     }
     SpinLock_unlock(&(*a).bumpLock);
@@ -277,11 +291,7 @@ static void *arena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes) {
     MemoryHeader *h = (MemoryHeader*) raw;
     (*h).typeId = typeId;
     (*h).length = (uint32_t) numBytes;
-    (*h).slabIndex = SLAB_SYSTEM;
-    (*h).magic = MEMORY_MAGIC;
-    (*h).reserved[0] = 0;
-    (*h).reserved[1] = 0;
-    (*h).reserved[2] = 0;
+    (*h).sugar = header_sugar(typeId, (uint32_t) numBytes);
     return (void*) (raw + sizeof(MemoryHeader));
 }
 
@@ -296,41 +306,42 @@ static void arena_free(MemoryArena *a, void *userPtr) {
     // Validate the pointer is within this arena's known address range before
     // performing the negative-offset header read.  MemoryArena_free calls us
     // directly (bypassing safe_header / arena_for), so a foreign pointer that
-    // happens to be aligned would otherwise blindly dereference p-32, which
+    // happens to be aligned would otherwise blindly dereference p-16, which
     // can SIGSEGV when those bytes are in an unmapped page.
     uint8_t *p = (uint8_t*) userPtr;
     bool in_range = false;
     if ((*a).masterArena && p >= (*a).masterArena + sizeof(MemoryHeader) && p < (*a).masterArena + (*a).masterCapacity)
         in_range = true;
     if (!in_range) {
-        // SLAB_SYSTEM blocks come from malloc and live outside the arena range.
-        // We can only accept them if we can safely read the header first, which
-        // we cannot without a range check.  Reject to avoid the blind read.
+        // Malloc-fallback blocks live outside the arena range (malloc regions
+        // never overlap live ones). They are not reclaimed here — same as
+        // before. We cannot safely read their header without a range, so we
+        // reject to avoid the blind read.
         return;
     }
 
     MemoryHeader *h = (MemoryHeader*) ((uint8_t*) userPtr - sizeof(MemoryHeader));
-    if ((*h).magic != MEMORY_MAGIC)
+    if (!header_valid(h))
         return;
 
-    uint32_t s_idx = (*h).slabIndex;
-    if (s_idx < SLAB_COUNT) {
-        (*h).magic = 0;
-        SlabClass *slab = &(*a).slabs[s_idx];
-        FreeNode *node = (FreeNode*) userPtr;
+    // Size class is a pure function of length — no stored index. Bump-resident
+    // small blocks recycle through the slab freelist of their class (same
+    // observable contract: right-sized memory, counts balance on reuse).
+    // Oversized (bump-carved) blocks invalidate only; bump space rewinds
+    // wholesale on freeAll, never per block.
+    int s = find_slab((*h).length);
+    (*h).sugar = 0;
+    if (s < 0 || (uint32_t) s >= SLAB_COUNT)
+        return;
+    SlabClass *slab = &(*a).slabs[s];
+    FreeNode *node = (FreeNode*) userPtr;
 
-        SpinLock_lock(&(*slab).lock);
-        (*node).next = (*slab).free_head;
-        (*slab).free_head = node;
-        if ((*slab).count > 0)
-            (*slab).count--;
-        SpinLock_unlock(&(*slab).lock);
-    } else if (s_idx == SLAB_LARGE) {
-        (*h).magic = 0;
-    } else if (s_idx == SLAB_SYSTEM) {
-        (*h).magic = 0;
-        free((void*) h);
-    }
+    SpinLock_lock(&(*slab).lock);
+    (*node).next = (*slab).free_head;
+    (*slab).free_head = node;
+    if ((*slab).count > 0)
+        (*slab).count--;
+    SpinLock_unlock(&(*slab).lock);
 }
 
 static void arena_freeAll(MemoryArena *a) {
@@ -347,7 +358,7 @@ static void arena_freeAll(MemoryArena *a) {
         for (size_t i = (*slab).capacity; i > 0; i--) {
             uint8_t *slot_ptr = (*slab).arena + (i - 1) * sz;
             MemoryHeader *h = (MemoryHeader*) slot_ptr;
-            (*h).magic = 0;
+            (*h).sugar = 0;
             FreeNode *node = (FreeNode*) (slot_ptr + sizeof(MemoryHeader));
             (*node).next = (*slab).free_head;
             (*slab).free_head = node;
@@ -361,8 +372,9 @@ static void arena_freeAll(MemoryArena *a) {
 }
 
 // Free-routing: headers carry no arena tag (ABI-stable by design), so the
-// owner is whoever's master range contains the header. SLAB_SYSTEM blocks
-// are malloc-fallback and free directly. Registry writes happen at
+// owner is whoever's master range contains the header. Malloc-fallback
+// blocks live outside every range (malloc regions never overlap live ones)
+// and are not reclaimed here — same as before. Registry writes happen at
 // create/destroy (pre-threads); reads are lock-free.
 static MemoryArena *arena_for(void *userPtr) {
     if (!userPtr)
@@ -379,7 +391,7 @@ static MemoryArena *arena_for(void *userPtr) {
             uint8_t *base = (*a).masterArena;
             if (p >= base + sizeof(MemoryHeader) && p < base + (*a).masterCapacity) {
                 MemoryHeader *h = (MemoryHeader*) (p - sizeof(MemoryHeader));
-                if ((*h).magic == MEMORY_MAGIC && (*h).slabIndex != SLAB_SYSTEM && (*h).slabIndex != SLAB_TRANSIENT)
+                if (header_valid(h))
                     return a;
             }
         }
@@ -399,7 +411,7 @@ static const MemoryHeader *safe_header(const void *userPtr) {
     if (s_transient.live && s_transient.buffer) {
         if (p >= s_transient.buffer + sizeof(MemoryHeader) && p < s_transient.buffer + s_transient.bumpOffset) {
             const MemoryHeader *h = (const MemoryHeader*) (p - sizeof(MemoryHeader));
-            if ((*h).magic == MEMORY_MAGIC)
+            if (header_valid(h))
                 return h;
         }
     }
@@ -410,7 +422,7 @@ static const MemoryHeader *safe_header(const void *userPtr) {
             uint8_t *base = (*a).masterArena;
             if (p >= base + sizeof(MemoryHeader) && p < base + (*a).masterCapacity) {
                 const MemoryHeader *h = (const MemoryHeader*) (p - sizeof(MemoryHeader));
-                if ((*h).magic == MEMORY_MAGIC)
+                if (header_valid(h))
                     return h;
             }
         }
@@ -463,13 +475,10 @@ void Memory_free(void *userPtr) {
     if (!h)
         return;
 
-    if ((*h).slabIndex == SLAB_SYSTEM) {
-        MemoryHeader *mut_h = (MemoryHeader*) h;
-        (*mut_h).magic = 0;
-        free((void*) mut_h);
-        return;
-    }
-
+    // No malloc-fallback branch: safe_header only returns headers inside a
+    // live range, and malloc regions never overlap live ones, so an
+    // out-of-range block cannot arrive here. Malloc-fallback blocks are not
+    // reclaimed — same as before.
     MemoryArena *a = arena_for(userPtr);
     if (!a)
         return;
@@ -492,6 +501,18 @@ uint64_t Memory_type(void *userPtr) {
     if (h)
         return (*h).typeId;
     return 0;
+}
+
+bool Memory_similar(const void *a, const void *b) {
+    if (!a || !b)
+        return false;
+    const MemoryHeader *ha = safe_header(a);
+    if (!ha)
+        return false;
+    const MemoryHeader *hb = safe_header(b);
+    if (!hb)
+        return false;
+    return (*ha).typeId == (*hb).typeId;
 }
 
 bool Memory_initTransient(size_t capacity) {
@@ -539,17 +560,12 @@ void *Transient_alloc(uint64_t typeId, size_t numBytes) {
 
     uint8_t *slot = s_transient.buffer + s_transient.bumpOffset;
     s_transient.bumpOffset += total;
-    uint32_t gen = s_transient.generation;
     SpinLock_unlock(&s_transient.lock);
 
     MemoryHeader *h = (MemoryHeader*) slot;
     (*h).typeId = typeId;
     (*h).length = (uint32_t) numBytes;
-    (*h).slabIndex = SLAB_TRANSIENT;
-    (*h).magic = MEMORY_MAGIC;
-    (*h).reserved[0] = gen;
-    (*h).reserved[1] = 0;
-    (*h).reserved[2] = 0;
+    (*h).sugar = header_sugar(typeId, (uint32_t) numBytes);
 
     return (void*) (slot + sizeof(MemoryHeader));
 }
@@ -693,7 +709,7 @@ size_t MemoryArena_findAll(MemoryArena *a, uint64_t typeId, void **outArray, siz
         for (size_t i = 0; i < (*slab).capacity; i++) {
             uint8_t *slot_ptr = (*slab).arena + i * sz;
             MemoryHeader *h = (MemoryHeader*) slot_ptr;
-            if ((*h).magic == MEMORY_MAGIC) {
+            if (header_valid(h)) {
                 if (typeId == 0 || (*h).typeId == typeId) {
                     if (outArray && count < maxCount) {
                         outArray[count] = (void*) (slot_ptr + sizeof(MemoryHeader));
