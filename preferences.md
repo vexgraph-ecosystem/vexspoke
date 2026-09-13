@@ -9,7 +9,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R1–R5 Supervisor Order), Rule 35 (Cold-Strict Crash-Guard half: never crash/block/allocate/use-after-free), Rule 38 (Test Segregation & Zero Source Pollution).
+   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 (Compositing Layer Order & Live Resize) & Rule 14 (Present-On-Demand), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R1–R5 Supervisor Order), Rule 35 (Cold-Strict Crash-Guard half: never crash/block/allocate/use-after-free), Rule 38 (Test Segregation & Zero Source Pollution).
    - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
@@ -169,30 +169,55 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 The compositing stack from top to bottom is fixed:
 
 ```
-IOSurfaces          ← floating panels (HUD, mini-3D, etc.) via CALayer
-Scene Panel         ← optional Vulkan scene stamped on swapchain (NULL = transparent)
-NSVisualEffectView  ← blur / vibrancy (behind-window blending)
-Window Frame        ← NSWindow chrome / traffic lights
+Content Board     ← the UI canvas: contentPanel's VkPane chain (UI subtree);
+                    paints the UI AND samples every COMPOSITED scene layer
+Scene Board       ← scenePanel's OWN CAMetalLayer + VkPane chain (scene subtree)
+Legacy Board      ← window CAMetalLayer, clear-transparent glass bottom
+Child Layers      ← scenes: COMPOSITED layers (retained offscreen targets
+                    collaged into the canvas) or DIRECT panes (own CAMetalLayer
+                    + VkPane swapchain)
+NSVisualEffectView← blur / vibrancy (behind-window blending)
+Window Frame      ← NSWindow chrome / traffic lights
 ```
 
-- `contentPanel` is a **pure placeholder**: its own background color is ignored.
-  Children of `contentPanel` get individual `IOSurface`-backed `CALayer`s composited
-  by AppKit. Never render `contentPanel` itself into the swapchain.
-- `scenePanel` (set via `Window_setScenePanel`) renders directly into the Vulkan
-  swapchain background. `NULL` means the swapchain clears to fully transparent,
-  letting blur show through.
+- `contentPanel` and `scenePanel` are the **two named boards**: each owns a
+  full-window `CAMetalLayer` + dedicated `VkPane` swapchain
+  (`PanelCocoa_newBoard`), composited scene-below-content via
+  `Window_compositeBoards`. A board paints its whole subtree into its own
+  chain; scene children render as COMPOSITED layers sampled into the board
+  pass or as DIRECT panes (Rule 11.5). Plain UI under a board needs no
+  `IOSurface` — it paints into the board pass.
+- `contentPanel` without board backing stays a **pure placeholder**: its own
+  background color is ignored and its children fall back to per-child panes.
+  A board-backed `contentPanel` paints its whole subtree into its own chain.
+- `scenePanel` without board backing (set via `Window_setScenePanel`) renders
+  directly into the Vulkan swapchain background. `NULL` means the swapchain
+  clears to fully transparent, letting blur show through.
+- Every `CAMetalLayer` in the stack pins top-left (`contentsGravity
+  kCAGravityTopLeft`, `anchorPoint (0,0)`, `geometryFlipped YES`, `(0,0)` =
+  top-left) and presents with the WindowServer transaction
+  (`presentsWithTransaction YES`), so anchor motion and presents land on the
+  same vsync — edge-locked, zero CPU catch-up.
+- Presentation is **on demand** (Rule 14): the presenter wakes only on a
+  dirty tree, a published layer frame, or a live-resize drag — and rests on
+  the last composite otherwise. Static content is never re-presented.
 - Calling `Window_setBlur(w, value > 0)` **must** also mark the window transparent
   so Vulkan rebuilds the swapchain with `VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR`.
   This is done automatically inside `Window_setBlur`.
-- **Pane-of-glass rule (Rule 11.5):** a scene child may own a "pane" — its OWN
-  `CAMetalLayer` + dedicated per-pane Vulkan swapchain (`VkPane` registry in
-  hotcwap, `PanelCocoa_newMetal` in darling) — instead of an IOSurface blit.
-  Each pane's layer frame is a logical-points rect pinned by `selfAnchor`
-  (Rule 13 gravity applies identically). The pane renders at 60fps into its own
-  swapchain (`VkPane_presentAll` from `Kernel_tick`); the board swapchain is
-  never rebuilt by a pane. A pane's pixel size is FIXED at
-  register/resize time — `VkPane_resize` is a no-op when the requested size is
-  unchanged, so fixed panes never rebuild.
+- **Pane-of-glass rule (Rule 11.5):** a scene child renders either as a
+  COMPOSITED layer (retained offscreen render targets — the `VkLayer` registry
+  in graphvex — collaged into the canvas by the composite pass; the default,
+  one `CAMetalLayer` total) or a DIRECT pane (its own `CAMetalLayer` +
+  dedicated per-pane Vulkan swapchain — `VkPane` registry in graphvex,
+  `PanelCocoa_newMetal` in darling — every panel is a Vulkan rect). DIRECT is
+  the managed exception (Rule 33) for full-window or latency-locked scenes
+  that must not pay the composite copy. The flight machinery — registry,
+  stable slot index, dual flight slots, acquire/render semaphores, bounded
+  100ms fences, dirty bit — is shared verbatim between both modes; only the
+  destination differs: a presentable swapchain image (DIRECT) vs a
+  compositable color image the canvas samples (COMPOSITED). A layer/pane's
+  pixel size is FIXED at register/resize time — `VkPane_resize`/`VkLayer_resize`
+  is a no-op when the requested size is unchanged, so fixed targets never rebuild.
 - **Live resize is layer-motion only on thread 0, and the scenes stay alive
   on the present worker (Rule 11.6):** during an active AppKit drag
   (`NSViewLiveResize`) thread 0 is inside the modal tracking loop — it moves
@@ -200,20 +225,20 @@ Window Frame        ← NSWindow chrome / traffic lights
   worker (`Kernel`'s `kernel_present_job` / `Application`'s `app_present_job`,
   spawned after window warm-up): it keeps presenting what Vulkan already has —
   the board swapchain stays at its current extent and the `CAMetalLayer`
-  scales it to the live frame, and the panes keep RENDERING + presenting at
-  60fps into their fixed chains (`VkPane_presentAll` never pauses), so the
-  four scenes keep animating the whole drag. The board layer's
+  scales it to the live frame, and the panes/layers keep RENDERING +
+  presenting at 60fps into their fixed chains (`VkPane_presentAll` /
+  `VkLayer_visit` never pause), so the four scenes keep animating the whole
+  drag. The board layer's
   `contentsGravity` flips to `kCAGravityResize` for the drag — the frozen
   board frame STRETCHES to cover the live bounds every drag step, so the
   interior tracks the window edges (no empty gorge past the frozen extent,
   no perceived resize lag); it flips back to `kCAGravityTopLeft` on settle
-  for the exact-size rebuild. Static IOSurface children hold
-  their last render. Pane/corner anchor motion during the drag is
+  for the exact-size rebuild. Static panes hold their last present. Pane/corner anchor motion during the drag is
   WindowServer-accelerated: `PanelCocoa_setAnchors` sets each layer's
   `autoresizingMask` + `anchorPoint` at attach, so CoreAnimation lays the
   sublayers out INSIDE the window-resize transaction — edge-locked on the
   same vsync as the window edge, zero CPU math, zero catch-up.
-  `Window_compositeIOSurfaceChildren` early-returns while
+  `Window_compositePanes` early-returns while
   `Window_isLiveResizing` (a per-event explicit frame would fight the
   accelerated autoresize pass and trail the live edge by a beat — the
   right/bottom "catching up" artifact); exact frames are re-applied at
@@ -221,45 +246,45 @@ Window Frame        ← NSWindow chrome / traffic lights
   early-returns while `Window_isLiveResizing`, so the worker never mutates
   container layout or composites concurrently — a worker/thread-0 layout race
   tears the `selfAnchor` math and pane layers drift from their pinned corners.
-  Zero swapchain rebuilds and zero IOSurface re-records
+  Zero swapchain rebuilds and zero pane re-renders
   per drag frame (`Window_isLiveResizing` gates both `presentFrameLocked`,
-  `renderNativeContent`, and `Darling_preFrame`; `Window_width/height` are
+  `Window_attachPanes`, and `Darling_preFrame`; `Window_width/height` are
   atomic caches written
   by thread 0 in `setFrameSize`/`windowWillResize`/`windowDidResize`/the
   pollEvents pump and read by the worker). On settle
   (`viewDidEndLiveResize`) the flag clears, the final drawableSize lands, and
-  the next pass runs exactly ONE rebuild + ONE re-record at the true final
-  size. Rebuilding or re-recording per drag frame is the
+  the next pass runs exactly ONE rebuild + ONE re-render at the true final
+  size. Rebuilding or re-rendering per drag frame is the
   size-proportional-lag defect — large windows lag more. `Kernel_run`
   bounded-joins the worker (`Thread_stop`) before teardown per Rule 26/27.
 - Pane register timing: `Darling_initCompositor` runs `Vk_init` first; child
-  attach happens inside `Darling_preFrame` → `renderNativeContent` →
-  `Window_attachPanelIOSurface`, so `VkPane_register` always finds a live
+  attach happens inside `Darling_preFrame` →
+  `Window_attachPanes`, so `VkPane_register` always finds a live
   device. Metal layers are attached before the composite frame is set, so a
   zero-extent capability report falls back to the registered pixel size —
   never fail registration on a frameless layer.
 
-## 12. IOSurface / Native Pixel Rule
-All `IOSurface` allocations and Vulkan renders into them must use **native hardware
-pixels**, not logical points.
+## 12. Native Pixel Rule
+All `CAMetalLayer` `drawableSize`s and Vulkan renders into pane chains must use
+**native hardware pixels**, not logical points.
 
 ```c
 // CORRECT — multiply point size by the monitor scale factor
 int pxW = (int)(rect.z * kx + 0.5f);
 int pxH = (int)(rect.w * ky + 0.5f);
-renderChildToIOSurface(child, surface, pxW, pxH);
+VkPane_register(layer, pxW, pxH, owner);
 
 // WRONG — logical points only, blurry on Retina
-renderChildToIOSurface(child, surface, (int)rect.z, (int)rect.h);
+VkPane_register(layer, (int)rect.z, (int)rect.w);
 ```
 
 The `CALayer` frame is always set in **logical points** (CoreAnimation convention).
-`contentsScale` on an IOSurface-backed layer must be set to `backingScaleFactor` (e.g. `2.0` on Retina)
-so CoreAnimation maps the native physical pixels of the pre-rendered `IOSurface` to logical points at
+`contentsScale` on a Metal pane layer must be set to `backingScaleFactor` (e.g. `2.0` on Retina)
+so CoreAnimation maps the native physical pixels of the pane's swapchain to logical points at
 exact 1:1 screen resolution, preventing the content from appearing doubled in size.
 
-## 13. IOSurface Panel Gravity
-Each `CALayer` backing an IOSurface panel gets its `contentsGravity` and
+## 13. Panel Gravity
+Each Metal pane layer gets its `contentsGravity` and
 `anchorPoint` set from the panel's `selfAnchor`. This keeps the rendered pixel
 content pinned to the correct corner during live window resize (before the next
 frame is ready). The mapping is:
@@ -276,20 +301,46 @@ BOTTOM_CENTER→ kCAGravityBottom     / anchorPoint (0.5,1)
 BOTTOM_RIGHT → kCAGravityBottomRight/ anchorPoint (1,1)
 ```
 
-The `CAMetalLayer` hosting the Vulkan swapchain has `geometryFlipped = YES` so
+The `CAMetalLayer` hosting a Vulkan swapchain has `geometryFlipped = YES` so
 that Vulkan's top-down coordinate space maps correctly onto CoreAnimation's
-bottom-up space. IOSurface `CALayer`s also get `geometryFlipped = YES` for the
+bottom-up space. Every pane layer in the stack carries it for the
 same reason.
 
-## 14. No Double-Render Law
-When `nativeContent` mode is active (IOSurface children), the Vulkan swapchain
-blit loop (`presentFrameTail`) **must skip** all non-scene panels. They are
-already composited natively by AppKit. Only `TYPE_SCENE3D_SINGLETON`,
-`TYPE_SCENE2D_SINGLETON`, and `TYPE_SCENE_SINGLETON` children may be stamped
-onto the swapchain, and **only if they are not pane-backed**: a scene child
-holding its own `CAMetalLayer` pane (`PanelCocoa_isMetal`) is composited by
-WindowServer and must never be stamped onto the board either — it renders
-through `VkPane_presentAll` only. Fixed-size panes never rebuild.
+## 14. Present-On-Demand Law (composite ≠ render)
+A surface presents only on demand. Demand is change: motion, layout, text,
+hover, or a scene publishing a new frame. Anything static presents once and
+then rests on its last composite — the compositor never re-presents clean
+content and never re-invokes a scene's render handler.
+
+### The Why (subsumes the former No Double-Render Law)
+The old law forbade stamping one panel into two chains. Present-on-demand
+makes that impossible by construction: a scene RENDER (its world into its
+retained offscreen target — `VkLayer`, own thread, own FPS) is distinct from
+a COMPOSITE (sample published targets + paint the UI tree into the canvas at
+vsync). The canvas painter only samples published targets — it cannot
+re-render a scene. Double-render is structurally unreachable, not merely
+forbidden.
+
+### Present modes (per scene):
+- `COMPOSITED` (default): the scene owns retained flight render targets
+  (offscreen images + acquire/render semaphores + fences) on its own
+  timeline; the canvas samples the latest published frame at the anchor rect,
+  in tree z-order interleaved with UI. One canvas total — no per-scene
+  surfaces.
+- `DIRECT` (managed exception, Rule 33): a scene may own its own
+  `CAMetalLayer` + swapchain (`VkPane`) and present at its own pace —
+  full-window or latency-locked scenes that must not pay the composite copy.
+
+### Composite rules:
+- The presenter wakes only on demand: a dirty tree, a published layer frame,
+  or a live-resize drag (the moving edge is itself a ticket). An idle tree
+  sleeps — zero presents, zero GPU work; power is the free win.
+- UI paints the FULL tree on any dirty tick (immediate-on-demand; damage
+  rects are a later optimization, never a first move). Static content rests:
+  the canvas is neither re-acquired nor presented.
+- Scene anchors are plain resolved C rects into the canvas; WindowServer-
+  native anchoring (`presentsWithTransaction`, `autoresizingMask`) lives on
+  the single canvas layer only.
 
 ## 15. Commit and Push Discipline
 - **Never push unless explicitly asked.** A push request is a one-time button press; do not auto-push subsequent changes.
