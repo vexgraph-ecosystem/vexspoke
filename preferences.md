@@ -9,8 +9,8 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R1–R5 Supervisor Order), Rule 35 (Cold-Strict Crash-Guard half: never crash/block/allocate/use-after-free).
-   - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, or un-bisectable repositories.
+   - *Rules*: Rule 3 (Single Class Per File / Java Law), Rule 6 & 20 (Atomic Commits & Upstream-First), Rule 11 & 16 (Two-Layer Compositing Split & No Double-Render), Rule 13 (Apple Silicon Native), Rule 26 (Teardown Order: Destroy Top-Down, Free Last), Rule 27 (Bounded Waits on Joined Threads), Rule 28 (System Levels L1–L4, distinct from R1–R5 Supervisor Order), Rule 35 (Cold-Strict Crash-Guard half: never crash/block/allocate/use-after-free), Rule 38 (Test Segregation & Zero Source Pollution).
+   - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
@@ -1000,9 +1000,29 @@ Multi-repo ecosystems rot silently — a header-only dialog or a half-stubbed pi
 3. **Test proof gates the status.** 🟨 rows carry test names in the scope column (`tests/<name>_test`); a row is never 🟩 before its unit tests pass under `-Wall -Wextra -Werror` (Rule 6). Moving a row up without its proof is inflation; use Rule 33 (`;;INTENTION`) instead of silently overstating.
 4. **Commits are per-checklist-file, per-repo.** The matrix lives as one row-write inside its feature commit; cross-repo rows never bundle (Rule 20). Code and wiki ship as separate per-repo commits in the same cycle — the code commit carries the behavior, the wiki commit carries the row.
 5. **The spearhead is the wedge, not the tail.** The next work item is chosen as the structural keystone that unblocks the largest contiguous block of 🟥 rows (e.g. `OverlayRoot` unblocking the dialog/dropdown family), then the block collapses down the matrix — mirrors the upstream-first law (Rule 20).
+
 ---
 
-## 39. Ecosystem Vulkan Safety Nets (Determinism + Tree-Shaken Truth)
+## 38. Test Segregation & Zero Source Pollution (No Tests in Source Trees)
+### Definition:
+Test code and harnesses NEVER reside inside production source directories (`src/`, `darling/`, `render/`, `main/`, `app/`, etc.). All unit tests, integration tests, benchmark harnesses, and test fixtures across the ecosystem live in dedicated test trees partitioned by subsystem under `_tests/<subsystem>/`. Production source trees contain only production classes, headers, and build scripts.
+
+### The Why:
+Colocating tests alongside production source files pollutes the clean 1:1 class-to-file architecture (Rule 3), confuses directory-based build tools and file watchers, muddles static analysis, degrades search/grep ergonomics, and creates risks of circular dependencies or accidental linkage of test helpers into production shared libraries. A source directory must be purely production code; test suites are clients of the subsystems they test and must sit in segregated test directories.
+
+### The Rule:
+1. **Zero test files in production trees.** No file named `*_test.c`, `test_*.c`, `*_test.h`, `test_*.h`, or `*_demo.c` may ever be placed in or committed to a production source directory (`src/`, `darling/`, `render/`, `text/`, `event/`, `app/`, `hot/`, etc.). Violations must be rejected in review and failed in CI.
+2. **Unified test hierarchy.** All test sources reside under `_tests/<subsystem>/` (e.g., `_tests/darling/`, `_tests/vexspoke/`, `_tests/graphvex/`, `_tests/hotcwap/`, `_tests/api-haven/`).
+3. **Subsystem partitioning.** Tests are grouped strictly by the subsystem they exercise:
+   - `_tests/darling/`: UI widgets, containers, text rendering, layout, and event dispatcher tests.
+   - `_tests/vexspoke/`: Core primitive, memory, threading, time, io, and relational tests.
+   - `_tests/graphvex/`: GPU buffers, rendering passes, texture, and font backend tests.
+   - `_tests/hotcwap/`: Hot reload, manifest parser, kernel, and window lifecycle tests.
+   - `_tests/api-haven/`: API client, webhooks, MCP server, SSE, and AI provider tests.
+4. **Standalone repo test contract.** If a project is checked out standalone without the umbrella `_tests/` root, it must keep its tests segregated in a top-level `tests/` directory at the repo root (e.g. `projects/<repo>/tests/`), never inside `src/` or component folders. In umbrella builds, `_tests/` is the canonical locus.
+5. **No test artifact commits.** Build artifacts, test scratch dumps, and test binaries must be excluded by `.gitignore` (`_tests/` or build output directories).
+
+---
 
 ## 39. Ecosystem Vulkan Safety Nets (Determinism + Tree-Shaken Truth)
 ### Definition:

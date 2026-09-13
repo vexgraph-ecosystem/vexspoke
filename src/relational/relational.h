@@ -1,8 +1,6 @@
 #ifndef RELATIONAL_RELATIONAL_H
 #define RELATIONAL_RELATIONAL_H
 
-#include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #include "relational/variable.h"
@@ -20,11 +18,13 @@
 //   Textbook OOP binds names at COMPILE time (identifiers vanish into addresses)
 //     and hides state behind encapsulation. At runtime nothing is findable
 //     except by walking graphs you must already hold. Query cost: O(graph).
+//
 //   Textbook DOD answers "process everything fast" (sweeps over flat
 //     arrays). It never answers "find one thing now" — you rebuild that per
 //     case, usually as a shadow naming system that drifts. The engine does
 //     not compete: hot iteration stays DOD (scene graphs, SoA physics);
 //     cold rendezvous comes here. Complementary axes.
+//
 //   Textbook ECS answers "all entities with [A,B,C]" — sets by signature,
 //     entities as numbers. It never answers "the thing called
 //     character.position.x" without a bolted-on name table, i.e. this engine

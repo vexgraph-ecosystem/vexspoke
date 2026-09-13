@@ -180,70 +180,117 @@ if(NOT TARGET vexspoke_demo)
     target_link_libraries(vexspoke_demo PRIVATE vexspoke)
 endif()
 
+set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../_tests/vexspoke")
+if(NOT EXISTS "${VEXSPOKE_TEST_DIR}")
+    set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+endif()
+
 # System Discovery & Hardware / Display probe target
-add_executable(system_test
-    tests/system_test.c
-)
-target_link_libraries(system_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/system_test.c" AND NOT TARGET system_test)
+    add_executable(system_test
+        ${VEXSPOKE_TEST_DIR}/system_test.c
+    )
+    target_link_libraries(system_test PRIVATE vexspoke)
+endif()
 
 # App + capture registry / live-probe targets (AppDetect, CaptureTool)
-add_executable(app_detect_test
-    tests/app_detect_test.c
-)
-target_link_libraries(app_detect_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/app_detect_test.c" AND NOT TARGET app_detect_test)
+    add_executable(app_detect_test
+        ${VEXSPOKE_TEST_DIR}/app_detect_test.c
+    )
+    target_link_libraries(app_detect_test PRIVATE vexspoke)
+endif()
 
-add_executable(capture_tool_test
-    tests/capture_tool_test.c
-)
-target_link_libraries(capture_tool_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/capture_tool_test.c" AND NOT TARGET capture_tool_test)
+    add_executable(capture_tool_test
+        ${VEXSPOKE_TEST_DIR}/capture_tool_test.c
+    )
+    target_link_libraries(capture_tool_test PRIVATE vexspoke)
+endif()
 
 # TouchID Demo Target
-add_executable(touchid_demo
-    tests/touchid_demo.c
-)
-target_link_libraries(touchid_demo PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/touchid_demo.c" AND NOT TARGET touchid_demo)
+    add_executable(touchid_demo
+        ${VEXSPOKE_TEST_DIR}/touchid_demo.c
+    )
+    target_link_libraries(touchid_demo PRIVATE vexspoke)
+endif()
 
 # Headless net package test
-add_executable(net_test
-    tests/net_test.c
-)
-target_link_libraries(net_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/net_test.c" AND NOT TARGET net_test)
+    add_executable(net_test
+        ${VEXSPOKE_TEST_DIR}/net_test.c
+    )
+    target_link_libraries(net_test PRIVATE vexspoke)
+endif()
 
 # Headless threading package test
-add_executable(thread_test
-    tests/thread_test.c
-)
-target_link_libraries(thread_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/thread_test.c" AND NOT TARGET thread_test)
+    add_executable(thread_test
+        ${VEXSPOKE_TEST_DIR}/thread_test.c
+    )
+    target_link_libraries(thread_test PRIVATE vexspoke)
+endif()
 
 # Headless time package test
-add_executable(time_test
-    tests/time_test.c
-)
-target_link_libraries(time_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/time_test.c" AND NOT TARGET time_test)
+    add_executable(time_test
+        ${VEXSPOKE_TEST_DIR}/time_test.c
+    )
+    target_link_libraries(time_test PRIVATE vexspoke)
+endif()
 
 # Headless input pipeline test
-add_executable(input_test
-    tests/input_test.c
-)
-target_link_libraries(input_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/input_test.c" AND NOT TARGET input_test)
+    add_executable(input_test
+        ${VEXSPOKE_TEST_DIR}/input_test.c
+    )
+    target_link_libraries(input_test PRIVATE vexspoke)
+endif()
 
 # VexHome cache factory test
-add_executable(vexhome_test
-    tests/vexhome_test.c
-)
-target_link_libraries(vexhome_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/vexhome_test.c" AND NOT TARGET vexhome_test)
+    add_executable(vexhome_test
+        ${VEXSPOKE_TEST_DIR}/vexhome_test.c
+    )
+    target_link_libraries(vexhome_test PRIVATE vexspoke)
+endif()
 
 # Class relational test
-add_executable(class_relational_test
-    tests/class_relational_test.c
-)
-target_link_libraries(class_relational_test PRIVATE vexspoke)
+if(EXISTS "${VEXSPOKE_TEST_DIR}/class_relational_test.c" AND NOT TARGET class_relational_test)
+    add_executable(class_relational_test
+        ${VEXSPOKE_TEST_DIR}/class_relational_test.c
+    )
+    target_link_libraries(class_relational_test PRIVATE vexspoke)
+endif()
 
 # Dynamic Lifetime Verifier Debug-only test
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND EXISTS "${VEXSPOKE_TEST_DIR}/transient_lifetime_test.c" AND NOT TARGET transient_lifetime_test)
     add_executable(transient_lifetime_test
-        tests/transient_lifetime_test.c
+        ${VEXSPOKE_TEST_DIR}/transient_lifetime_test.c
     )
     target_link_libraries(transient_lifetime_test PRIVATE vexspoke)
+endif()
+
+# Header veto and variable tests
+if(EXISTS "${VEXSPOKE_TEST_DIR}/header_veto_test.c" AND NOT TARGET header_veto_test)
+    add_executable(header_veto_test
+        ${VEXSPOKE_TEST_DIR}/header_veto_test.c
+    )
+    target_link_libraries(header_veto_test PRIVATE vexspoke)
+endif()
+
+if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_pool_test.c" AND NOT TARGET variable_pool_test)
+    add_executable(variable_pool_test
+        ${VEXSPOKE_TEST_DIR}/variable_pool_test.c
+    )
+    target_link_libraries(variable_pool_test PRIVATE vexspoke)
+endif()
+
+if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)
+    add_executable(variable_strict_test
+        ${VEXSPOKE_TEST_DIR}/variable_strict_test.c
+    )
+    target_link_libraries(variable_strict_test PRIVATE vexspoke)
 endif()
 

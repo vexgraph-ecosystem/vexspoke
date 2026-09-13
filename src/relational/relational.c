@@ -40,7 +40,7 @@
  *     because silent truncation would corrupt identity.
  *
  *   VARIABLE ROWS — 16B [slot u32][classId u32][pointer u64], per scope.
- *   
+ *
  *     Bindings (mutable) over names (immutable): rebinding changes the
  *     row, never the pool. Class pins at creation so typed gathers
  *     (character.position.x AS a float) fail closed on mismatch instead
