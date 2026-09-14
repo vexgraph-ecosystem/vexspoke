@@ -224,16 +224,20 @@ Window Frame      ← NSWindow chrome / traffic lights
   CALayer frames and nothing else. Presentation runs on a dedicated present
   worker (`Kernel`'s `kernel_present_job` / `Application`'s `app_present_job`,
   spawned after window warm-up): it keeps presenting what Vulkan already has —
-  the board swapchain stays at its current extent and the `CAMetalLayer`
-  scales it to the live frame, and the panes/layers keep RENDERING +
+  the board swapchain stays at its current extent pinned TopLeft (**freeze-exact**:
+  gravity NEVER flips to `kCAGravityResize`, so the frozen frame is never
+  stretched or scaled) and the panes/layers keep RENDERING +
   presenting at 60fps into their fixed chains (`VkPane_presentAll` /
   `VkLayer_visit` never pause), so the four scenes keep animating the whole
-  drag. The board layer's
-  `contentsGravity` flips to `kCAGravityResize` for the drag — the frozen
-  board frame STRETCHES to cover the live bounds every drag step, so the
-  interior tracks the window edges (no empty gorge past the frozen extent,
-  no perceived resize lag); it flips back to `kCAGravityTopLeft` on settle
-  for the exact-size rebuild. Static panes hold their last present. Pane/corner anchor motion during the drag is
+  drag. Freeze-exact means the board layer's
+  `contentsGravity` stays `kCAGravityTopLeft` for the drag — the frozen
+  board frame keeps its exact pre-drag pixels pinned to the top-left every
+  drag step, zero stretch; the growing seam past the frozen extent is the
+  board's transparent (`opaque NO`) remainder, so blur / window background
+  shows through there until settle. On settle the flag
+  clears and the present pass replaces the frozen frame with an
+  exact-size rebuild at the true final size — one rebuild, one re-render,
+  never per drag frame. Static panes hold their last present. Pane/corner anchor motion during the drag is
   WindowServer-accelerated: `PanelCocoa_setAnchors` sets each layer's
   `autoresizingMask` + `anchorPoint` at attach, so CoreAnimation lays the
   sublayers out INSIDE the window-resize transaction — edge-locked on the
