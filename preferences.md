@@ -166,38 +166,78 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 ---
 
 ## 11. Window / Compositing Layer Order (macOS)
-The compositing stack from top to bottom is fixed:
+The compositing stack from top to bottom is fixed — one window, one blur view,
+exactly TWO Metal layers, Vulkan rendered inside:
 
 ```
-Content Board     ← the UI canvas: contentPanel's VkPane chain (UI subtree);
-                    paints the UI AND samples every COMPOSITED scene layer
-Scene Board       ← scenePanel's OWN CAMetalLayer + VkPane chain (scene subtree)
-Legacy Board      ← window CAMetalLayer, clear-transparent glass bottom
-Child Layers      ← scenes: COMPOSITED layers (retained offscreen targets
-                    collaged into the canvas) or DIRECT panes (own CAMetalLayer
-                    + VkPane swapchain)
-NSVisualEffectView← blur / vibrancy (behind-window blending)
-Window Frame      ← NSWindow chrome / traffic lights
+NSWindow Frame       ← NSWindow chrome / traffic lights
+└─ NSVisualEffectView ← blur / vibrancy (behind-window blending)
+   ├─ CAMetalLayer (bottom)  ← scene/legacy backdrop (scenePanel subtree)
+   └─ CAMetalLayer (top)     ← content/UI canvas (contentPanel subtree)
+      └─ children rendered in Vulkan:
+         COMPOSITED scenes sampled into the board drawable, or
+         DIRECT panes = nested sub-layer CAMetalLayers with own swapchains
 ```
 
-- `contentPanel` and `scenePanel` are the **two named boards**: each owns a
-  full-window `CAMetalLayer` + dedicated `VkPane` swapchain
-  (`PanelCocoa_newBoard`), composited scene-below-content via
-  `Window_compositeBoards`. A board paints its whole subtree into its own
-  chain; scene children render as COMPOSITED layers sampled into the board
-  pass or as DIRECT panes (Rule 11.5). Plain UI under a board needs no
-  `IOSurface` — it paints into the board pass.
+The blur material is everything and nothing: it never presents and it never
+re-renders during a drag — it is stable glass behind both layers. Where both
+Metal layers are transparent, the blur shows through; the Vulkan children are
+what actually paint, and they paint *inside* the two layers, never above them.
+
+- **Decoupling law (Rule 11.0): a Window is just a Window.** The graphics loop
+  boots only when a window actually hosts a render surface — `contentPanel`
+  (top board) or `scenePanel` (bottom board) attached, which happens when an
+  Application *borrows* the Window and registers it into graphvex's `GfxLoop`.
+  A bare window with no borrower is a plain AppKit window: native free resize,
+  zero swapchain, zero warm-up presents, zero `GfxLoop` registration, zero
+  present thread. Rendering never owns the window's resize; the swapchain
+  machinery is additive on top of an already-resizable host window, and the
+  loop lives in graphvex (Rule 17) — never inside the Kernel.
+  A Window is a **dumb surface + callback bridge**: it carries no presentation
+  logic of its own — only the `CAMetalLayer` frames, the input adapters, and a
+  set of exported C functions (the bridge) that graphvex calls to present with
+  transaction, resize panes, attach boards, and read render generation. The
+  window never renders, never ticks, and never schedules; it answers the
+  bridge and gets out of the way.
+- `contentPanel` (top) and `scenePanel` (bottom) are the **two named boards**:
+  top owns the UI canvas `CAMetalLayer`, bottom owns the scene/legacy
+  `CAMetalLayer` (`PanelCocoa_newBoard`), each with a dedicated `VkPane`
+  swapchain. A board paints its whole subtree into its own chain; scene
+  children render as COMPOSITED layers sampled into the board pass or as
+  DIRECT panes (Rule 11.5). Plain UI under the top board needs no `IOSurface`
+  — it paints into the board pass.
 - `contentPanel` without board backing stays a **pure placeholder**: its own
   background color is ignored and its children fall back to per-child panes.
   A board-backed `contentPanel` paints its whole subtree into its own chain.
 - `scenePanel` without board backing (set via `Window_setScenePanel`) renders
-  directly into the Vulkan swapchain background. `NULL` means the swapchain
-  clears to fully transparent, letting blur show through.
+  directly into the bottom layer's swapchain background. `NULL` means that
+  layer clears to fully transparent, letting blur show through.
 - Every `CAMetalLayer` in the stack pins top-left (`contentsGravity
   kCAGravityTopLeft`, `anchorPoint (0,0)`, `geometryFlipped YES`, `(0,0)` =
   top-left) and presents with the WindowServer transaction
   (`presentsWithTransaction YES`), so anchor motion and presents land on the
   same vsync — edge-locked, zero CPU catch-up.
+- **Single-commit live coordination (Rule 11.4):** during a live resize every
+  layer change across BOTH Metal layers lands in ONE explicit `CATransaction`
+  (frame in logical points + `drawableSize` in native px per Rule 12) with
+  implicit layer actions disabled for the drag — so both edges track the cursor
+  on the same event and neither layer lags the other. `presentsWithTransaction
+  YES` then makes each drawable swap atomic with its own motion, and because
+  both layers are sublayers of the same window subtree committed in that one
+  transaction, the whole composite (blur + bottom + top) lands on one vsync.
+- **No transaction spans `[NSApp sendEvent:]` (Rule 11.4 discipline):** a
+  live-resize drag enters AppKit's modal tracking loop INSIDE `sendEvent` and
+  blocks thread 0 until mouse-up. Any `CATransaction` open across that call
+  collects every native layer frame (blur view, content view, pane motion)
+  into ONE commit at mouse-up — the window freezes mid-drag. The event pump
+  therefore commits+rebegins around each dispatch: the tracking loop always
+  runs with no outer transaction, AppKit commits each native drag step on its
+  own runloop turn, and the pump's own batch commits before/after (idle cadence
+  for `presentsWithTransaction` drawables). The window presents nothing on its
+  own — it only publishes live frames as events; graphvex (R3) consumes them
+  through the `resizeRenderFn` hook and `GfxLoop_modalTick` seam and presents
+  only when actually registered (Window is a dumb surface + bridge, never a
+  renderer, per Rule 11.0).
 - Presentation is **on demand** (Rule 14): the presenter wakes only on a
   dirty tree, a published layer frame, or a live-resize drag — and rests on
   the last composite otherwise. Static content is never re-presented.
@@ -218,49 +258,25 @@ Window Frame      ← NSWindow chrome / traffic lights
   compositable color image the canvas samples (COMPOSITED). A layer/pane's
   pixel size is FIXED at register/resize time — `VkPane_resize`/`VkLayer_resize`
   is a no-op when the requested size is unchanged, so fixed targets never rebuild.
-- **Live resize is layer-motion only on thread 0, and the scenes stay alive
-  on the present worker (Rule 11.6):** during an active AppKit drag
-  (`NSViewLiveResize`) thread 0 is inside the modal tracking loop — it moves
-  CALayer frames and nothing else. Presentation runs on a dedicated present
-  worker (`Kernel`'s `kernel_present_job` / `Application`'s `app_present_job`,
-  spawned after window warm-up): it keeps presenting what Vulkan already has —
-  the board swapchain stays at its current extent pinned TopLeft (**freeze-exact**:
-  gravity NEVER flips to `kCAGravityResize`, so the frozen frame is never
-  stretched or scaled) and the panes/layers keep RENDERING +
-  presenting at 60fps into their fixed chains (`VkPane_presentAll` /
-  `VkLayer_visit` never pause), so the four scenes keep animating the whole
-  drag. Freeze-exact means the board layer's
-  `contentsGravity` stays `kCAGravityTopLeft` for the drag — the frozen
-  board frame keeps its exact pre-drag pixels pinned to the top-left every
-  drag step, zero stretch; the growing seam past the frozen extent is the
-  board's transparent (`opaque NO`) remainder, so blur / window background
-  shows through there until settle. On settle the flag
-  clears and the present pass replaces the frozen frame with an
-  exact-size rebuild at the true final size — one rebuild, one re-render,
-  never per drag frame. Static panes hold their last present. Pane/corner anchor motion during the drag is
-  WindowServer-accelerated: `PanelCocoa_setAnchors` sets each layer's
-  `autoresizingMask` + `anchorPoint` at attach, so CoreAnimation lays the
-  sublayers out INSIDE the window-resize transaction — edge-locked on the
-  same vsync as the window edge, zero CPU math, zero catch-up.
-  `Window_compositePanes` early-returns while
-  `Window_isLiveResizing` (a per-event explicit frame would fight the
-  accelerated autoresize pass and trail the live edge by a beat — the
-  right/bottom "catching up" artifact); exact frames are re-applied at
-  settle. `Darling_preFrame` still
-  early-returns while `Window_isLiveResizing`, so the worker never mutates
-  container layout or composites concurrently — a worker/thread-0 layout race
-  tears the `selfAnchor` math and pane layers drift from their pinned corners.
-  Zero swapchain rebuilds and zero pane re-renders
-  per drag frame (`Window_isLiveResizing` gates both `presentFrameLocked`,
-  `Window_attachPanes`, and `Darling_preFrame`; `Window_width/height` are
-  atomic caches written
-  by thread 0 in `setFrameSize`/`windowWillResize`/`windowDidResize`/the
-  pollEvents pump and read by the worker). On settle
-  (`viewDidEndLiveResize`) the flag clears, the final drawableSize lands, and
-  the next pass runs exactly ONE rebuild + ONE re-render at the true final
-  size. Rebuilding or re-rendering per drag frame is the
-  size-proportional-lag defect — large windows lag more. `Kernel_run`
-  bounded-joins the worker (`Thread_stop`) before teardown per Rule 26/27.
+- **Continuous Real-Time Live Resize & Presentation Law (Rule 11.6 — Abolishing "Freeze-Exact"):**
+  Freezing swapchain extents, dropping `VK_ERROR_OUT_OF_DATE_KHR` frames, and early-returning from
+  layout during mouse drags (`Window_isLiveResizing`) is **strictly abolished**. Deferring work to
+  "settle" is an artificial cop-out that produces frozen windows, dead animations, and visual tearing.
+  During an active window drag or live resize, the rendering pipeline operates continuously:
+  1. **Dynamic Extent & Swapchain:** `CAMetalLayer.drawableSize` tracks live window bounds on every
+     resize event. Swapchain out-of-date events immediately rebuild the swapchain cleanly without
+     dropping frames.
+  2. **Live Layout Recalculation = Real-Time Anchor Feel:** Container layout and anchor resolution run
+     on live bounds every frame of the drag — pinned elements (e.g., right-anchored, bottom-anchored)
+     recalculate their offsets dynamically and re-present, so they stay glued to their edges in real
+     time. The resolution granularity is one vsync (60/120Hz), which IS the native contract:
+     CoreAnimation itself commits per frame, so per-frame latency is indistinguishable from a native
+     view. Nothing is ever stale beyond the latency of a single frame. The sub-frame gap between a
+     resize event and the next frame is covered by the instantly-moved layer frame (Rule 11.4) plus
+     the gravity-pinned last bitmap — never black, never torn, never stretched-out-of-anchor.
+  3. **Unbroken Animation & Presentation:** Animation tickers, dirty-propagation, and command buffer
+     presentation (`presentsWithTransaction = YES`) continue rendering and presenting at the display's
+     native refresh rate (60/120Hz) throughout mouse drags and moves.
 - Pane register timing: `Darling_initCompositor` runs `Vk_init` first; child
   attach happens inside `Darling_preFrame` →
   `Window_attachPanes`, so `VkPane_register` always finds a live
@@ -391,8 +407,10 @@ The stack has ONE order. Lower R = boots earlier, more stable, tears down later.
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │ R1 — HOST (hotcwap)                                                    │
-│ Process supervisor, Kernel, OS windows, dynamic hot-loader, lifecycle │
-│ Hot / Manifest / VkLoader / Window (window_cocoa.m) / Application      │
+│ Supervisor; Kernel = registries + dispatch. NO Kernel tick, NO pump      │
+│ thread — the frame loop + event pump live in R3 graphvex (GfxLoop).     │
+│ Hot / Manifest / VkLoader / Window (window_cocoa.m) /                   │
+│ process/{Process, Application, Console} — the three lifecycle kinds.    │
 │ boots FIRST, tears down LAST. Window never hot-updates (OS-owned).     │
 └──────────────────────────────────┬─────────────────────────────────────┘
      supervises ▼                   │ borrows leaf shape ▲
@@ -419,7 +437,7 @@ The stack has ONE order. Lower R = boots earlier, more stable, tears down later.
 ┌──────────────────────────────────┴─────────────────────────────────────┐
 │ R5 — INTERACTABLES (semicolon, samplerate, darling-editor, drawling, anti)
 │ End-user applications: IDE, DAW, Spatial Whiteboard, Painting, 3D Game │
-│ Each = Application {CLI/TUI/GUI} x windows[APP_MAX_WINDOWS] in Kernel. │
+│ Each = Application x windows[APP_MAX_WINDOWS] in Kernel.                  │
 └────────────────────────────────────────────────────────────────────────┘
 │ vexgraph — umbrella integrator (projects/, main/vk_test.c, tooling)    │
 └────────────────────────────────────────────────────────────────────────┘
@@ -428,7 +446,12 @@ The stack has ONE order. Lower R = boots earlier, more stable, tears down later.
 How to read the arrows (the only two directions in the whole repo):
 - `supervises ▼` (runtime): R1 boots R2, loads R3 dylibs, registers R4 UI, R5 apps. Teardown runs reverse per Rule 26.
 - `borrows shape ▲` (compile-time): a file may only `#include` shapes from the allowlist below. Supervisor borrows leaf shapes; leaf never borrows supervisor shapes.
-- `registers ◀` (engines): R5 never gets `#include`d by R1. R1 holds `void*` + `AppRunFn`/`AppTickFn`/`AppHotReloadFn` + `HotModule`. Same feature, no circular link, Rule 19 standalone stays green.
+- `registers ◀` (engines): R5 never gets `#include`d by R1. R1 holds `void*`
+  + per-kind fn-tables (`ProcessEntry`, `AppRunFn`/`AppTickFn`/`AppHotReloadFn`,
+  `ConsoleIo`) + `HotModule`. Same feature, no circular link, Rule 19
+  standalone stays green. Windowed Applications additionally register a
+  frame-handler frame-client into graphvex's `GfxLoop` — opaque handle +
+  callback, never an `#include`.
 
 Allowlist (only includes permitted — everything else is a defect):
 - R2 `vexspoke`: includes NOTHING from `graphvex`/`hotcwap`/`darling`/`api-haven`/engines. Pure leaf.
@@ -482,8 +505,56 @@ Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex`/`
    - `darkbase`: `Database` interface, native vex store in-budget.
 
 3. **R1 `hotcwap` Host**:
-   - Owns: `Kernel` (`projects/hotcwap/kernel/kernel.h`), `Application` registry (`app/application.h`), `Window`, `Hot`/`Manifest`/`VkLoader`/`SpvWatch`.
-   - `Application` is final infrastructure — R5 apps rely on it, it never relies on them.
+   - Owns: `Kernel` (`projects/hotcwap/kernel/kernel.h`), the **three process
+     kinds** in `hotcwap/process/` (`process/process.{c,h}`,
+     `process/application.{c,h}`, `process/console.{c,h}`), `Window`,
+     `Hot`/`Manifest`/`VkLoader`/`SpvWatch`.
+   - **Process taxonomy (classify by the first matching question):**
+1. Presents pixels through a Window/board composite chain
+         (`CAMetalLayer` + swapchain)? → **Application** — a pure *manifest*:
+         identity (name/author/version/icon), window registry,
+         and a hot-module slot. It NEVER owns a tick, a present worker, a
+         frame scheduler, or an event router — `Application_start/stop` flip
+         the `running` flag, and `Application_run` is the keep-alive parked
+         loop (hotcwap's own, graphvex-independent): it BLOCKS until every
+         registered window is closed, letting the Window pump its own events
+         in 25ms slices and asking closed-state at a 250ms cadence — so an
+         empty window lives on its own and `Kernel_run(kernel, app)` returns
+         only once the user closed all windows. The Kernel (R1) dispatches the
+         Application into graphvex's `GfxLoop` (R3),
+         which drives the Thread-0 event pump, frame scheduling, presentation
+         (demand-driven, Rules 14 + 11.6), and telemetry writes through the
+         Window's C callback bridge.
+         window attach/detach lifecycle, present-on-demand.
+     2. Talks to a tty/stdio, executes shell scripts, or hosts a REPL/session?
+        → **Console** — never a window; borrows R2 `ProcessSpawn`/`File`/
+        `VexHome` for execution. A session pump state machine (`ConsoleIo`
+        fn-table seam per Rule 33), polled in bounded 100ms slices with a cancel
+        flag (Rule 27) by a supervised thread — zero sockets, zero threads owned.
+     3. Neither — just a function? → **Process** — one-shot invocable wrapping
+        a hot-loadable `main`-shaped entry (`ProcessEntry`): invoke → run to
+        completion → exit status; re-runnable ("run it back"); never ticked;
+        the hot module is pinned by a retire handle while a call is in flight.
+   - **One type per process.** Classification is the *primary contract*:
+     surface > stdio > function. A terminal-in-a-window is composition — an
+     Application hosting a child Console via `ProcessSpawn` — never a hybrid.
+   - **Kernel is an object that stores and dispatches work — never an
+     executor.** `Kernel` owns the arenas, the three registries
+     (`processes`/`applications`/`consoles`, all doubling arena slabs per
+     Rule 40), and the supervised `Thread` registry. There is **no
+     `Kernel_tick`, no present worker field, and no Kernel-owned pump
+     thread**: `Kernel_run` is a thin reference forward that hands each
+     registered kind to its own run function — `Process_run()` for one-shot
+     invokables, `Console_run()` for session pumps, and graphvex `GfxLoop`
+     registration for Applications (which then drives the frame loop, the
+     Thread-0 event pump, presentation, and `frame(app, dt)` handler
+     invocation on live bounds as a demand-driven frame scheduler, Rules
+     14 + 11.6). The Kernel never implements the work itself, so hot-reloading
+     a module swaps the running code without touching the supervisor.
+   - `Application`/`Process`/`Console` are final infrastructure — R5 apps rely
+     on them, they never rely on R5. An Application never grows a loop back:
+     tick/render/present/poll are graphvex (frame) and Kernel-dispatch
+     (start/stop) jobs, steering through the Window's C callback bridge only.
 
 4. **R4 Interfaces — darling-framework | sesh**:
    - `darling-framework`: `Canvas`/`Container`/`Panel`/widgets/compositor/`panel_bridge.c`.
@@ -495,7 +566,9 @@ Build/commit order (dependencies first, per Rule 20): `vexspoke` -> `graphvex`/`
    - `darling-editor`: Spatial studio (Figma + Miro board, infinite canvas, HTML/SVG export).
    - `drawling`: Drawing studio (GIMP/Krita/FlipaClip target, layers, brushes).
    - `anti`: 3D game engine (5-column editor, bindless, meshlets, physics, darkbase).
-   - N apps x M windows per `Kernel`.
+   - N x the three process kinds x M windows per `Kernel` — the registries are
+     doubling arena slabs (Rule 40, zero ceilings): `processes` (invocables),
+     `applications` (windowed), `consoles` (sessions).
 
 6. **`vexgraph` (Top-Level Integrator & Application Root)**:
    - The umbrella project that nests the repositories in `projects/` and builds unified binaries, probes (`main/vk_test.c`), and tooling.
@@ -728,10 +801,13 @@ Window_destroy(w)            // detach adapters, close (never release-then-use)
 - A skipped step is a leak, not a shortcut. If a probe exits without
   `Window_destroy`, the `NSWindow` outlives the process as a ghost.
 - Multi-app Kernel order (`R1` host, N apps x M windows): `Kernel_destroy`
-  stops all `Application`s (`running = false`) top-down (R5 → R4 → R3),
-  destroys darling nodes per-panel, closes all windows, bounded-joins present/worker
-  threads per Rule 27, shuts down Vulkan, resets `transientArena`, destroys master
-  `arena` LAST. Never free `arena` while any `Application`/`Window` still runs.
+  stops all `Console` sessions (`SIGTERM` children, non-blocking reap per
+  Rule 27), detaches all `Application`s out of graphvex's `GfxLoop`, retires
+  all `Process` hot-mod pins, closes all windows, bounded-joins every
+  supervised thread per Rule 27, then graphvex `Vk_shutdown` (which joins
+  the `GfxLoop` present thread inside its own teardown), resets
+  `transientArena`, destroys master `arena` LAST. Never free `arena` while
+  any process kind / Window still runs.
 
 ---
 
@@ -981,7 +1057,7 @@ cold drop corrupts state; a log line per hot frame corrupts performance.
    integer overflow, cancelled, timeout. One `Log_warn` per failure at most,
    then drop-degrade per Rule 27 (return `false`, keep old content, move on).
 2. **Hot paths guard minimally, never log.** Vk present, `Raster`, `SdfGpu`,
-   darling layout, `Kernel_tick`, `presentFrameLocked`: at most one `nullptr`
+   darling layout, `GfxLoop_frame`, `presentFrameLocked`: at most one `nullptr`
    entry guard returning `false`, zero per-element revalidation, zero logging,
    zero allocation. The hot path trusts the cold-validated handle. Deeper
    invariants are proven at compile time (`_Static_assert`) or declared as
@@ -1092,3 +1168,23 @@ GPU failures are only debuggable if the report site equals the cause site. Chasi
 3. **Deterministic driver-state handling.** Every wait/acquire/submit/present follows one fixed decision table, written once: success advances; timeout-with-signal recovers; timeout-unsignaled drops with dirty state intact and retries next tick; `VK_ERROR_DEVICE_LOST` latches once at the true site (`presentDeviceLost(where)` in hotcwap — the latch is single-owned; downstream repos must not re-implement it, they may query `Vk_isDeviceLost()` wherever the allowlist permits) and short-circuits every later pass.
 4. **The report site is never the cause.** First action on any `VK_ERROR_DEVICE_LOST`: run with `MVK_CONFIG_LOG_LEVEL` enabled and read MoltenVK's underlying Metal error (`MTLCommandBuffer` error code + message) BEFORE touching code — `MTLCommandBufferErrorInternal`/`PageFault`/`Timeout` distinguishes a usage defect from a GPU power/restart event. Paste both lines together; never "fix the acquire" until MoltenVK says the acquire is the cause.
 5. **No loopholes in the health chain.** Handles are nulled in the same teardown pass (Rule 26) so a stale guard catches a real lifecycle defect instead of passing on a zombie pointer. Cold resource-creation paths (graphvex images/textures/framebuffers/views) keep Rule 35 result checks; hot per-frame seams (present, pane present, compositor batch, uploads, SDF dispatch, IOSurface export) carry `VkGuard_check` at entry.
+
+---
+
+## 40. Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits)
+
+### Definition:
+No algorithm, container, layout engine, or rendering pass may ever hardcode fixed task counts, capacity ceilings, or artificial element limits (e.g. `for (int i = 0; i < 4; i++)`, fixed array sizes for dynamic entities, or assumptions like "there are only 2 panels"). Systems must be engineered to handle whatever volume, resolution, or throughput is thrown at them — scaling seamlessly from 0 to $N$.
+
+### The Why:
+Hardcoded iteration limits and static capacity assumptions turn code into throwaway prototypes. When an engine assumes a fixed count or bakes dimensions (like hardcoded `640x400` or fixed 4 corners), any real-world workload breaks it. True systems architecture is scale-invariant: the same code that handles 1 child must handle 10,000 children with zero structural rewrites.
+
+### The Rule:
+1. **No Hardcoded Loops for Dynamic Work:**
+   Writing loops bounded by magic constants (`i < 4`, `i < 2`) to perform structural tasks is a defect. Iteration must be driven by dynamic child counts, queryable collections, or data-driven descriptor streams.
+2. **No Capacity Ceilings:**
+   Containers, layer registries, viewports, and pass managers must not impose arbitrary hard limits that reject or ignore elements beyond a static constant. Where fixed memory pools are required for zero steady-state allocation (Rule 36), storage must grow exponentially or re-index dynamically.
+3. **No "Cheat" Modes or Motion Gates:**
+   Gating or crippling functionality behind flags like `isLiveResizing` or "only at rest" to avoid implementing the general real-time case is forbidden. If a system can do it at idle, it must be engineered to do it under continuous motion and resize stress.
+4. **Generalized Geometry & Anchor Math:**
+   All positioning, anchoring, and layout math must be computed dynamically from parent extents $(W, H)$ via relative ratios or anchor matrices, never baked to static pixel constants.
