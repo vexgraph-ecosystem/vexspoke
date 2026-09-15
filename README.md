@@ -50,7 +50,7 @@ When nested inside an umbrella workspace, include `vexspoke` directly:
 # In your top-level CMakeLists.txt
 add_subdirectory(projects/vexspoke)
 
-add_executable(my_app main.c)
+add_executable(my_app spoke.c)
 target_link_libraries(my_app PRIVATE vexspoke)
 ```
 
@@ -63,7 +63,7 @@ if(NOT TARGET vexspoke)
     FetchContent_Declare(
         vexspoke
         GIT_REPOSITORY https://github.com/vexgraph-dev/vexspoke.git
-        GIT_TAG main
+        GIT_TAG spoke
     )
     FetchContent_MakeAvailable(vexspoke)
 endif()

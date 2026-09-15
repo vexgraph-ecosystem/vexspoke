@@ -737,7 +737,7 @@ if(NOT TARGET vexspoke)
     FetchContent_Declare(
         vexspoke
         GIT_REPOSITORY https://github.com/vexgraph-dev/vexspoke.git
-        GIT_TAG main
+        GIT_TAG spoke
     )
     FetchContent_MakeAvailable(vexspoke)
 endif()
