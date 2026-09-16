@@ -37,52 +37,52 @@ static inline void ov_type_error(void) {
 
 // --- elementwise helpers ---------------------------------------------------
 
-static inline Vec2 ov_v2_add(Vec2 a, Vec2 b) { return (Vec2){a.x + b.x, a.y + b.y}; }
-static inline Vec2 ov_v2_sub(Vec2 a, Vec2 b) { return (Vec2){a.x - b.x, a.y - b.y}; }
-static inline Vec2 ov_v2_mul(Vec2 a, Vec2 b) { return (Vec2){a.x * b.x, a.y * b.y}; }
-static inline Vec2 ov_v2_div(Vec2 a, Vec2 b) { return (Vec2){a.x / b.x, a.y / b.y}; }
+static inline Vec2 ov_v2_add(Vec2 a, Vec2 b) { return (Vec2){.horizontal = a.x + b.x, .vertical = a.y + b.y}; }
+static inline Vec2 ov_v2_sub(Vec2 a, Vec2 b) { return (Vec2){.horizontal = a.x - b.x, .vertical = a.y - b.y}; }
+static inline Vec2 ov_v2_mul(Vec2 a, Vec2 b) { return (Vec2){.horizontal = a.x * b.x, .vertical = a.y * b.y}; }
+static inline Vec2 ov_v2_div(Vec2 a, Vec2 b) { return (Vec2){.horizontal = a.x / b.x, .vertical = a.y / b.y}; }
 
-static inline Vec3 ov_v3_add(Vec3 a, Vec3 b) { return (Vec3){a.x + b.x, a.y + b.y, a.z + b.z}; }
-static inline Vec3 ov_v3_sub(Vec3 a, Vec3 b) { return (Vec3){a.x - b.x, a.y - b.y, a.z - b.z}; }
-static inline Vec3 ov_v3_mul(Vec3 a, Vec3 b) { return (Vec3){a.x * b.x, a.y * b.y, a.z * b.z}; }
-static inline Vec3 ov_v3_div(Vec3 a, Vec3 b) { return (Vec3){a.x / b.x, a.y / b.y, a.z / b.z}; }
+static inline Vec3 ov_v3_add(Vec3 a, Vec3 b) { return (Vec3){.horizontal = a.x + b.x, .vertical = a.y + b.y, .depth = a.z + b.z, .frame = 0}; }
+static inline Vec3 ov_v3_sub(Vec3 a, Vec3 b) { return (Vec3){.horizontal = a.x - b.x, .vertical = a.y - b.y, .depth = a.z - b.z, .frame = 0}; }
+static inline Vec3 ov_v3_mul(Vec3 a, Vec3 b) { return (Vec3){.horizontal = a.x * b.x, .vertical = a.y * b.y, .depth = a.z * b.z, .frame = 0}; }
+static inline Vec3 ov_v3_div(Vec3 a, Vec3 b) { return (Vec3){.horizontal = a.x / b.x, .vertical = a.y / b.y, .depth = a.z / b.z, .frame = 0}; }
 
-static inline Vec4 ov_v4_add(Vec4 a, Vec4 b) { return (Vec4){a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w}; }
-static inline Vec4 ov_v4_sub(Vec4 a, Vec4 b) { return (Vec4){a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w}; }
-static inline Vec4 ov_v4_mul(Vec4 a, Vec4 b) { return (Vec4){a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w}; }
-static inline Vec4 ov_v4_div(Vec4 a, Vec4 b) { return (Vec4){a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w}; }
+static inline Vec4 ov_v4_add(Vec4 a, Vec4 b) { return (Vec4){.horizontal = a.x + b.x, .vertical = a.y + b.y, .depth = a.z + b.z, .w = a.w + b.w}; }
+static inline Vec4 ov_v4_sub(Vec4 a, Vec4 b) { return (Vec4){.horizontal = a.x - b.x, .vertical = a.y - b.y, .depth = a.z - b.z, .w = a.w - b.w}; }
+static inline Vec4 ov_v4_mul(Vec4 a, Vec4 b) { return (Vec4){.horizontal = a.x * b.x, .vertical = a.y * b.y, .depth = a.z * b.z, .w = a.w * b.w}; }
+static inline Vec4 ov_v4_div(Vec4 a, Vec4 b) { return (Vec4){.horizontal = a.x / b.x, .vertical = a.y / b.y, .depth = a.z / b.z, .w = a.w / b.w}; }
 
 // v op s broadcast
-static inline Vec2 ov_v2_vs_add(Vec2 v, float s) { return (Vec2){v.x + s, v.y + s}; }
-static inline Vec2 ov_v2_vs_sub(Vec2 v, float s) { return (Vec2){v.x - s, v.y - s}; }
-static inline Vec2 ov_v2_vs_mul(Vec2 v, float s) { return (Vec2){v.x * s, v.y * s}; }
-static inline Vec2 ov_v2_vs_div(Vec2 v, float s) { return (Vec2){v.x / s, v.y / s}; }
+static inline Vec2 ov_v2_vs_add(Vec2 v, float s) { return (Vec2){.horizontal = v.x + s, .vertical = v.y + s}; }
+static inline Vec2 ov_v2_vs_sub(Vec2 v, float s) { return (Vec2){.horizontal = v.x - s, .vertical = v.y - s}; }
+static inline Vec2 ov_v2_vs_mul(Vec2 v, float s) { return (Vec2){.horizontal = v.x * s, .vertical = v.y * s}; }
+static inline Vec2 ov_v2_vs_div(Vec2 v, float s) { return (Vec2){.horizontal = v.x / s, .vertical = v.y / s}; }
 
-static inline Vec3 ov_v3_vs_add(Vec3 v, float s) { return (Vec3){v.x + s, v.y + s, v.z + s}; }
-static inline Vec3 ov_v3_vs_sub(Vec3 v, float s) { return (Vec3){v.x - s, v.y - s, v.z - s}; }
-static inline Vec3 ov_v3_vs_mul(Vec3 v, float s) { return (Vec3){v.x * s, v.y * s, v.z * s}; }
-static inline Vec3 ov_v3_vs_div(Vec3 v, float s) { return (Vec3){v.x / s, v.y / s, v.z / s}; }
+static inline Vec3 ov_v3_vs_add(Vec3 v, float s) { return (Vec3){.horizontal = v.x + s, .vertical = v.y + s, .depth = v.z + s, .frame = 0}; }
+static inline Vec3 ov_v3_vs_sub(Vec3 v, float s) { return (Vec3){.horizontal = v.x - s, .vertical = v.y - s, .depth = v.z - s, .frame = 0}; }
+static inline Vec3 ov_v3_vs_mul(Vec3 v, float s) { return (Vec3){.horizontal = v.x * s, .vertical = v.y * s, .depth = v.z * s, .frame = 0}; }
+static inline Vec3 ov_v3_vs_div(Vec3 v, float s) { return (Vec3){.horizontal = v.x / s, .vertical = v.y / s, .depth = v.z / s, .frame = 0}; }
 
-static inline Vec4 ov_v4_vs_add(Vec4 v, float s) { return (Vec4){v.x + s, v.y + s, v.z + s, v.w + s}; }
-static inline Vec4 ov_v4_vs_sub(Vec4 v, float s) { return (Vec4){v.x - s, v.y - s, v.z - s, v.w - s}; }
-static inline Vec4 ov_v4_vs_mul(Vec4 v, float s) { return (Vec4){v.x * s, v.y * s, v.z * s, v.w * s}; }
-static inline Vec4 ov_v4_vs_div(Vec4 v, float s) { return (Vec4){v.x / s, v.y / s, v.z / s, v.w / s}; }
+static inline Vec4 ov_v4_vs_add(Vec4 v, float s) { return (Vec4){.horizontal = v.x + s, .vertical = v.y + s, .depth = v.z + s, .w = v.w + s}; }
+static inline Vec4 ov_v4_vs_sub(Vec4 v, float s) { return (Vec4){.horizontal = v.x - s, .vertical = v.y - s, .depth = v.z - s, .w = v.w - s}; }
+static inline Vec4 ov_v4_vs_mul(Vec4 v, float s) { return (Vec4){.horizontal = v.x * s, .vertical = v.y * s, .depth = v.z * s, .w = v.w * s}; }
+static inline Vec4 ov_v4_vs_div(Vec4 v, float s) { return (Vec4){.horizontal = v.x / s, .vertical = v.y / s, .depth = v.z / s, .w = v.w / s}; }
 
 // s op v broadcast (non-commutative ops get real answers)
-static inline Vec2 ov_v2_sv_add(float s, Vec2 v) { return (Vec2){s + v.x, s + v.y}; }
-static inline Vec2 ov_v2_sv_sub(float s, Vec2 v) { return (Vec2){s - v.x, s - v.y}; }
-static inline Vec2 ov_v2_sv_mul(float s, Vec2 v) { return (Vec2){s * v.x, s * v.y}; }
-static inline Vec2 ov_v2_sv_div(float s, Vec2 v) { return (Vec2){s / v.x, s / v.y}; }
+static inline Vec2 ov_v2_sv_add(float s, Vec2 v) { return (Vec2){.horizontal = s + v.x, .vertical = s + v.y}; }
+static inline Vec2 ov_v2_sv_sub(float s, Vec2 v) { return (Vec2){.horizontal = s - v.x, .vertical = s - v.y}; }
+static inline Vec2 ov_v2_sv_mul(float s, Vec2 v) { return (Vec2){.horizontal = s * v.x, .vertical = s * v.y}; }
+static inline Vec2 ov_v2_sv_div(float s, Vec2 v) { return (Vec2){.horizontal = s / v.x, .vertical = s / v.y}; }
 
-static inline Vec3 ov_v3_sv_add(float s, Vec3 v) { return (Vec3){s + v.x, s + v.y, s + v.z}; }
-static inline Vec3 ov_v3_sv_sub(float s, Vec3 v) { return (Vec3){s - v.x, s - v.y, s - v.z}; }
-static inline Vec3 ov_v3_sv_mul(float s, Vec3 v) { return (Vec3){s * v.x, s * v.y, s * v.z}; }
-static inline Vec3 ov_v3_sv_div(float s, Vec3 v) { return (Vec3){s / v.x, s / v.y, s / v.z}; }
+static inline Vec3 ov_v3_sv_add(float s, Vec3 v) { return (Vec3){.horizontal = s + v.x, .vertical = s + v.y, .depth = s + v.z, .frame = 0}; }
+static inline Vec3 ov_v3_sv_sub(float s, Vec3 v) { return (Vec3){.horizontal = s - v.x, .vertical = s - v.y, .depth = s - v.z, .frame = 0}; }
+static inline Vec3 ov_v3_sv_mul(float s, Vec3 v) { return (Vec3){.horizontal = s * v.x, .vertical = s * v.y, .depth = s * v.z, .frame = 0}; }
+static inline Vec3 ov_v3_sv_div(float s, Vec3 v) { return (Vec3){.horizontal = s / v.x, .vertical = s / v.y, .depth = s / v.z, .frame = 0}; }
 
-static inline Vec4 ov_v4_sv_add(float s, Vec4 v) { return (Vec4){s + v.x, s + v.y, s + v.z, s + v.w}; }
-static inline Vec4 ov_v4_sv_sub(float s, Vec4 v) { return (Vec4){s - v.x, s - v.y, s - v.z, s - v.w}; }
-static inline Vec4 ov_v4_sv_mul(float s, Vec4 v) { return (Vec4){s * v.x, s * v.y, s * v.z, s * v.w}; }
-static inline Vec4 ov_v4_sv_div(float s, Vec4 v) { return (Vec4){s / v.x, s / v.y, s / v.z, s / v.w}; }
+static inline Vec4 ov_v4_sv_add(float s, Vec4 v) { return (Vec4){.horizontal = s + v.x, .vertical = s + v.y, .depth = s + v.z, .w = s + v.w}; }
+static inline Vec4 ov_v4_sv_sub(float s, Vec4 v) { return (Vec4){.horizontal = s - v.x, .vertical = s - v.y, .depth = s - v.z, .w = s - v.w}; }
+static inline Vec4 ov_v4_sv_mul(float s, Vec4 v) { return (Vec4){.horizontal = s * v.x, .vertical = s * v.y, .depth = s * v.z, .w = s * v.w}; }
+static inline Vec4 ov_v4_sv_div(float s, Vec4 v) { return (Vec4){.horizontal = s / v.x, .vertical = s / v.y, .depth = s / v.z, .w = s / v.w}; }
 
 // --- matrix helpers (mul only) ---------------------------------------------
 
