@@ -40,7 +40,11 @@
  *   - KeyMap_buildCombo(keyCode, gestureType)         : assemble combo from
  *                                                       current modifier state
  *   - KeyMap_resolve(map, outCombo)                   : per-frame gesture
- *                                                       resolution, exact match
+ *                                                       resolution, exact match;
+ *                                                       stale taps offered but
+ *                                                       declined on modifiers
+ *                                                       are expired (never
+ *                                                       re-matched later)
  *
  * Setters:
  *   - KeyMap_bind(map, combo, fn, userdata)           : register a binding
@@ -260,6 +264,24 @@ bool KeyMap_resolve(const KeyMap *map, int64_t *outCombo)
 
         best = b;
         bestKm = bm;
+    }
+
+    // Second pass (no fire): expire stale taps that were "offered but
+    // declined on modifiers." A binding whose gesture is live for its code
+    // but which was rejected because modifiers differ has consumed its
+    // implicit offer — consuming the tap now keeps a bare-Q tap from
+    // lingering until Cmd+A arrives later. Only the losing modifier-space
+    // is expired; gesture-kind upgrades (taps==1 against a DOUBLE binding)
+    // are preserved so cross-frame double-taps still accumulate.
+    for (uint32_t i = 0; i < (*map).count; i++) {
+        const KeyBinding *b = &(*map).bindings[i];
+        if ((*b).fn == nullptr)
+            continue;
+        if (!gestureMatches((*b).combo))
+            continue;
+        if (((*b).combo & KMOD_ALL_MASK) == liveMods)
+            continue; // would have matched — handled above or already the winner
+        consumeGesture((*b).combo);
     }
 
     if (best == nullptr)
