@@ -1,0 +1,159 @@
+#import <AppKit/AppKit.h>
+#include "io/clipboard.h"
+#include "annotation/platform_exclusive.h"
+#include "annotation/overview.h"
+
+;;OVERVIEW
+/**
+ * ============================================================================
+ * MODULE: Clipboard_mac (objc/clipboard_mac.m)
+ * LEVEL: L4 — Self-Management (native macOS pasteboard bridge)
+ * ============================================================================
+ * Native macOS NSPasteboard bridge supporting UTF-8 text and raw RGBA bitmaps.
+ * ============================================================================
+ */
+
+;;PLATFORM_EXCLUSIVE("Mac")
+
+bool Clipboard_hasText(void) {
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        NSArray *types = [pb types];
+        return [types containsObject:NSPasteboardTypeString];
+    }
+}
+
+bool Clipboard_hasImage(void) {
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        NSArray *types = [pb types];
+        return [types containsObject:NSPasteboardTypeTIFF] ||
+               [types containsObject:NSPasteboardTypePNG];
+    }
+}
+
+size_t Clipboard_getText(char *dest, size_t maxBytes) {
+    if (dest == nullptr || maxBytes == 0) {
+        return 0;
+    }
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        NSString *str = [pb stringForType:NSPasteboardTypeString];
+        if (str == nil) {
+            dest[0] = '\0';
+            return 0;
+        }
+
+        const char *utf8 = [str UTF8String];
+        if (utf8 == nullptr) {
+            dest[0] = '\0';
+            return 0;
+        }
+
+        size_t len = strlen(utf8);
+        if (len >= maxBytes) {
+            len = maxBytes - 1;
+        }
+        memcpy(dest, utf8, len);
+        dest[len] = '\0';
+        return len;
+    }
+}
+
+bool Clipboard_setText(const char *text) {
+    if (text == nullptr) {
+        return false;
+    }
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        [pb clearContents];
+        NSString *str = [NSString stringWithUTF8String:text];
+        if (str == nil) {
+            return false;
+        }
+        return [pb setString:str forType:NSPasteboardTypeString];
+    }
+}
+
+bool Clipboard_getImage(void *dest, size_t maxBytes, int32_t *outWidth, int32_t *outHeight) {
+    if (dest == nullptr || outWidth == nullptr || outHeight == nullptr) {
+        return false;
+    }
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        NSData *data = [pb dataForType:NSPasteboardTypeTIFF];
+        if (data == nil) {
+            data = [pb dataForType:NSPasteboardTypePNG];
+        }
+        if (data == nil) {
+            return false;
+        }
+
+        NSBitmapImageRep *rep = [NSBitmapImageRep imageRepWithData:data];
+        if (rep == nil) {
+            return false;
+        }
+
+        int32_t w = (int32_t) [rep pixelsWide];
+        int32_t h = (int32_t) [rep pixelsHigh];
+        size_t needed = (size_t) w * (size_t) h * 4;
+        if (needed > maxBytes) {
+            return false;
+        }
+
+        *outWidth = w;
+        *outHeight = h;
+
+        unsigned char *bitmapData = [rep bitmapData];
+        if (bitmapData != nullptr) {
+            memcpy(dest, bitmapData, needed);
+            return true;
+        }
+        return false;
+    }
+}
+
+bool Clipboard_setImage(const void *pixels, int32_t width, int32_t height) {
+    if (pixels == nullptr || width <= 0 || height <= 0) {
+        return false;
+    }
+    @autoreleasepool {
+        NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
+            initWithBitmapDataPlanes:nullptr
+                          pixelsWide:width
+                          pixelsHigh:height
+                       bitsPerSample:8
+                     samplesPerPixel:4
+                            hasAlpha:YES
+                            isPlanar:NO
+                      colorSpaceName:NSCalibratedRGBColorSpace
+                         bytesPerRow:width * 4
+                        bitsPerPixel:32];
+
+        if (rep == nil) {
+            return false;
+        }
+
+        unsigned char *destData = [rep bitmapData];
+        if (destData == nullptr) {
+            return false;
+        }
+        memcpy(destData, pixels, (size_t) width * (size_t) height * 4);
+
+        NSData *tiffData = [rep TIFFRepresentation];
+        if (tiffData == nil) {
+            return false;
+        }
+
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        [pb clearContents];
+        return [pb setData:tiffData forType:NSPasteboardTypeTIFF];
+    }
+}
+
+void Clipboard_clear(void) {
+    @autoreleasepool {
+        NSPasteboard *pb = [NSPasteboard generalPasteboard];
+        [pb clearContents];
+    }
+}
