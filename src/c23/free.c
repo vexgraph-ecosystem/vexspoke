@@ -24,26 +24,60 @@
  */
 
 
-// Note: Add other class headers here as they get ported and need destructors.
+typedef struct DestructorEntry {
+    uint64_t     typeId;
+    DestructorFn fn;
+} DestructorEntry;
+
+#define MAX_CUSTOM_DESTRUCTORS 64
+static DestructorEntry s_destructors[MAX_CUSTOM_DESTRUCTORS];
+static uint32_t s_destructorCount = 0;
+
+void Destructor_register(uint64_t typeId, DestructorFn fn) {
+    if (fn == nullptr || typeId == 0) return;
+    // Check if already registered to update
+    for (uint32_t i = 0; i < s_destructorCount; i++) {
+        if (s_destructors[i].typeId == typeId) {
+            s_destructors[i].fn = fn;
+            return;
+        }
+    }
+    if (s_destructorCount < MAX_CUSTOM_DESTRUCTORS) {
+        s_destructors[s_destructorCount].typeId = typeId;
+        s_destructors[s_destructorCount].fn = fn;
+        s_destructorCount++;
+    }
+}
+
+DestructorFn Destructor_lookup(uint64_t typeId) {
+    for (uint32_t i = 0; i < s_destructorCount; i++) {
+        if (s_destructors[i].typeId == typeId) {
+            return s_destructors[i].fn;
+        }
+    }
+    return nullptr;
+}
 
 void c23_free(void *ptr) {
     if (!ptr) return;
 
     uint64_t typeId = Memory_type(ptr);
 
+    // 1. Dynamic destructor table lookup
+    for (uint32_t i = 0; i < s_destructorCount; i++) {
+        if (s_destructors[i].typeId == typeId) {
+            if (s_destructors[i].fn != nullptr) {
+                s_destructors[i].fn(ptr);
+            }
+            break;
+        }
+    }
+
+    // 2. Built-in type cases
     switch (typeId) {
         case TYPE_PROBABLE:
         case TYPE_PROBABLE_ARRAY:
-            // Probable currently has no internal pointers to free, 
-            // but if it did, we'd call Probable_destroy(ptr) here.
             break;
-            
-        // Future cases for Picture, Thread, Window, etc. will go here.
-        /*
-        case TYPE_PICTURE_SINGLETON:
-            Picture_destroy(ptr); // (Not yet ported)
-            break;
-        */
 
         default:
             break;
