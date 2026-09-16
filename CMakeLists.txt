@@ -106,6 +106,7 @@ add_library(vexspoke STATIC
     src/io/hot_file.c
     src/input/focus.c
     src/input/key.c
+    src/input/key_map.c
     src/input/mouse.c
     src/input/touch.c
     src/input/piano_key.c
@@ -220,7 +221,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/main/main.c" AND NOT TARGET vexspoke_
     target_link_libraries(vexspoke_demo PRIVATE vexspoke)
 endif()
 
-set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../_tests/vexspoke")
+set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/vexspoke")
 if(NOT EXISTS "${VEXSPOKE_TEST_DIR}")
     set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 endif()
@@ -286,6 +287,14 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/input_test.c" AND NOT TARGET input_test)
         ${VEXSPOKE_TEST_DIR}/input_test.c
     )
     target_link_libraries(input_test PRIVATE vexspoke)
+endif()
+
+# Headless key map binding registry test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/key_map_test.c" AND NOT TARGET key_map_test)
+    add_executable(key_map_test
+        ${VEXSPOKE_TEST_DIR}/key_map_test.c
+    )
+    target_link_libraries(key_map_test PRIVATE vexspoke)
 endif()
 
 # VexHome cache factory test

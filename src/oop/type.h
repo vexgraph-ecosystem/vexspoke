@@ -206,6 +206,12 @@
 #define TYPE_AUDIO_VOICE_SINGLETON  (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO_VOICE)
 #define TYPE_AUDIO_SINGLETON        (PROJ_VEXSPOKE | FORM_SINGLETON | ID_AUDIO)
 
+// --- INPUT CLASSES (binding registry) ---
+#define ID_KEY_MAP      0x0089u
+
+#define TYPE_KEY_MAP_SINGLETON      (PROJ_VEXSPOKE | FORM_SINGLETON | ID_KEY_MAP)
+#define TYPE_KEY_MAP_ARRAY          (PROJ_VEXSPOKE | FORM_ARRAY     | ID_KEY_MAP)
+
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
 // Every project ships its own *-type.h registry and numbers its classes
 // from 1: darling classes live in darling/c23/darling-type.h, graphvex in
