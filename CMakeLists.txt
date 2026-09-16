@@ -55,12 +55,31 @@ add_library(vexspoke STATIC
     src/primitive/long_double.c
     src/primitive/pack.c
     src/engine/loop.c
+    src/math/coord_frame.c
+    src/math/strict_math.c
+    src/math/fast_math.c
+    src/math/math.c
     src/lang/vec2.c
+    src/lang/vec2/vec2.c
+    src/lang/vec2/vec2d.c
     src/lang/vec3.c
+    src/lang/vec3/vec3.c
+    src/lang/vec3/vec3d.c
+    src/lang/vec3/vec3_int_float.c
+    src/lang/vec3/vec3_long_double.c
     src/lang/vec4.c
+    src/lang/vec4/vec4.c
+    src/lang/vec4/vec4d.c
     src/lang/mat4.c
     src/lang/fastmath.c
+    src/search/calc.c
+    src/search/find.c
+    src/search/spotlight.c
+    src/algo/draft_sort.c
     src/struct/array.c
+    src/struct/circle_array.c
+    src/struct/sphere_array.c
+    src/struct/octree.c
     src/struct/collection.c
     src/struct/deque.c
     src/struct/list.c
@@ -70,6 +89,7 @@ add_library(vexspoke STATIC
     src/struct/set.c
     src/struct/sparseset.c
     src/struct/stack.c
+    src/security/crypto.c
     src/io/vexhome.c
     src/io/file.c
     src/io/filewriter.c
@@ -173,7 +193,7 @@ endif()
 endif() # NOT TARGET vexspoke
 
 # Headless demo target
-if(NOT TARGET vexspoke_demo)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/main/main.c" AND NOT TARGET vexspoke_demo)
     add_executable(vexspoke_demo
         src/main/main.c
     )
@@ -293,4 +313,38 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_
     )
     target_link_libraries(variable_strict_test PRIVATE vexspoke)
 endif()
+
+# 12 CoordFrames & Math Precision Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/math_coord_test.c" AND NOT TARGET math_coord_test)
+    add_executable(math_coord_test
+        ${VEXSPOKE_TEST_DIR}/math_coord_test.c
+    )
+    target_link_libraries(math_coord_test PRIVATE vexspoke)
+endif()
+
+# String Calc & IDE Search Flags Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/search_calc_test.c" AND NOT TARGET search_calc_test)
+    add_executable(search_calc_test
+        ${VEXSPOKE_TEST_DIR}/search_calc_test.c
+    )
+    target_link_libraries(search_calc_test PRIVATE vexspoke)
+endif()
+
+# Spatial Data Structures (CircleArray, SphereArray, Octree) Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/spatial_struct_test.c" AND NOT TARGET spatial_struct_test)
+    add_executable(spatial_struct_test
+        ${VEXSPOKE_TEST_DIR}/spatial_struct_test.c
+    )
+    target_link_libraries(spatial_struct_test PRIVATE vexspoke)
+endif()
+
+# Security & Cryptography Engine Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/crypto_security_test.c" AND NOT TARGET crypto_security_test)
+    add_executable(crypto_security_test
+        ${VEXSPOKE_TEST_DIR}/crypto_security_test.c
+    )
+    target_link_libraries(crypto_security_test PRIVATE vexspoke)
+endif()
+
+
 
