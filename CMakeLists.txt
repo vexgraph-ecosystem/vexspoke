@@ -76,6 +76,11 @@ add_library(vexspoke STATIC
     src/search/find.c
     src/search/spotlight.c
     src/algo/draft_sort.c
+    src/algo/radix_sort.c
+    src/algo/dijkstra.c
+    src/algo/kd_tree.c
+    src/algo/bvh.c
+    src/algo/tree_sit.c
     src/struct/array.c
     src/struct/circle_array.c
     src/struct/sphere_array.c
@@ -91,6 +96,7 @@ add_library(vexspoke STATIC
     src/struct/stack.c
     src/security/crypto.c
     src/io/vexhome.c
+    src/io/cache.c
     src/io/file.c
     src/io/filewriter.c
     src/io/ws_client.c
@@ -102,7 +108,13 @@ add_library(vexspoke STATIC
     src/input/key.c
     src/input/mouse.c
     src/input/touch.c
+    src/input/piano_key.c
+    src/input/turntable.c
+    src/input/gesture.c
+    src/input/gamepad.c
+    src/input/hardware_event.c
     src/net/http.c
+    src/net/download.c
     src/net/json.c
     src/net/netfacade.c
     src/net/url.c
@@ -160,6 +172,8 @@ if(APPLE)
         src/objc/audio_cocoa.m
         src/objc/discovery.m
         src/system/image_mac.m
+        src/objc/clipboard_mac.m
+        src/objc/audio_hal_mac.m
     )
     set_source_files_properties(
         src/objc/touchid_cocoa.m
@@ -167,6 +181,8 @@ if(APPLE)
         src/objc/audio_cocoa.m
         src/objc/discovery.m
         src/system/image_mac.m
+        src/objc/clipboard_mac.m
+        src/objc/audio_hal_mac.m
         PROPERTIES COMPILE_OPTIONS "-fobjc-arc"
     )
     target_link_libraries(vexspoke PUBLIC
@@ -180,12 +196,16 @@ if(APPLE)
         "-framework CoreGraphics"
         "-framework Metal"
         "-framework IOKit"
+        "-framework CoreAudio"
+        "-framework AudioToolbox"
     )
 else()
     target_sources(vexspoke PRIVATE
         src/security/touchid.c
         src/net/tls_curl.c
         src/audio/audio_stub.c
+        src/io/clipboard_stub.c
+        src/audio/audio_hal_stub.c
     )
     find_package(CURL REQUIRED)
     target_link_libraries(vexspoke PUBLIC CURL::libcurl)
@@ -344,6 +364,30 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/crypto_security_test.c" AND NOT TARGET crypto_se
         ${VEXSPOKE_TEST_DIR}/crypto_security_test.c
     )
     target_link_libraries(crypto_security_test PRIVATE vexspoke)
+endif()
+
+# Hardware Input & Multiplexer Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/hardware_input_test.c" AND NOT TARGET hardware_input_test)
+    add_executable(hardware_input_test
+        ${VEXSPOKE_TEST_DIR}/hardware_input_test.c
+    )
+    target_link_libraries(hardware_input_test PRIVATE vexspoke)
+endif()
+
+# Algorithm Suite (Radix, Dijkstra, KD-Tree, BVH, TreeSit) Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/algo_suite_test.c" AND NOT TARGET algo_suite_test)
+    add_executable(algo_suite_test
+        ${VEXSPOKE_TEST_DIR}/algo_suite_test.c
+    )
+    target_link_libraries(algo_suite_test PRIVATE vexspoke)
+endif()
+
+# Clipboard, Cache & Destructor Dispatch Test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/clipboard_test.c" AND NOT TARGET clipboard_test)
+    add_executable(clipboard_test
+        ${VEXSPOKE_TEST_DIR}/clipboard_test.c
+    )
+    target_link_libraries(clipboard_test PRIVATE vexspoke)
 endif()
 
 
