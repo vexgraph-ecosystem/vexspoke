@@ -46,12 +46,15 @@
 #define KMOD_CTRL          (1LL << 44)
 #define KMOD_FN            (1LL << 48)
 
-// ── Mask nibbles (for future wildcard matching) ───────────
-// Each mask nibble is 0xF shifted to its modifier position.
-// Used to mask out specific nibble fields during combo comparison.
-#define KMOD_NIBBLE_MASK   0x0000000F00000000LL   // all 5 modifier nibbles (bits 32..51)
+// ── Masks ──────────────────────────────────────────────────
+// KMOD_ALL_MASK covers all 5 modifier nibbles (bits 32..51).
+// KEY_CODE_MASK / KMODE_MASK isolate their fields for matchMask-style work.
+#define KMOD_ALL_MASK      0x000FFFFF00000000LL   // SHIFT|CMD|OPT|CTRL|FN nibbles
 #define KEY_CODE_MASK      0x00000000FFFFFFFFLL   // key code bits only (bits 0..31)
 #define KMODE_MASK         0x00F0000000000000LL   // gesture mode nibble (bits 52..55)
+
+// Per-frame gesture resolution reads hold state against this threshold.
+#define KEYMAP_LONG_PRESS_NANOS (400ull * 1000 * 1000) // 400 ms hold → LONG_PRESS
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -93,6 +96,23 @@ bool KeyMap_unbind(KeyMap *map, int64_t combo, KeyBindingFn fn);
 // O(n) where n = binding count — fast for <64 bindings.
 
 const KeyBinding *KeyMap_match(const KeyMap *map, int64_t liveCombo);
+
+// ── Resolution (per-frame) ────────────────────────────────
+// Resolve live Key/Mouse gesture state against the binding table.
+// Exact-match semantics: a binding fires when its gesture
+// (TAP/DOUBLE_TAP/TRIPLE_TAP/LONG_PRESS) is present in live state for its
+// code, and its modifier bits EQUAL the current modifier state (no
+// unbound-modifier tolerance — wildcard tolerance is KeyMap_matchMask,
+// deferred). When several bindings match, the most specific gesture wins
+// (higher KMODE); ties resolve in bind order. At most one binding fires per
+// call: its fn(userdata, combo) runs and the source tap counter is consumed
+// (Key_resetTaps / Mouse_resetTaps) so the hit cannot re-fire on the next
+// frame. DRAG/SCROLL/ZOOM combos can be bound but never resolve from
+// per-frame polling — they are event-stream gestures reserved for the
+// future event-driven resolver (;;DRAFT). Long-press uses
+// KEYMAP_LONG_PRESS_NANOS as its hold threshold.
+
+bool KeyMap_resolve(const KeyMap *map, int64_t *outCombo);
 
 // ── Combo builder ─────────────────────────────────────────
 // Reads current modifier state from vexspoke's Key_isDown / Key_taps,

@@ -39,6 +39,8 @@
  *   - KeyMap_destroy(map)                             : free bindings + map
  *   - KeyMap_buildCombo(keyCode, gestureType)         : assemble combo from
  *                                                       current modifier state
+ *   - KeyMap_resolve(map, outCombo)                   : per-frame gesture
+ *                                                       resolution, exact match
  *
  * Setters:
  *   - KeyMap_bind(map, combo, fn, userdata)           : register a binding
@@ -50,6 +52,12 @@
  *   - KeyMap_isEmpty(map)                             : true if count == 0
  * ============================================================================
  */
+
+// ── Gesture resolution (KeyMap_resolve) ───────────────────
+// Long-press threshold comes from KEYMAP_LONG_PRESS_NANOS (key_map.h).
+// Mouse buttons occupy codes 0..7 (MOUSE_LEFT..MOUSE_BUTTON_8); keyboard
+// codes start at 32 (KEY_SPACE), so code < 32 always means a mouse button.
+#define KMAP_MOUSE_ID_MAX 32
 
 
 // ── Initial capacity for the binding array ────────────────
@@ -99,6 +107,54 @@ static int64_t gestureFromHoldDuration(uint64_t holdNanos, uint64_t longPressThr
     if (longPressThresholdNanos > 0 && holdNanos >= longPressThresholdNanos)
         return KMODE_LONG_PRESS;
     return KMODE_TAP;
+}
+
+// True when live Key/Mouse state currently shows the combo's gesture.
+// TAP/DOUBLE/TRIPLE read tap counters; LONG_PRESS reads the hold clock.
+// DRAG/SCROLL/ZOOM are event-stream gestures: they never match under
+// per-frame polling (;;DRAFT — event-driven resolver comes later).
+static bool gestureMatches(int64_t combo)
+{
+    int64_t code = (combo & KEY_CODE_MASK);
+    int64_t kmode = (combo & KMODE_MASK);
+
+    if (code < KMAP_MOUSE_ID_MAX) {
+        int button = (int) code;
+        int taps = Mouse_taps(button);
+        if (kmode == KMODE_TAP)
+            return taps > 0;
+        if (kmode == KMODE_DOUBLE_TAP)
+            return taps > 1;
+        if (kmode == KMODE_TRIPLE_TAP)
+            return taps > 2;
+        if (kmode == KMODE_LONG_PRESS)
+            return Mouse_isDown(button)
+                && Mouse_currentHoldDurationNanos(button) >= KEYMAP_LONG_PRESS_NANOS;
+        return false;
+    }
+
+    int key = (int) code;
+    int taps = Key_taps(key);
+    if (kmode == KMODE_TAP)
+        return taps > 0;
+    if (kmode == KMODE_DOUBLE_TAP)
+        return taps > 1;
+    if (kmode == KMODE_TRIPLE_TAP)
+        return taps > 2;
+    if (kmode == KMODE_LONG_PRESS)
+        return Key_isDown(key)
+            && Key_currentHoldDurationNanos(key) >= KEYMAP_LONG_PRESS_NANOS;
+    return false;
+}
+
+// Consume the gesture source after a hit so it cannot re-fire next frame.
+static void consumeGesture(int64_t combo)
+{
+    int64_t code = (combo & KEY_CODE_MASK);
+    if (code < KMAP_MOUSE_ID_MAX)
+        Mouse_resetTaps((int) code);
+    else
+        Key_resetTaps((int) code);
 }
 
 
@@ -176,6 +232,46 @@ int64_t KeyMap_buildComboForHold(int key, uint64_t longPressThresholdNanos)
     uint64_t hold = Key_currentHoldDurationNanos(key);
     int64_t gesture = gestureFromHoldDuration(hold, longPressThresholdNanos);
     return gesture | (int64_t) key | modifierState();
+}
+
+bool KeyMap_resolve(const KeyMap *map, int64_t *outCombo)
+{
+    if (map == nullptr)
+        return false;
+
+    int64_t liveMods = modifierState() & KMOD_ALL_MASK;
+    const KeyBinding *best = nullptr;
+    int64_t bestKm = -1;
+
+    for (uint32_t i = 0; i < (*map).count; i++) {
+        const KeyBinding *b = &(*map).bindings[i];
+        if ((*b).fn == nullptr)
+            continue;
+
+        int64_t bm = (*b).combo & KMODE_MASK;
+        if (best != nullptr && bm <= bestKm)
+            continue; // strictly-less specific, or earlier equal already chosen
+
+        if (((*b).combo & KMOD_ALL_MASK) != liveMods)
+            continue; // exact modifier equality
+
+        if (!gestureMatches((*b).combo))
+            continue;
+
+        best = b;
+        bestKm = bm;
+    }
+
+    if (best == nullptr)
+        return false;
+
+    // Consume BEFORE invoking so a re-entrant render cannot re-fire.
+    consumeGesture((*best).combo);
+
+    if (outCombo != nullptr)
+        *outCombo = (*best).combo;
+    (*best).fn((*best).userdata, (*best).combo);
+    return true;
 }
 
 

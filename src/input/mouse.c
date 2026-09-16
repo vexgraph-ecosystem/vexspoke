@@ -69,6 +69,7 @@
  *   - Mouse_lastHoldDurationNanos(button)
  *   - Mouse_currentHoldDurationNanos(button)
  *   - Mouse_taps(button)
+ *   - Mouse_resetTaps(button)
  *   - Mouse_x(void)
  *   - Mouse_y(void)
  *   - Mouse_button(mouseEvent)
@@ -480,6 +481,11 @@ uint64_t Mouse_currentHoldDurationNanos(int button) {
 int Mouse_taps(int button) {
     if (button < 0 || button >= BUTTON_COUNT) return 0;
     return s_slots[button].taps;
+}
+
+void Mouse_resetTaps(int button) {
+    if (button < 0 || button >= BUTTON_COUNT) return;
+    s_slots[button].taps = 0;
 }
 
 double Mouse_x(void) {

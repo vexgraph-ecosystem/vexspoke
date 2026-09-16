@@ -64,6 +64,7 @@ uint64_t Mouse_lastReleaseTime(int button);
 uint64_t Mouse_lastHoldDurationNanos(int button);
 uint64_t Mouse_currentHoldDurationNanos(int button);
 int      Mouse_taps(int button);
+void     Mouse_resetTaps(int button);
 
 // Last dispatched cursor position in content coordinates (top-left origin).
 // Written on dispatch of move/drag events — legacy left these dead; here they
