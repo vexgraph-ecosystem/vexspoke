@@ -256,53 +256,73 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 
 ## 12. Window Compositing Layer Order Law (macOS)
 The compositing stack from top to bottom is fixed — one window, one blur view,
-exactly TWO Metal layers, Vulkan rendered inside:
+exactly ONE on-screen Metal layer (the Frame seam canvas), Vulkan rendered
+inside it; the two named boards are retained offscreen targets:
 
 ```
 NSWindow Frame       ← NSWindow chrome / traffic lights
 └─ NSVisualEffectView ← blur / vibrancy (behind-window blending)
-   ├─ CAMetalLayer (bottom)  ← scene/legacy backdrop (scenePanel subtree)
-   └─ CAMetalLayer (top)     ← content/UI canvas (contentPanel subtree)
-      └─ children rendered in Vulkan:
-         COMPOSITED scenes sampled into the board drawable, or
-         DIRECT panes = nested sub-layer CAMetalLayers with own swapchains
+   ├─ CAMetalLayer (seam canvas)  ← the Frame's single on-screen layer —
+   │     composites the retained board images in z-order and presents
+   │     on demand (the Present-On-Demand Law)
+   │     ├─ (offscreen) VkLayer sceneBoard   ← scenePanel subtree, rendered
+   │     ├─ (offscreen) VkLayer contentBoard ← contentPanel subtree, rendered
+   │     └─ DIRECT panes = CALayer sublayers with own swapchains (optional)
 ```
 
 The blur material is everything and nothing: it never presents and it never
-re-renders during a drag — it is stable glass behind both layers. Where both
-Metal layers are transparent, the blur shows through; the Vulkan children are
-what actually paint, and they paint *inside* the two layers, never above them.
+re-renders during a drag — it is stable glass behind the canvas. Where the
+canvas is transparent, the blur shows through; the Vulkan children are what
+actually paint, and they paint *inside* the canvas: the seam pass samples the
+published board images, never above the layer.
 
-- `contentPanel` (top) and `scenePanel` (bottom) are the **two named boards**:
-  top owns the UI canvas `CAMetalLayer`, bottom owns the scene/legacy
-  `CAMetalLayer` (`PanelCocoa_newBoard`), each with a dedicated `VkPane`
-  swapchain. A board paints its whole subtree into its own chain; scene
-  children render as COMPOSITED layers sampled into the board pass or as
+- `contentPanel` (top) and `scenePanel` (bottom) are the **two named boards**,
+  but as RETAINED OFFSCREEN targets: `PanelCocoa_newBoard` registers a
+  fixed-pixel-size `VkLayer` dual-flight chain per board — never a CALayer,
+  never in the window tree, and its pixel size is FIXED at register/resize
+  time (`VkLayer_resize` no-ops on unchanged extent, so boards never rebuild
+  on window resize — the Pane-of-Glass Law). A board paints its whole subtree
+  into its target on `VkLayer_visit`; the seam pass composites scene board
+  (bottom) then content board (top) at full drawable extent. Scene children
+  render as COMPOSITED layers sampled into the content board pass or as
   DIRECT panes (the Pane-of-Glass Law). Plain UI under the top board needs no
   `IOSurface` — it paints into the board pass.
 - `contentPanel` without board backing stays a **pure placeholder**: its own
-  background color is ignored and its children fall back to per-child panes.
-  A board-backed `contentPanel` paints its whole subtree into its own chain.
-- `scenePanel` without board backing (set via `Window_setScenePanel`) renders
-  directly into the bottom layer's swapchain background. `NULL` means that
-  layer clears to fully transparent, letting blur show through.
-- Every `CAMetalLayer` in the stack pins top-left (`contentsGravity
-  kCAGravityTopLeft`, `anchorPoint (0,0)`, `geometryFlipped YES`, `(0,0)` =
-  top-left) and presents with the WindowServer transaction
-  (`presentsWithTransaction YES`), so anchor motion and presents land on the
-  same vsync — edge-locked, zero CPU catch-up.
+  background color is ignored and its children fall back to per-child panes
+  or direct root painting into the seam pass. A board-backed `contentPanel`
+  paints its whole subtree into its retained target.
+- `scenePanel` without board backing renders through the seam pass's clear
+  color (set from the scene panel's background). `NULL` clears to fully
+  transparent, letting blur show through.
+- The seam canvas pins top-left (`contentsGravity kCAGravityTopLeft`,
+  `anchorPoint (0,0)`, `geometryFlipped YES`, `(0,0)` = top-left), tracks the
+  window natively (`autoresizingMask` width+height sizable), and presents
+  with the WindowServer transaction (`presentsWithTransaction YES`), so
+  presents land on the same vsync as the window frame — edge-locked, zero CPU
+  catch-up. Its `drawableSize` is chased in native hardware pixels on every
+  resize step (the Native Pixel Law), so the swapchain always matches the
+  screen 1:1.
 - Calling `Window_setBlur(w, value > 0)` **must** also mark the window transparent
   so Vulkan rebuilds the swapchain with `VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR`.
   This is done automatically inside `Window_setBlur`.
 - Presentation is **on demand** (the Present-On-Demand Law): during a live-resize
   drag the presenter wakes on the moving edge and rests on the last composite
   otherwise. Static content is never re-presented.
+- Visit-then-composite ordering: `Darling_preFrame` runs `VkLayer_visit()`
+  (dirty boards + COMPOSITED scenes render into their flight targets) BEFORE
+  the seam pass samples them — same-queue order makes publish-then-read safe,
+  and registration demands the first render, so the very first present paints.
 - Pane register timing: `Darling_initCompositor` runs `Vk_init` first; child
   attach happens inside `Darling_preFrame` →
   `Window_attachPanes`, so `VkPane_register` always finds a live
-  device. Metal layers are attached before the composite frame is set, so a
-  zero-extent capability report falls back to the registered pixel size —
-  never fail registration on a frameless layer.
+  device. Retained targets are registered the same way; a zero-extent
+  capability report falls back to the registered pixel size — never fail
+  registration on a frameless layer.
+
+;;INTENTION("managed exception per the Conflict Triage Law: the two-CAMetalLayer
+board stack is retired — boards are retained offscreen VkLayer targets, the
+seam canvas is the window's single on-screen layer (one window, one blur view,
+ONE long-lived CAMetalLayer); DIRECT panes keep their own CAMetalLayers")
 
 ## 13. Window Decoupling Law (a Window is just a Window)
 The graphics loop boots only when a window actually hosts a render surface —
@@ -330,14 +350,14 @@ actually registered (Window is a dumb surface + bridge, never a renderer,
 per this law).
 
 ## 14. Single-Transaction Live Coordination Law
-During a live resize every layer change across BOTH Metal layers lands in ONE
-explicit `CATransaction` (frame in logical points + `drawableSize` in native
-px per the Native Pixel Law) with implicit layer actions disabled for the drag
-— so both edges track the cursor on the same event and neither layer lags the
-other. `presentsWithTransaction YES` then makes each drawable swap atomic
-with its own motion, and because both layers are sublayers of the same window
-subtree committed in that one transaction, the whole composite (blur + bottom
-+ top) lands on one vsync.
+During a live resize every layer change across the seam canvas and any DIRECT
+pane layers lands in ONE explicit `CATransaction` (frame in logical points +
+`drawableSize` in native px per the Native Pixel Law) with implicit layer
+actions disabled for the drag — so every edge tracks the cursor on the same
+event and no layer lags the other. `presentsWithTransaction YES` then makes
+each drawable swap atomic with its own motion, and because the layers are
+sublayers of the same window subtree committed in that one transaction, the
+whole composite (blur + seam + panes) lands on one vsync.
 
 ## 15. No-Transaction-Across-Event-Dispatch Law
 No transaction spans `[NSApp sendEvent:]`. A live-resize drag enters AppKit's
