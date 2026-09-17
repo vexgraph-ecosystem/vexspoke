@@ -131,7 +131,6 @@ add_library(vexspoke STATIC
     src/relational/variable.c
     src/relational/variable_pool.c
     src/relational/relational.c
-    src/atomic/atomic.c
     src/atomic/ring.c
     src/atomic/registry.c
     src/atomic/spin.c

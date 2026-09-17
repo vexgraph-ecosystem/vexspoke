@@ -3,7 +3,6 @@
 #include <stdatomic.h>
 #include <string.h>
 
-#include "atomic/atomic.h"
 #include "atomic/spin.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
@@ -42,8 +41,8 @@
  * mapped and valid, so a racing reader that loaded the old pointer keeps
  * reading live memory. Directory capacity lives inside each generation so a
  * reader can never pair a new capacity with an old array. Chunk slots are
- * AtomicPtr: a chunk is published only after its rows are zeroed, so a reader
- * sees null ("not there yet") or a ready block, never a torn one.
+ * atomic pointers: a chunk is published only after its rows are zeroed, so a
+ * reader sees null ("not there yet") or a ready block, never a torn one.
  *
  * STRUCT FIELDS (Mirroring struct/chunked_list.h):
  * ----------------------------------------------------------------------------
@@ -51,7 +50,7 @@
  *     // --- ChunkedList core (embed-first: a ChunkedList* is a Collection*) ---
  *     Collection collection; // gate-maintained mirror; quiesced reads only under concurrency
  *     // --- ChunkedList chunk part (rows never move once published) ---
- *     AtomicPtr directory;       // current directory generation (COW)
+ *     _Atomic(void*) directory;  // current directory generation (COW)
  *     _Atomic uint32_t chunkCount; // published chunks (lock-free reader bound)
  *     _Atomic uint32_t committed;  // published rows (lock-free reader bound)
  *     uint32_t rowsPerChunk;     // rows per chunk (power of two, >= 1; setup-time geometry)
@@ -68,7 +67,7 @@
  *     struct ChunkDir *prev;  // previous generation, freed at teardown
  *     uint32_t capacity;      // chunk slots in THIS generation
  *     uint32_t pad;           // explicit padding so chunks[] is 8-byte aligned
- *     AtomicPtr chunks[];     // published chunk pointers (flexible array)
+ *     _Atomic(uint8_t*) chunks[]; // published chunk pointers (flexible array)
  *   }
  *   pow2Rows(stride, chunkBytes)      // largest power-of-two rows for a budget (wrap-safe)
  *   shiftOf(rows)                     // log2 of a power-of-two row count
@@ -122,7 +121,7 @@ typedef struct ChunkDir {
     struct ChunkDir *prev; // previous generation (freed last at teardown)
     uint32_t capacity;     // chunk slots in THIS generation
     uint32_t pad;          // explicit padding so chunks[] is 8-byte aligned
-    AtomicPtr chunks[];    // published chunk pointers (flexible array)
+    _Atomic(uint8_t*) chunks[]; // published chunk pointers (flexible array)
 } ChunkDir;
 
 // Largest power of two rows that fits a byte budget (min 1). The loop test
@@ -147,7 +146,7 @@ static uint32_t shiftOf(uint32_t rows) {
 }
 
 static ChunkDir *directoryOf(const ChunkedList *self) {
-    return (ChunkDir*) AtomicPtr_get(&(*self).directory);
+    return (ChunkDir*) atomic_load_explicit(&(*self).directory, memory_order_acquire);
 }
 
 // Lock-free stable row resolve: null when the row is not published yet.
@@ -160,7 +159,7 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
     uint32_t ci = index >> (*self).rowShift;
     if (ci >= (*dir).capacity)
         return nullptr;
-    uint8_t *chunk = (uint8_t*) AtomicPtr_get(&(*dir).chunks[ci]);
+    uint8_t *chunk = atomic_load_explicit(&(*dir).chunks[ci], memory_order_acquire);
     if (!chunk)
         return nullptr;
     size_t stride = (*self).collection.stride;
@@ -176,7 +175,7 @@ static bool dirGrow(ChunkedList *self) {
     if (oldCap > (UINT32_MAX / 2u))
         return false;
     uint32_t newCap = oldCap == 0u ? VEX_CHUNKED_DIR_INIT : oldCap * 2u;
-    size_t bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(AtomicPtr);
+    size_t bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(_Atomic(uint8_t*));
     ChunkDir *next = (ChunkDir*) Memory_alloc(TYPE_CHUNKED_LIST, bytes);
     if (!next)
         return false;
@@ -184,7 +183,7 @@ static bool dirGrow(ChunkedList *self) {
     (*next).prev = old;
     (*next).capacity = newCap;
     (*next).pad = 0u;
-    memset(&(*next).chunks[0], 0, (size_t)newCap * sizeof(AtomicPtr));
+    memset(&(*next).chunks[0], 0, (size_t)newCap * sizeof(_Atomic(uint8_t*)));
 
     uint32_t have = atomic_load(&(*self).chunkCount);
     if (have > newCap) {
@@ -192,9 +191,9 @@ static bool dirGrow(ChunkedList *self) {
         return false;
     }
     for (uint32_t i = 0; i < have; i++)
-        AtomicPtr_exchange(&(*next).chunks[i], AtomicPtr_get(&(*old).chunks[i]));
+        atomic_store_explicit(&(*next).chunks[i], atomic_load_explicit(&(*old).chunks[i], memory_order_relaxed), memory_order_relaxed);
 
-    AtomicPtr_exchange(&(*self).directory, next);
+    atomic_store_explicit(&(*self).directory, next, memory_order_release);
     return true;
 }
 
@@ -221,7 +220,7 @@ static bool chunkAddLocked(ChunkedList *self) {
         return false;
 
     memset(chunk, 0, bytes);
-    AtomicPtr_exchange(&(*dir).chunks[have], chunk);
+    atomic_store_explicit(&(*dir).chunks[have], chunk, memory_order_release);
     atomic_store(&(*self).chunkCount, have + 1u);
 
     uint64_t cap = ((uint64_t)have + 1u) * (uint64_t)(*self).rowsPerChunk;
@@ -275,7 +274,7 @@ static ChunkedList *instant(uint32_t elementClass, size_t stride, uint32_t chunk
     (*c).data = nullptr;
 
     uint32_t rows = pow2Rows(stride, chunkBytes);
-    (*self).directory.value = nullptr;
+    atomic_store_explicit(&(*self).directory, nullptr, memory_order_relaxed);
     atomic_store(&(*self).chunkCount, 0u);
     atomic_store(&(*self).committed, 0u);
     (*self).rowsPerChunk = rows;
@@ -309,7 +308,7 @@ void ChunkedList_free(ChunkedList *self) {
     if (dir) {
         uint32_t chunks = atomic_load(&(*self).chunkCount);
         for (uint32_t i = 0; i < chunks; i++)
-            Memory_free(AtomicPtr_get(&(*dir).chunks[i]));
+            Memory_free(atomic_load_explicit(&(*dir).chunks[i], memory_order_relaxed));
     }
     while (dir) {
         ChunkDir *prev = (*dir).prev;
@@ -396,7 +395,7 @@ uint8_t *ChunkedList_getChunk(const ChunkedList *self, uint32_t chunkIndex) {
     ChunkDir *dir = self ? directoryOf(self) : nullptr;
     if (!dir || chunkIndex >= (*dir).capacity)
         return nullptr;
-    return (uint8_t*) AtomicPtr_get(&(*dir).chunks[chunkIndex]);
+    return atomic_load_explicit(&(*dir).chunks[chunkIndex], memory_order_acquire);
 }
 
 // SETTERS

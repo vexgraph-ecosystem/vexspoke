@@ -7,7 +7,6 @@
 #include <stdint.h>
 
 #include "c23/constructor.h"
-#include "atomic/atomic.h"
 #include "atomic/spin.h"
 #include "struct/collection.h"
 
@@ -51,11 +50,11 @@
 //     reading live memory (the classic COW snapshot rule). Directory capacity
 //     lives inside each generation for the same reason — a reader must never
 //     pair a new capacity with an old array.
-//   - chunk slots are AtomicPtr: publishing a chunk is an acquire/release
-//     handoff, so a reader sees either null ("not there yet") or a fully
-//     initialized row block — never a torn one. The committed count is stored
-//     only after the chunk is published, so index < committed implies the row
-//     is resolvable.
+//   - chunk slots are published via atomic pointers: publishing a chunk is an
+//     acquire/release handoff, so a reader sees either null ("not there yet")
+//     or a fully initialized row block — never a torn one. The committed count
+//     is stored only after the chunk is published, so index < committed implies
+//     the row is resolvable.
 // Growth copies nothing but the directory's chunk pointers (the cold
 // arraycopy), and that copy happens only when the directory doubles.
 //
@@ -80,7 +79,7 @@ typedef struct ChunkedList {
     // --- ChunkedList core (embed-first: a ChunkedList* is a Collection*) ---
     Collection collection; // gate-maintained mirror; quiesced reads only under concurrency
     // --- ChunkedList chunk part (rows never move once published) ---
-    AtomicPtr directory;       // current directory generation (COW, generations never freed mid-run)
+    _Atomic(void*) directory;  // current directory generation (COW, generations never freed mid-run)
     _Atomic uint32_t chunkCount; // published chunks (lock-free reader bound)
     _Atomic uint32_t committed;  // published rows (lock-free reader bound)
     uint32_t rowsPerChunk;     // rows per chunk (power of two, >= 1; setup-time geometry)
