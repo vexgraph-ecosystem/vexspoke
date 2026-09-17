@@ -408,20 +408,21 @@ static inline int Type_isChoice(uint64_t typeId) {
     return (typeId & MASK_WRAPPER_2) == WRAP2_CHOICE;
 }
 
-// Bounded registration slate for per-project parent tables (Rule 36:
-// flat index-keyed storage). Downstream repos register their class chains
-// here once; vexspoke resolves them without ever including their headers.
-#define TYPE_MAX_REGISTERED_PROJECTS 8u
+// Growable registration slate for per-project parent tables (Rule 36: flat
+// index-keyed storage). Downstream repos register their class chains here
+// once; vexspoke resolves them without ever including their headers. The
+// slate starts empty and doubles exponentially on demand, arena-backed (the
+// Dynamic Scalability & Anti-Hardcoding Law).
 
 // Register a project's parent table: parents[i] = parent class number of
 // class number i, 0 = root (the class is its own parent). Row 0 (the
 // entry for class 0) is unused. Class number indexes the row; the project
 // byte picks the table, so the same number space means different things in
 // every repo. Registration is idempotent (re-registering the same project
-// replaces its table) and bounded to TYPE_MAX_REGISTERED_PROJECTS entries.
-// Returns false on invalid proj (zero, non-project bits, PROJ_VEXSPOKE) or
-// when the slate is full. vexspoke's own classes need no registration —
-// their chains are the legacy bare-id rules below.
+// replaces its table). Returns false on invalid proj (zero, non-project
+// bits, PROJ_VEXSPOKE), an invalid (nullptr, count != 0) pair, or when the
+// arena allocator runs out of memory. vexspoke's own classes need no
+// registration — their chains are the legacy bare-id rules below.
 bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count);
 
 // Parent-class walk. Bare id or PROJ_VEXSPOKE class -> vexspoke's own

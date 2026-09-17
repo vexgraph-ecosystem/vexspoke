@@ -2,6 +2,9 @@
 #include "annotation/overview.h"
 
 #include <stddef.h>
+#include <string.h>
+
+#include "nio/mem.h"
 
 ;;OVERVIEW
 /**
@@ -26,8 +29,9 @@
  *     const uint32_t *parents;    // parents[i] = parent class # of class # i
  *     uint32_t count;             // 0 = root; rows past count = root
  *   }
- *   g_typeTables[8]               // bounded registration slate, first-match
- *   findTable(proj)               // row lookup for the project byte
+ *   g_typeTables                // growable slate, first-match, doubling on demand
+ *   growSlate(needed)           // exponential growth, arena-backed
+ *   findTable(proj)             // row lookup for the project byte
  *   vexspokeParent(cls)           // bare-id / PROJ_VEXSPOKE chain resolution
  *
  * FUNCTION REGISTRY:
@@ -80,10 +84,31 @@ typedef struct TypeParentsRow {
     uint32_t count;              // 0 row = root; rows past count = root
 } TypeParentsRow;
 
-static TypeParentsRow g_typeTables[TYPE_MAX_REGISTERED_PROJECTS];
+// Growable registration slate (the Dynamic Scalability & Anti-Hardcoding
+// Law): starts empty, doubles exponentially on demand, arena-backed. Rows
+// beyond g_typeTableCount are never scanned, so stale bytes are harmless.
+static TypeParentsRow *g_typeTables = NULL;
+static size_t g_typeTableCount = 0;
+static size_t g_typeTableCap = 0;
+
+// Grow the slate to at least `needed` rows (doubling, cold start 8). On OOM
+// the slate is left untouched and registration fails; the caller drops.
+static bool growSlate(size_t needed) {
+    if (needed <= g_typeTableCap) return true;
+    size_t newCap = (g_typeTableCap == 0) ? 8 : g_typeTableCap * 2;
+    while (newCap < needed) newCap *= 2;
+    TypeParentsRow *nb = (TypeParentsRow*) Memory_alloc(
+        TYPE_INT_POINTER, newCap * sizeof(TypeParentsRow));
+    if (nb == nullptr) return false;
+    if (g_typeTables != NULL && g_typeTableCap > 0)
+        memcpy(nb, g_typeTables, g_typeTableCap * sizeof(TypeParentsRow));
+    g_typeTables = nb;
+    g_typeTableCap = newCap;
+    return true;
+}
 
 static const TypeParentsRow *findTable(uint64_t proj) {
-    for (size_t i = 0; i < TYPE_MAX_REGISTERED_PROJECTS; ++i) {
+    for (size_t i = 0; i < g_typeTableCount; ++i) {
         const TypeParentsRow *row = &g_typeTables[i];
         if ((*row).proj == proj)
             return row;
@@ -100,21 +125,20 @@ bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count
         return false;
     if (parents == nullptr && count != 0u)
         return false;
-    for (size_t i = 0; i < TYPE_MAX_REGISTERED_PROJECTS; ++i) {
+    for (size_t i = 0; i < g_typeTableCount; ++i) {
         TypeParentsRow *row = &g_typeTables[i];
         if ((*row).proj == proj) {
             (*row).parents = parents;
             (*row).count = count;
             return true;
         }
-        if ((*row).proj == 0u) {
-            (*row).proj = proj;
-            (*row).parents = parents;
-            (*row).count = count;
-            return true;
-        }
     }
-    return false;
+    if (!growSlate(g_typeTableCount + 1)) return false;
+    TypeParentsRow *row = &g_typeTables[g_typeTableCount++];
+    (*row).proj = proj;
+    (*row).parents = parents;
+    (*row).count = count;
+    return true;
 }
 
 static uint64_t vexspokeParent(uint64_t cls) {
