@@ -188,7 +188,7 @@ Multi-statement bodies always use braces.
 
 ## 6. Cohesive Commits Law
 Commits must be strictly cohesive and buildable: **one logical feature or subsystem unit per repository**. Because the ecosystem consists of multiple specialized repositories that are assessed independently, git histories must be clean, traceable, and fully bisectable.
-- **Per Repository**: Commits must be executed locally inside the specific repository's git root (`projects/<repo>`). Never cross repository boundaries in a single commit, and never bundle multiple repos into one untracked commit.
+- **Per Repository**: Commits must be executed locally inside the specific repository's git root (`../<repo>`). Never cross repository boundaries in a single commit, and never bundle multiple repos into one untracked commit.
 - **Atomic & Bisectable**: Every commit MUST compile cleanly (`-Wall -Wextra -Werror`) and include its build wiring (`CMakeLists.txt`). Broken intermediate states or dead unwired commits are defects that ruin `git bisect`.
 - **Cohesive Scope**:
   - Independent classes or isolated fixes commit individually: `feat(cursor): ...`, `fix(label): ...`.
@@ -616,7 +616,7 @@ first.
    - `darkbase`: `Database` interface, native vex store in-budget.
 
 3. **R1 `hotcwap` Host**:
-   - Owns: `Kernel` (`projects/hotcwap/kernel/kernel.h`), the **three process
+   - Owns: `Kernel` (`../hotcwap/kernel/kernel.h`), the **three process
      kinds** in `hotcwap/process/` (`process/process.{c,h}`,
      `process/application.{c,h}`, `process/console.{c,h}`), `Window`,
      `Hot`/`Manifest`/`VkLoader`/`SpvWatch`.
@@ -685,7 +685,7 @@ first.
      `consoles` (sessions).
 
 6. **`vexgraph` (Top-Level Integrator & Application Root)**:
-   - The umbrella project that nests the repositories in `projects/` and builds unified binaries, probes (`main/vk_test.c`), and tooling.
+   - The umbrella project that nests the repositories in `../` and builds unified binaries, probes (`main/vk_test.c`), and tooling.
 
 ## 24. One Type Registry Law (Project-Scoped Identity, Uniform Per-Project Numbering)
 - **Type identity is project-scoped, never class-number-scoped.** A bare class number is meaningless without its project: vexspoke `#3` (`ID_DOUBLE`) and darling `#3` (`ID_CANVAS`) are entirely different types, because their 64-bit ids carry different PROJECT bytes. To identify any id you **must first resolve its project, then switch on the class number within that project's scope**:
@@ -747,7 +747,7 @@ When building inside `vexgraph`, `vexspoke` already exists as an in-tree target.
 
 ## 27. Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo)
 The Cohesive Commits Law and the No Auto-Pushing Law apply across all repositories:
-- **Per-Repository Execution**: When a change touches a class or feature within a repo, commit locally inside that repository's git root (`projects/<repo>`). Never commit from the umbrella root for sub-repository changes.
+- **Per-Repository Execution**: When a change touches a class or feature within a repo, commit locally inside that repository's git root (`../<repo>`). Never commit from the umbrella root for sub-repository changes.
 - **Atomic Subsystem Isolation**: Keep commits focused to a single class or cohesive subsystem unit (e.g., `feat(cursor): ...`, `feat(text_core): ...`, or `feat(sync): ...`). Classes that operate as a cohesive pipeline land together with their build wiring; unrelated subsystems must never be bundled into a shared omnibus blob.
 - **Upstream First**: Cross-cutting changes spanning multiple repositories must commit in strict downward-only dependency order:
   `vexspoke` -> `graphvex`/`api-haven`/`language`/`darkbase` -> `hotcwap` -> `darling-framework`/`sesh` -> R5 apps.
@@ -758,7 +758,7 @@ The old order (`vexspoke` -> `graphvex` -> `hotcwap` -> `darling` -> `api-haven`
 Upstream-first ordering applies to file-pair commits; each repo-local commit is one file pair per above.
 
 ## 28. SPIR-V Shader Deployment Law
-SPIR-V shaders (`.spv`) are centralized under `projects/graphvex/shader/` — the single source of truth, laid out by stage:
+SPIR-V shaders (`.spv`) are centralized under `../graphvex/shader/` — the single source of truth, laid out by stage:
 - `shader/frag/`, `shader/vert/`, `shader/comp/` — GLSL sources (base: `hello_triangle`, `solid_quad`; UI: `texture_quad`, `text_sdf`; compute: `sdf_jfa`, `sdf_combine`).
 - `shader/spv/` — compiled blobs (`<name>_<stage>.spv`, bare `<name>.spv` for compute), rebuilt via `shader/build_shaders.sh` (requires `glslangValidator`).
 - (Legacy note: sources lived in `hotcwap/vulkan/shaders/` + `darling/vulkan/shaders/`, blobs in per-subsystem `spv/` mirrors — all stale, pending deletion.)
@@ -766,12 +766,12 @@ SPIR-V shaders (`.spv`) are centralized under `projects/graphvex/shader/` — th
 
 **Runtime Shader Resolution Protocol**:
 The runtime loader (`loadSpvAny`) must search in this exact precedence order:
-1. `ANTI_SPV_DIR` / `VEX_SPV_DIR` (build-time staging directory `${CMAKE_BINARY_DIR}/spv/`, populated from `projects/graphvex/shader/spv/`)
+1. `ANTI_SPV_DIR` / `VEX_SPV_DIR` (build-time staging directory `${CMAKE_BINARY_DIR}/spv/`, populated from `../graphvex/shader/spv/`)
 2. `<exe_dir>/spv/<name>` (adjacent deployment)
 3. `<exe_dir>/../Resources/spv/<name>` (macOS `.app` bundle)
 4. CWD-relative paths (`spv/<name>`, `src/vulkan/spv/<name>`)
 
-The top-level `vexgraph` CMake build staging copies all `.spv` blobs from `projects/graphvex/shader/spv/` into `${CMAKE_BINARY_DIR}/spv/` so all subsystems discover their shaders seamlessly.
+The top-level `vexgraph` CMake build staging copies all `.spv` blobs from `../graphvex/shader/spv/` into `${CMAKE_BINARY_DIR}/spv/` so all subsystems discover their shaders seamlessly.
 
 ## 29. Identity & Naming Transition Law (Anti → Vexspoke / VexHome)
 The codebase is actively transitioning from the initial `anti` prototype name to the permanent **`vex`** family identity:
@@ -1032,7 +1032,7 @@ load-bearing artifact, not a snapshot. An out-of-date section is a defect,
 same as a stale `;;OVERVIEW` under the Living `;;OVERVIEW` Blueprint Law.
 
 - **Scope — every class root in darling.** Each class struct / file pair under
-  `projects/darling/` is a root: `Container`, `Panel`, `Canvas`, every widget
+  `../../projects/darling/` is a root: `Container`, `Panel`, `Canvas`, every widget
   (`ListContainer`, `GridContainer`, `ScrollContainer`, `SectionContainer`, `LayeredContainer`, `SplitContainer`,
   `MarkdownPanel`, `RichTextPanel`, `Button`, `Switch`, `Checkbox`,
   `RadioGroup`, `Slider`, `Knob`, `Input`, `Textarea`, `InputOTP`, `Select`,
@@ -1229,13 +1229,13 @@ they are complementary halves of a modern C23 collection design.
 
 ## 44. Living Feature Readiness Law (Zero Drift for Status)
 ### Definition:
-Each repository's feature readiness matrix lives in the ecosystem wiki repo (`.ecosystem/<repo>.md`, rendered as the `[[<repo>]]` wiki pages), one row per feature (container/widget/module/command), each carrying a scope line and a status emoji. The matrix is a **living inventory**, not a snapshot: its status column is the machine-readable handshake the ecosystem uses to know what is real vs stubbed vs absent.
+Each repository's feature readiness matrix lives in the ecosystem wiki repo (`../../_repositories/.ecosystem/<repo>.md`, rendered as the `[[<repo>]]` wiki pages), one row per feature (container/widget/module/command), each carrying a scope line and a status emoji. The matrix is a **living inventory**, not a snapshot: its status column is the machine-readable handshake the ecosystem uses to know what is real vs stubbed vs absent.
 
 ### The Why:
 Multi-repo ecosystems rot silently — a header-only dialog or a half-stubbed picker looks "implemented" from the call site until someone depends on it and hits the empty paint. A single, always-current matrix — one row per unit, read by machines and humans alike — makes build-readiness legible at a glance, keeps scope lines honest, and exposes the next structural wedge (the largest contiguous 🟥 block) the moment it appears.
 
 ### The Rule:
-1. **Same-cycle status law, per file pair.** Any commit that ships, stubs, retires, or re-scopes a feature **must move its `.ecosystem/<repo>.md` row in the same cycle** — code commit first, wiki row-write immediately after, never a deferred "update checklist" blob (the Cohesive Commits Law / Commit and Push Discipline Law). Code and wiki live in different repos so they ship as separate per-repo commits, but a green-on-disk row that is stale-red on the sheet is still a broken intermediate state.
+1. **Same-cycle status law, per file pair.** Any commit that ships, stubs, retires, or re-scopes a feature **must move its `../../_repositories/.ecosystem/<repo>.md` row in the same cycle** — code commit first, wiki row-write immediately after, never a deferred "update checklist" blob (the Cohesive Commits Law / Commit and Push Discipline Law). Code and wiki live in different repos so they ship as separate per-repo commits, but a green-on-disk row that is stale-red on the sheet is still a broken intermediate state.
 2. **Status legend (canonical, mirrors the wiki `Home.md` Status Legend):** 💚 98% done, production-ready · 🟩 95% done, implemented & functional · 🟨 85% done, substantially implemented · 🟧 75% done, partial/draft · 🟥 concept/draft, zero working source · ⬜ vital future work, not implemented (⬜ is never "dropped/archived"; it marks an important concept not yet built). A row's scope line is rewritten when the actor or deliverable changes, not just the emoji.
 3. **Test proof gates the status.** 🟨 rows carry test names in the scope column (`tests/<name>_test`); a row is never 🟩 before its unit tests pass under `-Wall -Wextra -Werror` (the Cohesive Commits Law). Moving a row up without its proof is inflation; use the Conflict Triage Law (`;;INTENTION`) instead of silently overstating.
 4. **Commits are per-checklist-file, per-repo.** The matrix lives as one row-write inside its feature commit; cross-repo rows never bundle (the Multi-Repo Atomic Commit Discipline Law). Code and wiki ship as separate per-repo commits in the same cycle — the code commit carries the behavior, the wiki commit carries the row.
@@ -1257,7 +1257,7 @@ Colocating tests alongside production source files pollutes the clean 1:1 class-
    - `_tests/graphvex/`: GPU buffers, rendering passes, texture, and font backend tests.
    - `_tests/hotcwap/`: Hot reload, manifest parser, kernel, and window lifecycle tests.
    - `_tests/api-haven/`: API client, webhooks, MCP server, SSE, and AI provider tests.
-4. **Standalone repo test contract.** If a project is checked out standalone without the umbrella `_tests/` root, it must keep its tests segregated in a top-level `tests/` directory at the repo root (e.g. `projects/<repo>/tests/`), never inside `src/` or component folders. In umbrella builds, `_tests/` is the canonical locus.
+4. **Standalone repo test contract.** If a project is checked out standalone without the umbrella `_tests/` root, it must keep its tests segregated in a top-level `tests/` directory at the repo root (e.g. `../<repo>/tests/`), never inside `src/` or component folders. In umbrella builds, `_tests/` is the canonical locus.
 5. **No test artifact commits.** Build artifacts, test scratch dumps, and test binaries must be excluded by `.gitignore` (`_tests/` or build output directories).
 
 ## 46. Ecosystem Vulkan Safety Nets Law (Determinism + Tree-Shaken Truth)
