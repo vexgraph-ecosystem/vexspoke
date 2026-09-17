@@ -645,9 +645,14 @@ first.
         slices with a cancel flag (the Bounded Wait Law) by a supervised
         thread — zero sockets, zero threads owned.
      3. Neither — just a function? → **Process** — one-shot invocable wrapping
-        a hot-loadable `main`-shaped entry (`ProcessEntry`): invoke → run to
-        completion → exit status; re-runnable ("run it back"); never ticked;
-        the hot module is pinned by a retire handle while a call is in flight.
+        one `int (*ProcessEntry)(void *context)` on the caller's thread.
+        Re-runnable, never ticked; one invocation at a time. `Process_run`
+        returns admission status separately from the callback's exit status.
+        `Process_replace` changes entry/context/hot association together between
+        calls, returning busy rather than waiting. Name and context are borrowed;
+        freeing requires deregistration and external exclusion of API callers.
+        A hot association is not a pin: callers must keep code loaded during
+        execution until generation pinning is integrated with the loader.
    - **One type per process.** Classification is the *primary contract*:
      surface > stdio > function. A terminal-in-a-window is composition — an
      Application hosting a child Console via `ProcessSpawn` — never a hybrid.
