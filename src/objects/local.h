@@ -5,14 +5,14 @@
 #include <stddef.h>
 #include "c23/constructor.h"
 
-// objects/local.h — Thread-local variable slot array object wrapper.
-// Ported from legacy objects/Local.java.
-
-#define LOCAL_THREAD_MAX 256
+// objects/local.h — Thread-local variable slot table object wrapper.
+// Ported from legacy objects/Local.java. The slot table is arena-backed
+// and grows exponentially on demand (the Dynamic Scalability &
+// Anti-Hardcoding Law) — thread ids are never capped.
 
 typedef struct Local Local;
 
-// Allocate a new thread-local slot array
+// Allocate a new thread-local slot table
 Local *Local_0(void);
 
 // Free local memory
@@ -23,7 +23,8 @@ Local *Local_2(const Local *init, size_t count);
 
 void Local_free(Local *local);
 
-// Slot accessors per thread id
+// Slot accessors per thread id — reads outside the live table return 0,
+// writes grow the table first.
 uint64_t Local_get(const Local *local, uint32_t threadId);
 void     Local_set(Local *local, uint32_t threadId, uint64_t value);
 
