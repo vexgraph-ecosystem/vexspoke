@@ -30,7 +30,7 @@ extern char **environ;
  * ----------------------------------------------------------------------------
  * Options & Lifecycle:
  *   - DownloadOptions_default()
- *   - DownloadResponse_free(res)
+ *   - DownloadResponse_free(resources)
  * Execution:
  *   - Download_to_file(url, output_file, opts)
  *   - Download_to_memory(url, opts, response_out)
