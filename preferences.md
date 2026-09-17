@@ -89,6 +89,7 @@ its ordinal may move as the document evolves.
 | 45 | Test Segregation Law |
 | 46 | Ecosystem Vulkan Safety Nets Law |
 | 47 | Dynamic Scalability & Anti-Hardcoding Law |
+| 48 | No Section Sign Law |
 
 ---
 
@@ -108,7 +109,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
    - *Concern*: Eliminating ambiguous syntax, visual sugar, and aliasing that obscures pointer operations or impairs machine readability.
-   - *Laws*: the No Arrow Sugar Law, the Cast Spacing Law, the Function Naming Law, the Single-Line If Law, the No Auto-Pushing Law, the Two-Semicolon Annotation Style Law, the Pointer Declaration Spacing Law, the Per-Repo Commit Message Scope Law.
+   - *Laws*: the No Arrow Sugar Law, the Cast Spacing Law, the Function Naming Law, the Single-Line If Law, the No Auto-Pushing Law, the Two-Semicolon Annotation Style Law, the Pointer Declaration Spacing Law, the Per-Repo Commit Message Scope Law, the No Section Sign Law.
    - *The Why*: The codebase is engineered for AI-human pair systems programming. Machine reasoning thrives on explicit, un-sugared syntax where every dereference is visible and unambiguous.
 
 ---
@@ -1065,7 +1066,7 @@ same as a stale `;;OVERVIEW` under the Living `;;OVERVIEW` Blueprint Law.
   1. `;;OVERVIEW` STRUCT FIELDS + FUNCTION REGISTRY mirror the new struct/API?
   2. `_docs/darling.md` section mirrors the new fields/functions/compartments?
   3. Stub-vs-live status corrected (`;;INCOMPLETE` gained or retired)?
-  4. Backend sections (§41–§48) touched if pixels, events, or teardown changed?
+  4. Backend sections (sections 41–48) touched if pixels, events, or teardown changed?
 Same-commit law is per file pair: code pair plus overview plus the matching
 `_docs/darling.md` section land together; splitting them across commits is a
 broken intermediate state.
@@ -1291,3 +1292,18 @@ Hardcoded iteration limits and static capacity assumptions turn code into throwa
    Gating or crippling functionality behind flags like `isLiveResizing` or "only at rest" to avoid implementing the general real-time case is forbidden. If a system can do it at idle, it must be engineered to do it under continuous motion and resize stress.
 4. **Generalized Geometry & Anchor Math:**
    All positioning, anchoring, and layout math must be computed dynamically from parent extents $(W, H)$ via relative ratios or anchor matrices, never baked to static pixel constants.
+
+---
+
+## 48. No Section Sign Law
+
+### Definition:
+The section sign (§, U+00A7) — the "double-S" — is forbidden everywhere: source comments, `;;OVERVIEW` blocks, docs, commit messages, wiki rows, and this document. Section references are always written as plain ASCII words: "see section 32", "the KeyMap section", "sections 41–48" — never "§32", "§KeyMap", or "§41–§48".
+
+### The Why:
+The glyph renders as an ugly double-S that reads as a typo in monospace, breaks `grep` for section references, and mangles in fonts, terminal pipelines, and localized tooling. The word "section" costs nothing and survives every tool, font, and copy-paste intact. A codebase that already bans arrow sugar for machine-readability has no business smuggling invisible punctuation into comments.
+
+### The Rule:
+1. **Never write §.** New code, new docs, new commits: the character is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
+2. **Migration on touch.** Existing occurrences migrate when their file is next modified: any commit that touches a file containing § must scrub those occurrences in the same commit. A § surviving a touch is a defect (the Living Preferences Law zero-drift rule applies to this migration too).
+3. **Canonical artifacts migrate with this law.** The occurrences present in `preferences.md` and the canonical docs at the time this law lands are scrubbed in this same commit; the umbrella-local legacy markers (`// §N` test-section comments, `_docs/code.txt` notes) migrate file-by-file as each is next touched.
