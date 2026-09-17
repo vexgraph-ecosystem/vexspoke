@@ -1,5 +1,6 @@
 #include "nio/mem.h"
 #include "annotation/overview.h"
+#include "annotation/intention.h"
 #include "atomic/spin.h"
 
 #include <stdbool.h>
@@ -96,8 +97,8 @@
  */
 
 #define SLAB_COUNT 7
+;;INTENTION("fixed SLAB_COUNT: allocator slab classes are a design constant, not a workload ceiling")
 #define ANTI_ARENA_DEFAULT_SIZE (64 * 1024 * 1024) // 64 MB master arena
-#define ARENA_REGISTRY_MAX 4
 
 // Hash-clarification veto over the identity core, fed little-endian (never
 // serialized, but explicit anyway). LSB forced so a stored sugar is never 0:
@@ -148,8 +149,38 @@ static uint32_t s_slabSizes[SLAB_COUNT] = { 64, 128, 256, 512, 1024, 2048, 4096 
 static uint32_t s_slabCaps[SLAB_COUNT] = { 32768, 32768, 16384, 8192, 4096, 2048, 2048 };
 
 static MemoryArena s_default = {0};
-static MemoryArena *s_registry[ARENA_REGISTRY_MAX] = { &s_default, nullptr, nullptr, nullptr };
+
+// Growable arena registry (the Dynamic Scalability & Anti-Hardcoding Law):
+// slot 0 is always the default arena once Memory_init runs; created arenas
+// append on demand. The pointer table is heap-backed (realloc), like the
+// calloc'd MemoryArena shims — never arena-backed, so allocator bookkeeping
+// can never recurse into itself. Writes happen at init/create/destroy
+// (pre-threads); walks are lock-free reads.
+static MemoryArena **s_registry = NULL;
+static size_t s_registryCount = 0;
+static size_t s_registryCap = 0;
 static SpinLock s_registryLock = SPIN_LOCK_INIT;
+
+// Append an arena pointer, growing the table exponentially. OOM returns false
+// and leaves the registry untouched.
+static bool registry_push(MemoryArena *a) {
+    if (s_registryCount == s_registryCap) {
+        size_t newCap = (s_registryCap == 0) ? 8 : s_registryCap * 2;
+        MemoryArena **nb = (MemoryArena**) realloc(
+            s_registry, newCap * sizeof(MemoryArena *));
+        if (!nb) return false;
+        s_registry = nb;
+        s_registryCap = newCap;
+    }
+    s_registry[s_registryCount++] = a;
+    return true;
+}
+
+// The default arena occupies slot 0 so free-routing walks always see it.
+static bool registry_ensureDefault(void) {
+    if (s_registryCount == 0) return registry_push(&s_default);
+    return true;
+}
 
 #define ANTI_TRANSIENT_DEFAULT_SIZE (64 * 1024 * 1024) // 64 MB
 
@@ -386,7 +417,7 @@ static MemoryArena *arena_for(void *userPtr) {
 
     uint8_t *p = (uint8_t*) userPtr;
 
-    for (size_t i = 0; i < ARENA_REGISTRY_MAX; i++) {
+    for (size_t i = 0; i < s_registryCount; i++) {
         MemoryArena *a = s_registry[i];
         if (a && (*a).live && (*a).masterArena) {
             uint8_t *base = (*a).masterArena;
@@ -417,7 +448,7 @@ static const MemoryHeader *safe_header(const void *userPtr) {
         }
     }
 
-    for (size_t i = 0; i < ARENA_REGISTRY_MAX; i++) {
+    for (size_t i = 0; i < s_registryCount; i++) {
         MemoryArena *a = s_registry[i];
         if (a && (*a).live && (*a).masterArena) {
             uint8_t *base = (*a).masterArena;
@@ -443,6 +474,7 @@ bool Memory_init(size_t totalBytes) {
         return true;
     }
     SpinLock_unlock(&s_default.initLock);
+    if (!registry_ensureDefault()) return false;   // slot 0 must exist first
     return arena_init(&s_default, totalBytes);
 }
 
@@ -636,14 +668,7 @@ MemoryArena *MemoryArena_create(size_t totalBytes) {
         return nullptr;
     }
     SpinLock_lock(&s_registryLock);
-    bool placed = false;
-    for (size_t i = 1; i < ARENA_REGISTRY_MAX; i++) {
-        if (!s_registry[i]) {
-            s_registry[i] = a;
-            placed = true;
-            break;
-        }
-    }
+    bool placed = registry_push(a);
     SpinLock_unlock(&s_registryLock);
     if (!placed) {
         free((*a).masterArena);
@@ -657,9 +682,11 @@ void MemoryArena_destroy(MemoryArena *a) {
     if (!a || a == &s_default)
         return;
     SpinLock_lock(&s_registryLock);
-    for (size_t i = 1; i < ARENA_REGISTRY_MAX; i++) {
-        if (s_registry[i] == a)
-            s_registry[i] = nullptr;
+    for (size_t i = 0; i < s_registryCount; i++) {
+        if (s_registry[i] == a) {
+            s_registry[i] = s_registry[--s_registryCount];
+            break;
+        }
     }
     SpinLock_unlock(&s_registryLock);
     (*a).live = false;
