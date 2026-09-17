@@ -86,6 +86,7 @@ add_library(vexspoke STATIC
     src/struct/sphere_array.c
     src/struct/octree.c
     src/struct/collection.c
+    src/struct/chunked_list.c
     src/struct/deque.c
     src/struct/list.c
     src/struct/map.c
@@ -311,6 +312,14 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/class_relational_test.c" AND NOT TARGET class_re
         ${VEXSPOKE_TEST_DIR}/class_relational_test.c
     )
     target_link_libraries(class_relational_test PRIVATE vexspoke)
+endif()
+
+# Chunked list (never-moved rows) test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/chunked_list_test.c" AND NOT TARGET chunked_list_test)
+    add_executable(chunked_list_test
+        ${VEXSPOKE_TEST_DIR}/chunked_list_test.c
+    )
+    target_link_libraries(chunked_list_test PRIVATE vexspoke)
 endif()
 
 # Dynamic Lifetime Verifier Debug-only test
