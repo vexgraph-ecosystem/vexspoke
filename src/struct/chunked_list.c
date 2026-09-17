@@ -1,5 +1,6 @@
 #include "struct/chunked_list.h"
 
+#include <stdatomic.h>
 #include <string.h>
 
 #include "atomic/atomic.h"
@@ -16,16 +17,25 @@
  * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * Never-moved chunked list: rows live in stable chunk blocks, so a row address
- * handed out once stays valid for the list's life and a reader on any thread
- * resolves an index to a row with no lock. Sibling of struct/List, which grows
+ * handed out once stays valid until free. Sibling of struct/List, which grows
  * one contiguous buffer and therefore moves every element on growth.
  *
+ * Concurrency: addSlot and reserve are safe from any number of writers — the
+ * gate serializes the whole claim-plus-growth-plus-commit step, so every row
+ * is handed out exactly once. slot, getChunk, the count getters and packInto
+ * are lock-free and safe concurrently with writers: the committed count is
+ * stored only after the row's chunk is published, so index < committed implies
+ * the row resolves. setChunkBytes is setup-time only and free requires
+ * quiescence. The embedded Collection mirror is maintained under the gate for
+ * single-threaded Collection_* use; under concurrency read counts only through
+ * the ChunkedList_* getters.
+ *
  * Storage: rowsPerChunk is the largest power of two <= chunkBytes / stride, so
- * lookup is chunk = index >> rowShift, off = index & rowMask (no divide).
- * chunkBytes is a BYTE budget (default 128 = one Apple Silicon cache line), so
- * a row at or above the budget owns a cache line and its atomics never false
- * share. Chunks and directory generations are 16-byte aligned by the arena
- * contract (MemoryHeader is 16 bytes, payload lengths round to 16).
+ * lookup is chunk = index >> rowShift, off = index & rowMask (no divide). All
+ * size math is checked and fails closed instead of wrapping. chunkBytes is a
+ * BYTE budget (default 128, sized to one Apple Silicon cache line): a row at
+ * or above the budget gets a chunk to itself. That is not a cache-line
+ * isolation guarantee — the arena aligns payloads to 16 bytes, not 128.
  *
  * The directory is copy-on-write: growth allocates a larger generation, copies
  * only the chunk pointers into it, and publishes it — old generations stay
@@ -39,16 +49,17 @@
  * ----------------------------------------------------------------------------
  *   ChunkedList {
  *     // --- ChunkedList core (embed-first: a ChunkedList* is a Collection*) ---
- *     Collection collection; // activeCount/stride/elementClass/capacity; data stays NULL
+ *     Collection collection; // gate-maintained mirror; quiesced reads only under concurrency
  *     // --- ChunkedList chunk part (rows never move once published) ---
- *     AtomicPtr directory;   // current directory generation (COW)
- *     uint32_t chunkCount;   // published chunks (owner-updated under the gate)
- *     uint32_t rowsPerChunk; // rows per chunk (power of two, >= 1)
- *     uint32_t rowShift;     // log2(rowsPerChunk)
- *     uint32_t rowMask;      // rowsPerChunk - 1
- *     uint32_t chunkBytes;   // byte budget per chunk (>= 16; default 128)
- *     // --- ChunkedList gate part (cold mutation only: chunks + directory) ---
- *     SpinLock lock;         // serializes growth; try-locked, 100ms bounded
+ *     AtomicPtr directory;       // current directory generation (COW)
+ *     _Atomic uint32_t chunkCount; // published chunks (lock-free reader bound)
+ *     _Atomic uint32_t committed;  // published rows (lock-free reader bound)
+ *     uint32_t rowsPerChunk;     // rows per chunk (power of two, >= 1; setup-time geometry)
+ *     uint32_t rowShift;         // log2(rowsPerChunk)
+ *     uint32_t rowMask;          // rowsPerChunk - 1
+ *     uint32_t chunkBytes;       // byte budget per chunk (>= 16; default 128)
+ *     // --- ChunkedList gate part (serializes every mutation step) ---
+ *     SpinLock lock;             // claim + growth + commit; try-locked, 100ms bounded
  *   }
  *
  * PRIVATE HELPERS (kept file-local, pure data + growth math only):
@@ -59,12 +70,14 @@
  *     uint32_t pad;           // explicit padding so chunks[] is 8-byte aligned
  *     AtomicPtr chunks[];     // published chunk pointers (flexible array)
  *   }
- *   pow2Rows(stride, chunkBytes)      // largest power-of-two rows for a budget
+ *   pow2Rows(stride, chunkBytes)      // largest power-of-two rows for a budget (wrap-safe)
+ *   shiftOf(rows)                     // log2 of a power-of-two row count
  *   directoryOf(self)                 // lock-free current generation load
  *   rowAt(self, index)                // lock-free stable row resolve
- *   dirGrow(self)                     // COW directory doubling (cold)
- *   chunkAdd(self)                    // allocate + publish one chunk (cold)
- *   ensureChunks(self, needChunks)    // bounded-lock growth gate
+ *   dirGrow(self)                     // COW directory doubling (gate held, cold)
+ *   chunkAddLocked(self)              // allocate + publish one chunk (gate held, cold)
+ *   ensureChunksLocked(self, need)    // growth gate body (gate held, cold)
+ *   ensureChunks(self, need)          // bounded-lock growth gate
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -112,18 +125,21 @@ typedef struct ChunkDir {
     AtomicPtr chunks[];    // published chunk pointers (flexible array)
 } ChunkDir;
 
-// Largest power of two rows that fits a byte budget (min 1).
+// Largest power of two rows that fits a byte budget (min 1). The loop test
+// divides instead of shifting so it cannot wrap on large budgets.
 static uint32_t pow2Rows(size_t stride, uint32_t chunkBytes) {
     uint32_t rows = (uint32_t)(chunkBytes / stride);
     if (rows == 0u)
         return 1u;
     uint32_t p = 1u;
-    while ((p << 1) <= rows)
+    while (p <= (rows >> 1))
         p <<= 1u;
     return p;
 }
 
 static uint32_t shiftOf(uint32_t rows) {
+    if (rows == 0u)
+        return 0u;
     uint32_t shift = 0;
     while ((1u << shift) < rows)
         shift++;
@@ -135,6 +151,8 @@ static ChunkDir *directoryOf(const ChunkedList *self) {
 }
 
 // Lock-free stable row resolve: null when the row is not published yet.
+// Callers bound index by the committed count first; the committed store lands
+// only after the chunk publish, so index < committed implies non-null here.
 static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
     ChunkDir *dir = directoryOf(self);
     if (!dir)
@@ -151,9 +169,12 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
 
 // Copy-on-write directory doubling: publish a bigger generation, keep the old
 // one valid forever (the arraycopy of the cold path — chunk pointers only).
+// Gate held by the caller: exactly one grower, so chunkCount only moves here.
 static bool dirGrow(ChunkedList *self) {
     ChunkDir *old = directoryOf(self);
     uint32_t oldCap = old ? (*old).capacity : 0u;
+    if (oldCap > (UINT32_MAX / 2u))
+        return false;
     uint32_t newCap = oldCap == 0u ? VEX_CHUNKED_DIR_INIT : oldCap * 2u;
     size_t bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(AtomicPtr);
     ChunkDir *next = (ChunkDir*) Memory_alloc(TYPE_CHUNKED_LIST, bytes);
@@ -165,7 +186,11 @@ static bool dirGrow(ChunkedList *self) {
     (*next).pad = 0u;
     memset(&(*next).chunks[0], 0, (size_t)newCap * sizeof(AtomicPtr));
 
-    uint32_t have = (*self).chunkCount;
+    uint32_t have = atomic_load(&(*self).chunkCount);
+    if (have > newCap) {
+        Memory_free(next);
+        return false;
+    }
     for (uint32_t i = 0; i < have; i++)
         AtomicPtr_exchange(&(*next).chunks[i], AtomicPtr_get(&(*old).chunks[i]));
 
@@ -174,13 +199,18 @@ static bool dirGrow(ChunkedList *self) {
 }
 
 // Allocate one chunk, zero its rows, then publish it (acquire/release handoff).
-static bool chunkAdd(ChunkedList *self) {
+// Gate held by the caller.
+static bool chunkAddLocked(ChunkedList *self) {
     ChunkDir *dir = directoryOf(self);
-    if (!dir || (*self).chunkCount >= (*dir).capacity) {
+    uint32_t have = atomic_load(&(*self).chunkCount);
+    if (!dir || have >= (*dir).capacity) {
         if (!dirGrow(self))
             return false;
         dir = directoryOf(self);
         if (!dir)
+            return false;
+        have = atomic_load(&(*self).chunkCount);
+        if (have >= (*dir).capacity)
             return false;
     }
 
@@ -191,22 +221,31 @@ static bool chunkAdd(ChunkedList *self) {
         return false;
 
     memset(chunk, 0, bytes);
-    AtomicPtr_exchange(&(*dir).chunks[(*self).chunkCount], chunk);
-    (*self).chunkCount++;
-    (*self).collection.capacity = (*self).chunkCount * (*self).rowsPerChunk;
+    AtomicPtr_exchange(&(*dir).chunks[have], chunk);
+    atomic_store(&(*self).chunkCount, have + 1u);
+
+    uint64_t cap = ((uint64_t)have + 1u) * (uint64_t)(*self).rowsPerChunk;
+    Collection *c = (Collection*) self;
+    (*c).capacity = cap > (uint64_t)UINT32_MAX ? UINT32_MAX : (uint32_t)cap;
     return true;
 }
 
-// Growth gate: bounded 100ms try-lock, drop-degrade false on contention.
+// Growth gate body: publish chunks until `needChunks` exist. Gate held.
+static bool ensureChunksLocked(ChunkedList *self, uint32_t needChunks) {
+    while (atomic_load(&(*self).chunkCount) < needChunks)
+        if (!chunkAddLocked(self))
+            return false;
+    return true;
+}
+
+// Growth gate: bounded 100ms try-lock, drop-degrade false on contention or OOM.
 static bool ensureChunks(ChunkedList *self, uint32_t needChunks) {
-    if (needChunks <= (*self).chunkCount)
+    if (needChunks <= atomic_load(&(*self).chunkCount))
         return true;
     if (!SpinLock_tryLockTimeout(&(*self).lock, VEX_CHUNKED_LOCK_NANOS))
         return false;
 
-    bool ok = true;
-    while ((*self).chunkCount < needChunks && ok)
-        ok = chunkAdd(self);
+    bool ok = ensureChunksLocked(self, needChunks);
 
     SpinLock_unlock(&(*self).lock);
     return ok;
@@ -217,6 +256,8 @@ static ChunkedList *instant(uint32_t elementClass, size_t stride, uint32_t chunk
         stride = Stride_get(elementClass);
     if (stride == 0)
         stride = sizeof(void*);
+    if (stride > (size_t)UINT32_MAX)
+        return nullptr;
     if (chunkBytes < 16u)
         chunkBytes = 16u;
 
@@ -235,7 +276,8 @@ static ChunkedList *instant(uint32_t elementClass, size_t stride, uint32_t chunk
 
     uint32_t rows = pow2Rows(stride, chunkBytes);
     (*self).directory.value = nullptr;
-    (*self).chunkCount = 0;
+    atomic_store(&(*self).chunkCount, 0u);
+    atomic_store(&(*self).committed, 0u);
     (*self).rowsPerChunk = rows;
     (*self).rowShift = shiftOf(rows);
     (*self).rowMask = rows - 1u;
@@ -265,7 +307,7 @@ void ChunkedList_free(ChunkedList *self) {
         return;
     ChunkDir *dir = directoryOf(self);
     if (dir) {
-        uint32_t chunks = (*self).chunkCount;
+        uint32_t chunks = atomic_load(&(*self).chunkCount);
         for (uint32_t i = 0; i < chunks; i++)
             Memory_free(AtomicPtr_get(&(*dir).chunks[i]));
     }
@@ -280,19 +322,25 @@ void ChunkedList_free(ChunkedList *self) {
 uint8_t *ChunkedList_addSlot(ChunkedList *self) {
     if (!self)
         return nullptr;
-
-    Collection *c = (Collection*) self;
-    uint32_t index = (*c).activeCount;
-    uint32_t needChunks = (index >> (*self).rowShift) + 1u;
-    if (!ensureChunks(self, needChunks))
+    if (!SpinLock_tryLockTimeout(&(*self).lock, VEX_CHUNKED_LOCK_NANOS))
         return nullptr;
 
-    uint8_t *row = rowAt(self, index);
-    if (!row)
-        return nullptr;
+    uint8_t *row = nullptr;
+    uint32_t index = atomic_load(&(*self).committed);
+    if (index != UINT32_MAX) {
+        uint32_t needChunks = (index >> (*self).rowShift) + 1u;
+        if (ensureChunksLocked(self, needChunks)) {
+            row = rowAt(self, index);
+            if (row) {
+                Collection *c = (Collection*) self;
+                memset(row, 0, (*c).stride);
+                atomic_store(&(*self).committed, index + 1u);
+                (*c).activeCount = index + 1u;
+            }
+        }
+    }
 
-    memset(row, 0, (*c).stride);
-    (*c).activeCount = index + 1u;
+    SpinLock_unlock(&(*self).lock);
     return row;
 }
 
@@ -311,7 +359,7 @@ bool ChunkedList_packInto(const ChunkedList *self, uint8_t *dest, size_t destCap
     if (!self || !dest)
         return false;
 
-    uint32_t rows = (*self).collection.activeCount;
+    uint32_t rows = atomic_load(&(*self).committed);
     size_t stride = (*self).collection.stride;
     size_t fit = stride == 0 ? 0 : destCap / stride;
     bool truncated = (size_t)rows > fit;
@@ -337,7 +385,9 @@ bool ChunkedList_packInto(const ChunkedList *self, uint8_t *dest, size_t destCap
 }
 
 uint8_t *ChunkedList_slot(const ChunkedList *self, uint32_t index) {
-    if (!self || index >= (*self).collection.activeCount)
+    if (!self)
+        return nullptr;
+    if (index >= atomic_load(&(*self).committed))
         return nullptr;
     return rowAt(self, index);
 }
@@ -352,21 +402,28 @@ uint8_t *ChunkedList_getChunk(const ChunkedList *self, uint32_t chunkIndex) {
 // SETTERS
 
 void ChunkedList_setChunkBytes(ChunkedList *self, uint32_t chunkBytes) {
-    if (!self || (*self).chunkCount > 0u)
-        return; // budget is locked in once the first chunk exists (reject)
-    if (chunkBytes < 16u)
-        chunkBytes = 16u;
-    uint32_t rows = pow2Rows((size_t)(*self).collection.stride, chunkBytes);
-    (*self).chunkBytes = chunkBytes;
-    (*self).rowsPerChunk = rows;
-    (*self).rowShift = shiftOf(rows);
-    (*self).rowMask = rows - 1u;
+    if (!self)
+        return;
+    if (!SpinLock_tryLockTimeout(&(*self).lock, VEX_CHUNKED_LOCK_NANOS))
+        return;
+    if (atomic_load(&(*self).chunkCount) == 0u) {
+        if (chunkBytes < 16u)
+            chunkBytes = 16u;
+        uint32_t rows = pow2Rows((size_t)(*self).collection.stride, chunkBytes);
+        (*self).chunkBytes = chunkBytes;
+        (*self).rowsPerChunk = rows;
+        (*self).rowShift = shiftOf(rows);
+        (*self).rowMask = rows - 1u;
+    }
+    SpinLock_unlock(&(*self).lock);
 }
 
 // GETTERS
 
 uint32_t ChunkedList_size(const ChunkedList *self) {
-    return self ? (*self).collection.activeCount : 0u;
+    if (!self)
+        return 0u;
+    return atomic_load(&(*self).committed);
 }
 
 uint32_t ChunkedList_length(const ChunkedList *self) {
@@ -374,11 +431,18 @@ uint32_t ChunkedList_length(const ChunkedList *self) {
 }
 
 uint32_t ChunkedList_capacity(const ChunkedList *self) {
-    return self ? (*self).collection.capacity : 0u;
+    if (!self)
+        return 0u;
+    uint64_t cap = (uint64_t)atomic_load(&(*self).chunkCount) * (uint64_t)(*self).rowsPerChunk;
+    if (cap > (uint64_t)UINT32_MAX)
+        return UINT32_MAX;
+    return (uint32_t)cap;
 }
 
 bool ChunkedList_isEmpty(const ChunkedList *self) {
-    return self ? ((*self).collection.activeCount == 0u) : true;
+    if (!self)
+        return true;
+    return atomic_load(&(*self).committed) == 0u;
 }
 
 uint32_t ChunkedList_elementClassId(const ChunkedList *self) {
@@ -390,7 +454,9 @@ uint32_t ChunkedList_stride(const ChunkedList *self) {
 }
 
 uint32_t ChunkedList_getChunkCount(const ChunkedList *self) {
-    return self ? (*self).chunkCount : 0u;
+    if (!self)
+        return 0u;
+    return atomic_load(&(*self).chunkCount);
 }
 
 uint32_t ChunkedList_getRowsPerChunk(const ChunkedList *self) {
