@@ -71,6 +71,8 @@ typedef struct KeyMap {
     uint32_t    count;         // active binding count
     uint32_t    capacity;      // allocated slots (doubling growth)
     void       *arena;         // opaque MemoryArena handle
+    bool        multiTapEnabled; // false = rhythm mode: every press an instant single
+    uint64_t    longPressNanos;  // LONG_PRESS hold threshold (0 = disabled on this map)
 } KeyMap;
 
 // ── Lifecycle ─────────────────────────────────────────────
@@ -107,12 +109,41 @@ const KeyBinding *KeyMap_match(const KeyMap *map, int64_t liveCombo);
 // (higher KMODE); ties resolve in bind order. At most one binding fires per
 // call: its fn(userdata, combo) runs and the source tap counter is consumed
 // (Key_resetTaps / Mouse_resetTaps) so the hit cannot re-fire on the next
-// frame. DRAG/SCROLL/ZOOM combos can be bound but never resolve from
-// per-frame polling — they are event-stream gestures reserved for the
-// future event-driven resolver (;;DRAFT). Long-press uses
-// KEYMAP_LONG_PRESS_NANOS as its hold threshold.
+// frame.
+//
+// Windowed settlement (multi-tap on, the default): taps are OFFERED while the
+// per-key pending window (tapWindowNanos, 250ms on the platform drivers) is
+// still open — nothing fires until the window closes after the LAST press and
+// the count settles into SINGLE/DOUBLE/TRIPLE. TAP bindings additionally
+// require the key/button released (release owns the single); DOUBLE/TRIPLE
+// fire at settlement. A sequence that settled but was declined on modifiers
+// is expired (never re-matched later). Modifier-state changes between presses
+// break the sequence.
+//
+// Multi-tap off (rhythm game mode, KeyMap_setMultiTapEnabled(false)): every
+// press-release is a single tap resolved immediately — zero window latency;
+// DOUBLE/TRIPLE bindings never resolve.
+//
+// LONG_PRESS fires once per press (one-shot latch in the driver slot, cleared
+// on release), consuming the tap count so the release of the same press never
+// also fires a TAP. DRAG/SCROLL/ZOOM combos can be bound but never resolve
+// from per-frame polling — they are event-stream gestures reserved for the
+// future event-driven resolver (;;DRAFT). Long-press uses the map's
+// longPressNanos threshold (KEYMAP_LONG_PRESS_NANOS by default; 0 disables).
 
 bool KeyMap_resolve(const KeyMap *map, int64_t *outCombo);
+
+// ── Recognition config ────────────────────────────────────
+// multiTapEnabled (default true): settle-based multi-tap recognition. Turning
+// it off switches to rhythm-game mode — instant singles, no window latency,
+// no double/triple resolution (bindings for them never fire).
+bool KeyMap_isMultiTapEnabled(const KeyMap *map);
+void KeyMap_setMultiTapEnabled(KeyMap *map, bool enabled);
+
+// Hold threshold for LONG_PRESS resolution (default KEYMAP_LONG_PRESS_NANOS;
+// 0 disables long-press bindings on this map).
+uint64_t KeyMap_getLongPressNanos(const KeyMap *map);
+void     KeyMap_setLongPressNanos(KeyMap *map, uint64_t nanos);
 
 // ── Combo builder ─────────────────────────────────────────
 // Reads current modifier state from vexspoke's Key_isDown / Key_taps,

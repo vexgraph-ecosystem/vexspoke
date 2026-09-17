@@ -1,6 +1,11 @@
 // input/mouse.c — mouse buttons, position, and event stream
 // (Legacy: input/Mouse.java port).
 //
+// Button slots mirror the Key state table (same 40-byte layout): 16 x 40-byte
+// off-heap slots, one per button, with windowed-tap settlement — clicks are
+// OFFERED while `now < pendingUntil` and settle (SINGLE/DOUBLE/TRIPLE) once
+// the tap window closes. longPressFired is the one-shot hold latch.
+//
 // Wire format is byte-for-byte the legacy packing; the dispatcher classifies
 // by marker byte FIRST (bits [15:8]) so button payloads can never collide
 // with the motion markers (legacy read the low action nibble too late and
@@ -40,9 +45,12 @@
  *   ButtonSlot {
  *     uint64_t pressTime;        // last press timestamp
  *     uint64_t lastReleaseTime;  // last release timestamp
- *     int32_t taps;              // click-count state
- *     int32_t pad;               // alignment padding
+ *     uint64_t pendingUntil;     // click window close; clicks settle once now >= pendingUntil
  *     uint64_t lastHoldDuration; // hold length accumulator
+ *     int32_t taps;              // click-count state
+ *     uint8_t lastTapMods;       // wire modifier mask at last press (change breaks sequence)
+ *     uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
+ *     uint8_t pad[2];            // alignment padding
  *   }
  *
  * FUNCTION REGISTRY:
@@ -57,7 +65,7 @@
  *   - Mouse_attachWindow(windowId, listener)
  *   - Mouse_detachWindow(windowId, listener)
  *   - Mouse_detachWindowAll(windowId)
- *   - Mouse_pushButtonEvent(windowId, button, action, holdThresholdNanos)
+ *   - Mouse_pushButtonEvent(windowId, button, action, tapWindowNanos)
  *   - Mouse_pushMoveEvent(windowId, x, y)
  *   - Mouse_pushMoveDeltaEvent(windowId, dx, dy)
  *   - Mouse_pushDragEvent(windowId, button, x, y)
@@ -70,6 +78,9 @@
  *   - Mouse_currentHoldDurationNanos(button)
  *   - Mouse_taps(button)
  *   - Mouse_resetTaps(button)
+ *   - Mouse_tapPhase(button)
+ *   - Mouse_isLongPressFired(button)
+ *   - Mouse_setLongPressFired(button, fired)
  *   - Mouse_x(void)
  *   - Mouse_y(void)
  *   - Mouse_button(mouseEvent)
@@ -100,12 +111,15 @@ _Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 bytes");
 typedef struct {
     uint64_t pressTime;
     uint64_t lastReleaseTime;
-    int32_t taps;
-    int32_t pad;
+    uint64_t pendingUntil;     // click window close; clicks settle once now >= pendingUntil
     uint64_t lastHoldDuration;
+    int32_t taps;
+    uint8_t lastTapMods;       // wire modifier mask at last press (change breaks sequence)
+    uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
+    uint8_t pad[2];            // alignment padding
 } ButtonSlot;
 
-_Static_assert(sizeof(ButtonSlot) == 32, "button slot must stay 32 bytes");
+_Static_assert(sizeof(ButtonSlot) == 40, "button slot must stay 40 bytes");
 
 static ButtonSlot s_slots[BUTTON_COUNT];
 static double s_posX = 0.0;
@@ -184,7 +198,7 @@ static uint64_t epochMicros(void) {
     return (NanoTime_elapsedNanos() / 1000ULL) & 0x3FFFFFFFFFFFULL;
 }
 
-void Mouse_pushButtonEvent(uint32_t windowId, int button, int action, uint64_t holdThresholdNanos) {
+void Mouse_pushButtonEvent(uint32_t windowId, int button, int action, uint64_t tapWindowNanos) {
     if (button < 0 || button >= BUTTON_COUNT) return;
     if (!s_ready) Mouse_init();
     if (!s_ready) return;
@@ -203,16 +217,23 @@ void Mouse_pushButtonEvent(uint32_t windowId, int button, int action, uint64_t h
             return;
         }
         uint64_t lastRelease = (*slot).lastReleaseTime;
-        if (lastRelease != 0 && (now - lastRelease) < holdThresholdNanos)
+        // A modifier-state change since the last press breaks the sequence:
+        // different modifiers => a fresh click, never an upgrade to double.
+        uint8_t modsNow = (uint8_t)(modifierMask() & 0xF);
+        if (lastRelease != 0 && (now - lastRelease) < tapWindowNanos
+            && (*slot).lastTapMods == modsNow)
             (*slot).taps++;
         else
             (*slot).taps = 1;
+        (*slot).lastTapMods = modsNow;
+        (*slot).pendingUntil = now + tapWindowNanos;
         (*slot).pressTime = now;
     } else if (action == KEY_ACTION_UP) {
         if ((*slot).pressTime != 0)
             (*slot).lastHoldDuration = now - (*slot).pressTime;
         (*slot).lastReleaseTime = now;
         (*slot).pressTime = 0;
+        (*slot).longPressFired = 0; // release clears the one-shot hold latch
     }
 
     InputEvent ev = { .packed = (epochMicros() << 18)
@@ -486,6 +507,30 @@ int Mouse_taps(int button) {
 void Mouse_resetTaps(int button) {
     if (button < 0 || button >= BUTTON_COUNT) return;
     s_slots[button].taps = 0;
+}
+
+MouseTapPhase Mouse_tapPhase(int button) {
+    if (button < 0 || button >= BUTTON_COUNT) return MOUSE_TAP_NONE;
+    const ButtonSlot *slot = &s_slots[button];
+    if ((*slot).taps == 0)
+        return MOUSE_TAP_NONE;
+    if (NanoTime_now() < (*slot).pendingUntil)
+        return MOUSE_TAP_PENDING;
+    if ((*slot).taps >= 3)
+        return MOUSE_TAP_TRIPLE;
+    if ((*slot).taps == 2)
+        return MOUSE_TAP_DOUBLE;
+    return MOUSE_TAP_SINGLE;
+}
+
+bool Mouse_isLongPressFired(int button) {
+    if (button < 0 || button >= BUTTON_COUNT) return false;
+    return s_slots[button].longPressFired != 0;
+}
+
+void Mouse_setLongPressFired(int button, bool fired) {
+    if (button < 0 || button >= BUTTON_COUNT) return;
+    s_slots[button].longPressFired = (uint8_t)(fired ? 1 : 0);
 }
 
 double Mouse_x(void) {

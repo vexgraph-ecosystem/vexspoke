@@ -18,6 +18,11 @@
 // listener callbacks. Motion events carry coordinates instead of timestamps;
 // button events carry timestamp + modifiers instead of coordinates.
 //
+// Click counting is windowed exactly like key taps: a press opens a click
+// sequence whose pending window closes `tapWindowNanos` after the LAST press;
+// while open the sequence is pending (Mouse_tapPhase), then it settles into
+// SINGLE / DOUBLE / TRIPLE.
+//
 // Button-event wire format (identical to legacy):
 //   [63:18] micros since engine start | [17:14] modifiers
 //   [13: 2] button | [1:0] action (0 up | 1 down | 2 repeat)
@@ -47,7 +52,8 @@ bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener);
 void Mouse_detachWindowAll(uint32_t windowId);
 
 // Producers: Thread 0 only. windowId tags the receiving window.
-void Mouse_pushButtonEvent(uint32_t windowId, int button, int action, uint64_t holdThresholdNanos);
+// tapWindowNanos gates click settlement (see the header comment above).
+void Mouse_pushButtonEvent(uint32_t windowId, int button, int action, uint64_t tapWindowNanos);
 void Mouse_pushMoveEvent(uint32_t windowId, double x, double y);
 void Mouse_pushMoveDeltaEvent(uint32_t windowId, double dx, double dy);
 void Mouse_pushDragEvent(uint32_t windowId, int button, double x, double y);
@@ -65,6 +71,22 @@ uint64_t Mouse_lastHoldDurationNanos(int button);
 uint64_t Mouse_currentHoldDurationNanos(int button);
 int      Mouse_taps(int button);
 void     Mouse_resetTaps(int button);
+
+// --- Multi-tap gesture timeline (windowed settlement, mirrors KeyTapPhase) ---
+typedef enum MouseTapPhase {
+    MOUSE_TAP_NONE    = 0, // no clicks in flight (or consumed)
+    MOUSE_TAP_PENDING = 1, // clicks counted, window still open — not yet settled
+    MOUSE_TAP_SINGLE  = 2, // settled: window closed, taps == 1
+    MOUSE_TAP_DOUBLE  = 3, // settled: window closed, taps == 2
+    MOUSE_TAP_TRIPLE  = 4, // settled: window closed, taps >= 3
+} MouseTapPhase;
+
+// Settled-or-windowed click readout for a button.
+MouseTapPhase Mouse_tapPhase(int button);
+
+// One-shot LONG_PRESS latch (mirrors Key_isLongPressFired).
+bool Mouse_isLongPressFired(int button);
+void Mouse_setLongPressFired(int button, bool fired);
 
 // Last dispatched cursor position in content coordinates (top-left origin).
 // Written on dispatch of move/drag events — legacy left these dead; here they

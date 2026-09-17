@@ -1,10 +1,17 @@
 // input/key.c — keyboard state + event stream (Legacy: input/Key.java port).
 //
-// The state table is a static 512 x 32-byte arena — the C equivalent of the
+// The state table is a static 512 x 40-byte arena — the C equivalent of the
 // legacy Arena.global() block, except it costs zero runtime allocation. Slot
-// layout matches legacy exactly:
+// layout matches legacy exactly plus the windowed-tap settlement fields:
 //   +0  pressTime (0 == up)        +8  lastReleaseTime
-//   +16 taps (multi-tap counter)   +24 lastHoldDuration
+//   +16 pendingUntil               +24 lastHoldDuration
+//   +32 taps (multi-tap counter)   +36 lastTapMods (4-bit wire mods)
+//   +37 longPressFired latch       +38 pad
+//
+// pendingUntil is the tap-sequence settlement instant: taps are OFFERED while
+// `now < pendingUntil` and settle (SINGLE/DOUBLE/TRIPLE) once it passes.
+// lastTapMods breaks the sequence when the modifier state changes between
+// presses. longPressFired is the one-shot hold latch, cleared on release.
 //
 // Producers (Thread 0) push packed events; Key_dispatchEvents() drains them
 // on the game thread. The ring is the same thread/ring MPMC the rest of the
@@ -37,9 +44,12 @@
  *   KeySlot {
  *     uint64_t pressTime;        // last press timestamp
  *     uint64_t lastReleaseTime;  // last release timestamp
- *     int32_t taps;              // tap count for multi-tap
- *     int32_t pad;               // alignment padding
+ *     uint64_t pendingUntil;     // tap window close; taps settle once now >= pendingUntil
  *     uint64_t lastHoldDuration; // hold length accumulator
+ *     int32_t taps;              // tap count for multi-tap
+ *     uint8_t lastTapMods;       // wire modifier mask at last press (change breaks sequence)
+ *     uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
+ *     uint8_t pad[2];            // alignment padding
  *   }
  *
  * FUNCTION REGISTRY:
@@ -54,7 +64,7 @@
  *   - Key_attachWindow(windowId, listener)
  *   - Key_detachWindow(windowId, listener)
  *   - Key_detachWindowAll(windowId)
- *   - Key_pushEvent(windowId, keyCode, action, holdThresholdNanos)
+ *   - Key_pushEvent(windowId, keyCode, action, tapWindowNanos)
  *   - Key_pushCharEvent(windowId, c)
  *   - Key_dispatchEvents(void)
  *   - Key_pressTime(keyCode)
@@ -65,6 +75,9 @@
  *   - Key_durationSinceReleaseNanos(keyCode)
  *   - Key_taps(keyCode)
  *   - Key_resetTaps(keyCode)
+ *   - Key_tapPhase(keyCode)
+ *   - Key_isLongPressFired(keyCode)
+ *   - Key_setLongPressFired(keyCode, fired)
  *   - Key_code(keyEvent)
  *   - Key_name(keyCode)
  *
@@ -94,12 +107,15 @@ _Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 bytes");
 typedef struct {
     uint64_t pressTime;
     uint64_t lastReleaseTime;
-    int32_t taps;
-    int32_t pad; // we need the padding
+    uint64_t pendingUntil;     // tap window close; taps settle once now >= pendingUntil
     uint64_t lastHoldDuration;
+    int32_t taps;
+    uint8_t lastTapMods;       // wire modifier mask at last press (change breaks sequence)
+    uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
+    uint8_t pad[2];            // alignment padding
 } KeySlot;
 
-_Static_assert(sizeof(KeySlot) == 32, "key slot must stay 32 bytes");
+_Static_assert(sizeof(KeySlot) == 40, "key slot must stay 40 bytes");
 
 static KeySlot s_slots[KEY_COUNT];
 static RingBuffer s_queue;
@@ -238,7 +254,7 @@ static uint64_t epochMicros(void) {
     return (NanoTime_elapsedNanos() / 1000ULL) & 0x3FFFFFFFFFFFULL;
 }
 
-void Key_pushEvent(uint32_t windowId, int keyCode, int action, uint64_t holdThresholdNanos) {
+void Key_pushEvent(uint32_t windowId, int keyCode, int action, uint64_t tapWindowNanos) {
     if (keyCode < 0 || keyCode >= KEY_COUNT) return;
     if (!s_ready) Key_init();
     if (!s_ready) return;
@@ -258,16 +274,23 @@ void Key_pushEvent(uint32_t windowId, int keyCode, int action, uint64_t holdThre
             return;
         }
         uint64_t lastRelease = (*slot).lastReleaseTime;
-        if (lastRelease != 0 && (now - lastRelease) < holdThresholdNanos)
+        // A modifier-state change since the last press breaks the sequence:
+        // different modifiers => a fresh tap, never an upgrade to double/triple.
+        uint8_t modsNow = (uint8_t)(modifierMask() & 0xF);
+        if (lastRelease != 0 && (now - lastRelease) < tapWindowNanos
+            && (*slot).lastTapMods == modsNow)
             (*slot).taps++;
         else
             (*slot).taps = 1;
+        (*slot).lastTapMods = modsNow;
+        (*slot).pendingUntil = now + tapWindowNanos;
         (*slot).pressTime = now;
     } else if (action == KEY_ACTION_UP) {
         if ((*slot).pressTime != 0)
             (*slot).lastHoldDuration = now - (*slot).pressTime;
         (*slot).lastReleaseTime = now;
         (*slot).pressTime = 0;
+        (*slot).longPressFired = 0; // release clears the one-shot hold latch
     }
 
     InputEvent ev = { .packed = (epochMicros() << 18)
@@ -401,6 +424,30 @@ int Key_taps(int keyCode) {
 void Key_resetTaps(int keyCode) {
     if (keyCode < 0 || keyCode >= KEY_COUNT) return;
     s_slots[keyCode].taps = 0;
+}
+
+KeyTapPhase Key_tapPhase(int keyCode) {
+    if (keyCode < 0 || keyCode >= KEY_COUNT) return KEY_TAP_NONE;
+    const KeySlot *slot = &s_slots[keyCode];
+    if ((*slot).taps == 0)
+        return KEY_TAP_NONE;
+    if (NanoTime_now() < (*slot).pendingUntil)
+        return KEY_TAP_PENDING;
+    if ((*slot).taps >= 3)
+        return KEY_TAP_TRIPLE;
+    if ((*slot).taps == 2)
+        return KEY_TAP_DOUBLE;
+    return KEY_TAP_SINGLE;
+}
+
+bool Key_isLongPressFired(int keyCode) {
+    if (keyCode < 0 || keyCode >= KEY_COUNT) return false;
+    return s_slots[keyCode].longPressFired != 0;
+}
+
+void Key_setLongPressFired(int keyCode, bool fired) {
+    if (keyCode < 0 || keyCode >= KEY_COUNT) return;
+    s_slots[keyCode].longPressFired = (uint8_t)(fired ? 1 : 0);
 }
 
 int Key_code(int keyEvent) {
