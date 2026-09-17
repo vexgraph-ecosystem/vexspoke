@@ -6,9 +6,9 @@
 
 #include "event/mousehandler.h"
 
-// Window id carried by every queued event (0 = FOCUS_BROADCAST).
-#define MOUSE_MAX_WINDOWS 8
-#define MOUSE_MAX_WINDOW_LISTENERS 64
+// Window id carried by every queued event (0 = FOCUS_BROADCAST). windowId is
+// an opaque OS tag, never a slot index: scoped registries grow on demand (the
+// Dynamic Scalability & Anti-Hardcoding Law), so any id attaches.
 
 // input/mouse.h — mouse buttons, position, and event stream
 // (Legacy: input/Mouse.java).

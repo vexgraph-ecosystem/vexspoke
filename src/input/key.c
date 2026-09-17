@@ -24,7 +24,10 @@
 #include "input/focus.h"
 #include "atomic/ring.h"
 #include "time/nanotime.h"
+#include "nio/mem.h"
+#include "oop/type.h"
 #include "annotation/overview.h"
+#include "annotation/intention.h"
 
 ;;OVERVIEW
 /**
@@ -32,7 +35,10 @@
  * CLASS: Key (input/key.c)
  * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
- * never stale.
+ * listener registries grow exponentially (the Dynamic Scalability &
+ * Anti-Hardcoding Law): window scope is a row keyed by the opaque OS window
+ * id (never a slot index), and every segment starts at zero allocations and
+ * doubles on demand, arena-backed.
  *
  * STRUCT FIELDS (local to this file):
  * ----------------------------------------------------------------------------
@@ -51,6 +57,16 @@
  *     uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
  *     uint8_t pad[2];            // alignment padding
  *   }
+ *
+ * PRIVATE HELPERS (kept file-local pure-data only, each with full fields):
+ * ----------------------------------------------------------------------------
+ *   WinRow {
+ *     uint32_t windowId;         // opaque OS window tag (0 never attached)
+ *     const KeyHandler **items;  // arena-allocated listener segment, doubling
+ *     int count;                 // live listener count
+ *     int cap;                   // allocated segment capacity
+ *   }
+ *   (growSegment / growRows / rowFor: static behavior, zero struct fields)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -92,8 +108,10 @@
 
 
 #define KEY_COUNT 512
+;;INTENTION("fixed KEY_COUNT: the GLFW-style keycode domain is a hardware enum (0..511), not a workload ceiling")
+
 #define QUEUE_CAPACITY 1024
-#define WINDOW_SLOTS KEY_MAX_WINDOWS
+;;INTENTION("fixed input ring: a bounded hot-path sync budget; MPMC ring growth is a separate follow-up per the Dynamic Scalability & Anti-Hardcoding Law")
 
 // One queued event: the legacy 64-bit packing plus the window it belongs to.
 typedef struct {
@@ -122,13 +140,68 @@ static RingBuffer s_queue;
 static bool s_ready = false;
 
 // keytryer (do not remove this comment)
-static const KeyHandler *s_listeners[64];
-static int s_listenerCount = 0;
 
-// Window-scoped listeners: slot index IS the window id (0 = broadcast is
-// reserved and never attached; broadcast events fan _out to every slot).
-static const KeyHandler *s_winListeners[WINDOW_SLOTS][KEY_MAX_WINDOW_LISTENERS];
-static int s_winCounts[WINDOW_SLOTS];
+// --- PRIVATE HELPERS: growable listener registries ---
+// The Dynamic Scalability & Anti-Hardcoding Law: registries start at zero
+// allocations and double exponentially, arena-backed. windowId is an opaque
+// OS tag (0 = FOCUS_BROADCAST, reserved, never attached); broadcast events
+// fan _out to every attached row.
+typedef struct WinRow {
+    uint32_t windowId;
+    const KeyHandler **items;  // arena-allocated segment, doubling
+    int count;
+    int cap;
+} WinRow;
+
+static const KeyHandler **s_listeners = NULL;  // global listener segment
+static int s_listenerCount = 0;
+static int s_listenerCap = 0;
+
+static WinRow *s_rows = NULL;  // growable window-row table
+static int s_rowCount = 0;
+static int s_rowCap = 0;
+
+// Grow a handler segment to at least `needed` slots. On OOM the segment is
+// left untouched and the registration is silently dropped (legacy parity).
+// Row structs move when the row TABLE grows, so their ITEM segments are
+// separate arena blocks: item pointers survive, row pointers do not — always
+// re-derive rows through rowFor() after any attach/detach.
+static bool growSegment(const KeyHandler ***items, int *cap, int needed) {
+    if (needed <= *cap) return true;
+    int newCap = (*cap == 0) ? 16 : *cap * 2;
+    while (newCap < needed) newCap *= 2;
+    const KeyHandler **nb = (const KeyHandler**) Memory_alloc(
+        TYPE_INT_POINTER, (size_t) newCap * sizeof(KeyHandler *));
+    if (nb == NULL) return false;
+    if (*items != NULL && *cap > 0)
+        memcpy(nb, *items, (size_t) *cap * sizeof(KeyHandler *));
+    *items = nb;
+    *cap = newCap;
+    return true;
+}
+
+// Grow the window-row table to at least `needed` rows (doubling, cold 8).
+static bool growRows(int needed) {
+    if (needed <= s_rowCap) return true;
+    int newCap = (s_rowCap == 0) ? 8 : s_rowCap * 2;
+    while (newCap < needed) newCap *= 2;
+    WinRow *nb = (WinRow*) Memory_alloc(TYPE_INT_POINTER,
+        (size_t) newCap * sizeof(WinRow));
+    if (nb == NULL) return false;
+    if (s_rows != NULL && s_rowCap > 0)
+        memcpy(nb, s_rows, (size_t) s_rowCap * sizeof(WinRow));
+    s_rows = nb;
+    s_rowCap = newCap;
+    return true;
+}
+
+// Find the row for an opaque OS window id, or NULL when not attached.
+static WinRow *rowFor(uint32_t windowId) {
+    for (int i = 0; i < s_rowCount; i++)
+        if (s_rows[i].windowId == windowId)
+            return &s_rows[i];
+    return NULL;
+}
 
 // O(1) name table; designated initializers leave every other slot nullptr.
 static const char *const s_names[KEY_COUNT] = {
@@ -201,7 +274,8 @@ void Key_shutdown(void) {
 }
 
 void Key_addListener(const KeyHandler *listener) {
-    if (!listener || s_listenerCount >= (int)(sizeof(s_listeners) / sizeof(s_listeners[0]))) return;
+    if (listener == NULL) return;
+    if (!growSegment(&s_listeners, &s_listenerCap, s_listenerCount + 1)) return;
     s_listeners[s_listenerCount++] = listener;
 }
 
@@ -218,16 +292,28 @@ bool Key_removeListener(const KeyHandler *listener) {
 }
 
 void Key_attachWindow(uint32_t windowId, const KeyHandler *listener) {
-    if (!listener || windowId == 0 || windowId >= WINDOW_SLOTS) return;
-    if (s_winCounts[windowId] >= KEY_MAX_WINDOW_LISTENERS) return;
-    s_winListeners[windowId][s_winCounts[windowId]++] = listener;
+    if (listener == NULL || windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) {
+        if (!growRows(s_rowCount + 1)) return;
+        row = &s_rows[s_rowCount++];
+        (*row).windowId = windowId;
+        (*row).items = NULL;
+        (*row).count = 0;
+        (*row).cap = 0;
+    }
+    if (!growSegment(&(*row).items, &(*row).cap, (*row).count + 1)) return;
+    (*row).items[(*row).count++] = listener;
 }
 
 bool Key_detachWindow(uint32_t windowId, const KeyHandler *listener) {
-    if (!listener || windowId == 0 || windowId >= WINDOW_SLOTS) return false;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        if (s_winListeners[windowId][i] == listener) {
-            s_winListeners[windowId][i] = s_winListeners[windowId][--s_winCounts[windowId]];
+    if (listener == NULL || windowId == 0) return false;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return false;
+    for (int i = 0; i < (*row).count; i++) {
+        if ((*row).items[i] == listener) {
+            (*row).count--;
+            (*row).items[i] = (*row).items[(*row).count];
             return true;
         }
     }
@@ -235,8 +321,10 @@ bool Key_detachWindow(uint32_t windowId, const KeyHandler *listener) {
 }
 
 void Key_detachWindowAll(uint32_t windowId) {
-    if (windowId >= WINDOW_SLOTS) return;
-    s_winCounts[windowId] = 0;
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row != NULL)
+        (*row).count = 0;
 }
 
 // Modifier snapshot from live state, packed into the wire-format nibble.
@@ -309,12 +397,14 @@ void Key_pushCharEvent(uint32_t windowId, uint32_t c) {
     RingBuffer_push(&s_queue, &ev);
 }
 
-// Deliver one event to a scoped listener list (slot 0 is never attached, so
-// broadcast events fan _out to slots 1..N).
+// Deliver one event to a scoped listener list. windowId 0 (FOCUS_BROADCAST)
+// is reserved and never attached; broadcast events fan _out to every row.
 static void deliverToWindow(uint32_t windowId, int action, int keyEvent, uint64_t exactNanos) {
-    if (windowId >= WINDOW_SLOTS) return;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const KeyHandler *l = s_winListeners[windowId][i];
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return;
+    for (int i = 0; i < (*row).count; i++) {
+        const KeyHandler *l = (*row).items[i];
         void *self = (*l).self;
         if (action == KEY_ACTION_DOWN && (*l).onKeyDown)
             (*l).onKeyDown(self, keyEvent, exactNanos);
@@ -322,6 +412,18 @@ static void deliverToWindow(uint32_t windowId, int action, int keyEvent, uint64_
             (*l).onKeyUp(self, keyEvent, exactNanos);
         else if (action == KEY_ACTION_REPEAT && (*l).onKeyRepeat)
             (*l).onKeyRepeat(self, keyEvent, exactNanos);
+    }
+}
+
+// Deliver a typed character to one window's scoped list.
+static void deliverChar(uint32_t windowId, uint32_t c) {
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return;
+    for (int i = 0; i < (*row).count; i++) {
+        const KeyHandler *l = (*row).items[i];
+        if ((*l).onCharTyped)
+            (*l).onCharTyped((*l).self, c);
     }
 }
 
@@ -340,13 +442,11 @@ void Key_dispatchEvents(void) {
             for (int i = 0; i < s_listenerCount; i++)
                 if ((*s_listeners[i]).onCharTyped)
                     (*s_listeners[i]).onCharTyped((*s_listeners[i]).self, c);
-            for (uint32_t w = 1; w < WINDOW_SLOTS; w++) {
-                if (ev.windowId != FOCUS_BROADCAST && ev.windowId != w) continue;
-                for (int i = 0; i < s_winCounts[w]; i++) {
-                    const KeyHandler *l = s_winListeners[w][i];
-                    if ((*l).onCharTyped)
-                        (*l).onCharTyped((*l).self, c);
-                }
+            if (ev.windowId == FOCUS_BROADCAST) {
+                for (int r = 0; r < s_rowCount; r++)
+                    deliverChar(s_rows[r].windowId, c);
+            } else {
+                deliverChar(ev.windowId, c);
             }
             continue;
         }
@@ -373,8 +473,8 @@ void Key_dispatchEvents(void) {
                 (*s_listeners[i]).onKeyRepeat(self, keyEvent, exactNanos);
         }
         if (ev.windowId == FOCUS_BROADCAST) {
-            for (uint32_t w = 1; w < WINDOW_SLOTS; w++)
-                deliverToWindow(w, action, keyEvent, exactNanos);
+            for (int r = 0; r < s_rowCount; r++)
+                deliverToWindow(s_rows[r].windowId, action, keyEvent, exactNanos);
         } else {
             deliverToWindow(ev.windowId, action, keyEvent, exactNanos);
         }

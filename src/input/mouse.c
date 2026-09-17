@@ -25,7 +25,10 @@
 #include "input/key.h"
 #include "atomic/ring.h"
 #include "time/nanotime.h"
+#include "nio/mem.h"
+#include "oop/type.h"
 #include "annotation/overview.h"
+#include "annotation/intention.h"
 
 ;;OVERVIEW
 /**
@@ -33,7 +36,9 @@
  * CLASS: Mouse (input/mouse.c)
  * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
- * mouse buttons, position, and event stream
+ * mouse buttons, position, and event stream. Listener registries grow
+ * exponentially (the Dynamic Scalability & Anti-Hardcoding Law): window scope
+ * is a row keyed by the opaque OS window id, arena-backed, doubling on demand.
  *
  * STRUCT FIELDS (local to this file):
  * ----------------------------------------------------------------------------
@@ -52,6 +57,16 @@
  *     uint8_t longPressFired;    // one-shot LONG_PRESS latch, cleared on release
  *     uint8_t pad[2];            // alignment padding
  *   }
+ *
+ * PRIVATE HELPERS (kept file-local pure-data only, each with full fields):
+ * ----------------------------------------------------------------------------
+ *   WinRow {
+ *     uint32_t windowId;         // opaque OS window tag (0 never attached)
+ *     const MouseHandler **items;  // arena-allocated listener segment, doubling
+ *     int count;                 // live listener count
+ *     int cap;                   // allocated segment capacity
+ *   }
+ *   (growSegment / growRows / rowFor: static behavior, zero struct fields)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -97,7 +112,10 @@
 
 
 #define BUTTON_COUNT 16
+;;INTENTION("fixed BUTTON_COUNT: the mouse-button domain is a hardware enum (0..15), not a workload ceiling")
+
 #define QUEUE_CAPACITY 1024
+;;INTENTION("fixed input ring: a bounded hot-path sync budget; MPMC ring growth is a separate follow-up per the Dynamic Scalability & Anti-Hardcoding Law")
 
 // One queued event: the legacy 64-bit packing plus the window it belongs to.
 typedef struct {
@@ -127,12 +145,67 @@ static double s_posY = 0.0;
 static RingBuffer s_queue;
 static bool s_ready = false;
 
-static const MouseHandler *s_listeners[64];
-static int s_listenerCount = 0;
+// --- PRIVATE HELPERS: growable listener registries ---
+// The Dynamic Scalability & Anti-Hardcoding Law: registries start at zero
+// allocations and double exponentially, arena-backed. windowId is an opaque
+// OS tag (0 = FOCUS_BROADCAST, reserved, never attached); broadcast events
+// fan _out to every attached row.
+typedef struct WinRow {
+    uint32_t windowId;
+    const MouseHandler **items;  // arena-allocated segment, doubling
+    int count;
+    int cap;
+} WinRow;
 
-// Window-scoped listeners: slot index IS the window id (0 reserved).
-static const MouseHandler *s_winListeners[MOUSE_MAX_WINDOWS][MOUSE_MAX_WINDOW_LISTENERS];
-static int s_winCounts[MOUSE_MAX_WINDOWS];
+static const MouseHandler **s_listeners = NULL;  // global listener segment
+static int s_listenerCount = 0;
+static int s_listenerCap = 0;
+
+static WinRow *s_rows = NULL;  // growable window-row table
+static int s_rowCount = 0;
+static int s_rowCap = 0;
+
+// Grow a handler segment to at least `needed` slots. On OOM the segment is
+// left untouched and the registration is silently dropped (legacy parity).
+// Row structs move when the row TABLE grows, so their ITEM segments are
+// separate arena blocks: item pointers survive, row pointers do not — always
+// re-derive rows through rowFor() after any attach/detach.
+static bool growSegment(const MouseHandler ***items, int *cap, int needed) {
+    if (needed <= *cap) return true;
+    int newCap = (*cap == 0) ? 16 : *cap * 2;
+    while (newCap < needed) newCap *= 2;
+    const MouseHandler **nb = (const MouseHandler**) Memory_alloc(
+        TYPE_INT_POINTER, (size_t) newCap * sizeof(MouseHandler *));
+    if (nb == NULL) return false;
+    if (*items != NULL && *cap > 0)
+        memcpy(nb, *items, (size_t) *cap * sizeof(MouseHandler *));
+    *items = nb;
+    *cap = newCap;
+    return true;
+}
+
+// Grow the window-row table to at least `needed` rows (doubling, cold 8).
+static bool growRows(int needed) {
+    if (needed <= s_rowCap) return true;
+    int newCap = (s_rowCap == 0) ? 8 : s_rowCap * 2;
+    while (newCap < needed) newCap *= 2;
+    WinRow *nb = (WinRow*) Memory_alloc(TYPE_INT_POINTER,
+        (size_t) newCap * sizeof(WinRow));
+    if (nb == NULL) return false;
+    if (s_rows != NULL && s_rowCap > 0)
+        memcpy(nb, s_rows, (size_t) s_rowCap * sizeof(WinRow));
+    s_rows = nb;
+    s_rowCap = newCap;
+    return true;
+}
+
+// Find the row for an opaque OS window id, or NULL when not attached.
+static WinRow *rowFor(uint32_t windowId) {
+    for (int i = 0; i < s_rowCount; i++)
+        if (s_rows[i].windowId == windowId)
+            return &s_rows[i];
+    return NULL;
+}
 
 void Mouse_init(void) {
     if (s_ready) return;
@@ -149,7 +222,8 @@ void Mouse_shutdown(void) {
 }
 
 void Mouse_addListener(const MouseHandler *listener) {
-    if (!listener || s_listenerCount >= (int)(sizeof(s_listeners) / sizeof(s_listeners[0]))) return;
+    if (listener == NULL) return;
+    if (!growSegment(&s_listeners, &s_listenerCap, s_listenerCount + 1)) return;
     s_listeners[s_listenerCount++] = listener;
 }
 
@@ -164,16 +238,28 @@ bool Mouse_removeListener(const MouseHandler *listener) {
 }
 
 void Mouse_attachWindow(uint32_t windowId, const MouseHandler *listener) {
-    if (!listener || windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
-    if (s_winCounts[windowId] >= MOUSE_MAX_WINDOW_LISTENERS) return;
-    s_winListeners[windowId][s_winCounts[windowId]++] = listener;
+    if (listener == NULL || windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) {
+        if (!growRows(s_rowCount + 1)) return;
+        row = &s_rows[s_rowCount++];
+        (*row).windowId = windowId;
+        (*row).items = NULL;
+        (*row).count = 0;
+        (*row).cap = 0;
+    }
+    if (!growSegment(&(*row).items, &(*row).cap, (*row).count + 1)) return;
+    (*row).items[(*row).count++] = listener;
 }
 
 bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener) {
-    if (!listener || windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return false;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        if (s_winListeners[windowId][i] == listener) {
-            s_winListeners[windowId][i] = s_winListeners[windowId][--s_winCounts[windowId]];
+    if (listener == NULL || windowId == 0) return false;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return false;
+    for (int i = 0; i < (*row).count; i++) {
+        if ((*row).items[i] == listener) {
+            (*row).count--;
+            (*row).items[i] = (*row).items[(*row).count];
             return true;
         }
     }
@@ -181,8 +267,10 @@ bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener) {
 }
 
 void Mouse_detachWindowAll(uint32_t windowId) {
-    if (windowId >= MOUSE_MAX_WINDOWS) return;
-    s_winCounts[windowId] = 0;
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row != NULL)
+        (*row).count = 0;
 }
 
 static int modifierMask(void) {
@@ -318,9 +406,11 @@ void Mouse_pushZoomEvent(uint32_t windowId, double magnification) {
 // window's scoped list.
 static void deliverMotion(uint32_t windowId, int action8, int button,
                           double a, double b) {
-    if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseHandler *l = s_winListeners[windowId][i];
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return;
+    for (int i = 0; i < (*row).count; i++) {
+        const MouseHandler *l = (*row).items[i];
         void *self = (*l).self;
         if (action8 == 5 && (*l).onMouseMove)
             (*l).onMouseMove(self, a, b);
@@ -335,9 +425,11 @@ static void deliverMotion(uint32_t windowId, int action8, int button,
 
 // Zoom rides the same routing but carries float bits instead of coords.
 static void deliverZoom(uint32_t windowId, double magnification) {
-    if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseHandler *l = s_winListeners[windowId][i];
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return;
+    for (int i = 0; i < (*row).count; i++) {
+        const MouseHandler *l = (*row).items[i];
         if ((*l).onMouseZoom)
             (*l).onMouseZoom((*l).self, magnification);
     }
@@ -345,9 +437,11 @@ static void deliverZoom(uint32_t windowId, double magnification) {
 
 // Deliver one button-class event to one window's scoped list.
 static void deliverButton(uint32_t windowId, int action, int mouseEvent, uint64_t exactNanos) {
-    if (windowId == 0 || windowId >= MOUSE_MAX_WINDOWS) return;
-    for (int i = 0; i < s_winCounts[windowId]; i++) {
-        const MouseHandler *l = s_winListeners[windowId][i];
+    if (windowId == 0) return;
+    WinRow *row = rowFor(windowId);
+    if (row == NULL) return;
+    for (int i = 0; i < (*row).count; i++) {
+        const MouseHandler *l = (*row).items[i];
         void *self = (*l).self;
         if (action == KEY_ACTION_DOWN && (*l).onMouseDown)
             (*l).onMouseDown(self, mouseEvent, exactNanos);
@@ -376,8 +470,8 @@ void Mouse_dispatchEvents(void) {
                     if ((*s_listeners[i]).onMouseMove)
                         (*s_listeners[i]).onMouseMove((*s_listeners[i]).self, s_posX, s_posY);
                 if (ev.windowId == FOCUS_BROADCAST) {
-                    for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                        deliverMotion(w, 5, 0, s_posX, s_posY);
+                    for (int r = 0; r < s_rowCount; r++)
+                        deliverMotion(s_rows[r].windowId, 5, 0, s_posX, s_posY);
                 } else {
                     deliverMotion(ev.windowId, 5, 0, s_posX, s_posY);
                 }
@@ -388,8 +482,8 @@ void Mouse_dispatchEvents(void) {
                     if ((*s_listeners[i]).onMouseMoveDelta)
                         (*s_listeners[i]).onMouseMoveDelta((*s_listeners[i]).self, dx, dy);
                 if (ev.windowId == FOCUS_BROADCAST) {
-                    for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                        deliverMotion(w, 9, 0, dx, dy);
+                    for (int r = 0; r < s_rowCount; r++)
+                        deliverMotion(s_rows[r].windowId, 9, 0, dx, dy);
                 } else {
                     deliverMotion(ev.windowId, 9, 0, dx, dy);
                 }
@@ -402,8 +496,8 @@ void Mouse_dispatchEvents(void) {
                     if ((*s_listeners[i]).onMouseZoom)
                         (*s_listeners[i]).onMouseZoom((*s_listeners[i]).self, mag);
                 if (ev.windowId == FOCUS_BROADCAST) {
-                    for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                        deliverZoom(w, mag);
+                    for (int r = 0; r < s_rowCount; r++)
+                        deliverZoom(s_rows[r].windowId, mag);
                 } else {
                     deliverZoom(ev.windowId, mag);
                 }
@@ -417,8 +511,8 @@ void Mouse_dispatchEvents(void) {
                 if ((*s_listeners[i]).onMouseScroll)
                     (*s_listeners[i]).onMouseScroll((*s_listeners[i]).self, dx, dy);
             if (ev.windowId == FOCUS_BROADCAST) {
-                for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                    deliverMotion(w, 6, 0, dx, dy);
+                for (int r = 0; r < s_rowCount; r++)
+                    deliverMotion(s_rows[r].windowId, 6, 0, dx, dy);
             } else {
                 deliverMotion(ev.windowId, 6, 0, dx, dy);
             }
@@ -434,8 +528,8 @@ void Mouse_dispatchEvents(void) {
                 if ((*s_listeners[i]).onMouseDrag)
                     (*s_listeners[i]).onMouseDrag((*s_listeners[i]).self, button, s_posX, s_posY);
             if (ev.windowId == FOCUS_BROADCAST) {
-                for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                    deliverMotion(w, 7, button, s_posX, s_posY);
+                for (int r = 0; r < s_rowCount; r++)
+                    deliverMotion(s_rows[r].windowId, 7, button, s_posX, s_posY);
             } else {
                 deliverMotion(ev.windowId, 7, button, s_posX, s_posY);
             }
@@ -466,8 +560,8 @@ void Mouse_dispatchEvents(void) {
                 (*s_listeners[i]).onMouseRepeat(self, mouseEvent, exactNanos);
         }
         if (ev.windowId == FOCUS_BROADCAST) {
-            for (uint32_t w = 1; w < MOUSE_MAX_WINDOWS; w++)
-                deliverButton(w, action, mouseEvent, exactNanos);
+            for (int r = 0; r < s_rowCount; r++)
+                deliverButton(s_rows[r].windowId, action, mouseEvent, exactNanos);
         } else {
             deliverButton(ev.windowId, action, mouseEvent, exactNanos);
         }

@@ -8,9 +8,9 @@
 
 // Window id carried by every queued event (0 = FOCUS_BROADCAST, no window).
 // Events only exist on the window the OS delivered them to; dispatch routes
-// on this tag, read at delivery time — never stale.
-#define KEY_MAX_WINDOWS 8
-#define KEY_MAX_WINDOW_LISTENERS 64
+// on this tag, read at delivery time — never stale. windowId is an opaque OS
+// tag, never a slot index: scoped registries grow on demand (the Dynamic
+// Scalability & Anti-Hardcoding Law), so any id attaches.
 
 // input/key.h — keyboard state + event stream (Legacy: input/Key.java).
 //
@@ -166,12 +166,14 @@ enum {
 void Key_init(void);
 void Key_shutdown(void);
 
-// Register a listener (fixed slots, silently dropped when full — legacy parity).
+// Register a global listener. The registry grows exponentially on demand;
+// registration is dropped only when the arena allocator runs out of memory.
 void Key_addListener(const KeyHandler *listener);
 bool Key_removeListener(const KeyHandler *listener);
 
 // Window-scoped registration: the listener only receives events whose
-// windowId tag matches (broadcast-tagged events reach every window).
+// windowId tag matches (broadcast-tagged events reach every window). Any
+// nonzero windowId is accepted and grows the registry as needed.
 void Key_attachWindow(uint32_t windowId, const KeyHandler *listener);
 bool Key_detachWindow(uint32_t windowId, const KeyHandler *listener);
 void Key_detachWindowAll(uint32_t windowId);
