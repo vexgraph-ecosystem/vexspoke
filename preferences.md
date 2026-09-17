@@ -90,6 +90,7 @@ its ordinal may move as the document evolves.
 | 46 | Ecosystem Vulkan Safety Nets Law |
 | 47 | Dynamic Scalability & Anti-Hardcoding Law |
 | 48 | No Section Sign Law |
+| 49 | Window Board Root Lock Law |
 
 ---
 
@@ -1312,3 +1313,21 @@ The glyph renders as an ugly double-S that reads as a typo in monospace, breaks 
 1. **Never write §.** New code, new docs, new commits: the character is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
 2. **Migration on touch.** Existing occurrences migrate when their file is next modified: any commit that touches a file containing § must scrub those occurrences in the same commit. A § surviving a touch is a defect (the Living Preferences Law zero-drift rule applies to this migration too).
 3. **Canonical artifacts migrate with this law.** The occurrences present in `preferences.md` and the canonical docs at the time this law lands are scrubbed in this same commit; the umbrella-local legacy markers (`// §N` test-section comments, `_docs/code.txt` notes) migrate file-by-file as each is next touched.
+
+---
+
+## 49. Window Board Root Lock Law (Dimension Override Law)
+
+### Definition:
+An empty `Frame` contains no content pane or scene pane by default. When any panel-derived type (`Panel`, `Scene2D`, `Scene3D`, `ListPanel`, `LayeredContainer`, `SplitPanel`, `SectionContainer`, `GridPanel`, `FlexPanel`, `ExpandableListContainer`, `ScrollPanel`, or any future subclass that embeds `Panel` as its first member) is set as the `contentPane` or `scenePane` of a `Frame`, its position, anchor, pivot, and dimensions are **strictly overridden and locked** to the host window's dimensions. The root pane's geometry is $(0, 0, \text{winW}, \text{winH})$, anchor `CONTAINER_ANCHOR_TOP_LEFT` (0), pivot `CONTAINER_PIVOT_TOP_LEFT` (0). Even if the caller subsequently calls `Container_setSize`, `Container_setLocation`, `Container_setAnchor`, or `Container_setPivot` on the root pane, the locked values are silently restored from the frame on the next layout pass and the root pane never escapes its host window bounds.
+
+### The Why:
+A root board pane is not a freely positioned child — it IS the window. Every child in the UI tree descends from a rectangle that is, definitionally, the full window surface. If a root pane were ever allowed to be a different size, children that anchor or percent-place against the parent would compute against the wrong extents, breaking every responsive layout rule in the tree. Locking the root geometry removes an entire class of "why is my layout wrong at startup" bugs that arise when the caller forgets to match the pane size to the window size.
+
+### The Rule:
+1. **`contentPane` and `scenePane` are always locked.** `Frame_setContentPane` and `Frame_setScenePane` (and their polymorphic `Frame_setContentPanel` / `Frame_setScenePanel` macros) apply `lockedRoot = 1`, anchor `TOP_LEFT`, pivot `TOP_LEFT`, location `(0, 0)`, and size `(frame.width, frame.height)` to the incoming panel's `Container` base immediately on set.
+2. **`Container_setSize` and `Container_setLocation` silently no-op on locked-root containers.** No assertion, no error, no crash — the call returns without modifying the node. User code that tries to resize a root pane simply does nothing; it is not an API contract violation. (This rule protects code that generically resizes all its panels without knowing which is the root.)
+3. **`Frame_resize` force-updates locked roots.** `Frame_resize(frame, w, h)` calls `Container_forceSize` on both `contentPane` and `scenePane` (non-null only) so the root geometry tracks the window live, including during live-resize drag events. `Container_forceSize` bypasses the `lockedRoot` guard and is internal to `darling-framework`; it is not part of the public API surface.
+4. **Polymorphic arity: `Frame_setContentPanel` and `Frame_setScenePanel`.** These are `_Generic`-free macros that cast any panel-derived `void*`-compatible pointer to `Panel*` and forward to `Frame_setContentPane` / `Frame_setScenePane`. Any type whose first member is `Container base` inside a `Panel base` (the two-layer embedding pattern used by all darling subclasses) is accepted. The caller must ensure the pointer is a live panel-derived type; no runtime type check is performed (the Single Class Per File Law bans vtable complexity here).
+5. **Default root geometry.** The starting point is always $(0, 0)$ top-left. The anchor is `CONTAINER_ANCHOR_TOP_LEFT` (0). The pivot is `CONTAINER_PIVOT_TOP_LEFT` (0). These values match the resolve baseline so the first layout pass never produces a delta from the previous-base reference, preventing a spurious re-layout on the very first frame.
+6. **Scope.** The lock applies only to the two board-root slots (`contentPane`, `scenePane`). `rootPanel` and arbitrary child panels are not affected. A panel removed from `contentPane` or `scenePane` (replaced with nullptr or swapped) loses its `lockedRoot` status only if the new holder explicitly calls `Container_setLockedRoot(c, false)` — the flag stays 1 until cleared, which is the correct behavior for recycled panel references.
