@@ -101,6 +101,7 @@
 #define ID_MAT4        0x002Bu
 #define ID_QUATERNION  0x002Cu
 #define ID_POINT       0x002Du
+#define ID_RECT        0x002Eu
 
 // --- SCALAR / WRAPPER CLASSES (Legacy TypeRegister raw IDs) ---
 #define ID_BYTE         0x0010u
@@ -273,6 +274,7 @@
 #define TYPE_MAT4_SINGLETON          (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MAT4)
 #define TYPE_QUATERNION_SINGLETON    (PROJ_VEXSPOKE | FORM_SINGLETON | ID_QUATERNION)
 #define TYPE_POINT_SINGLETON         (PROJ_VEXSPOKE | FORM_SINGLETON | ID_POINT)
+#define TYPE_RECT_SINGLETON          (PROJ_VEXSPOKE | FORM_SINGLETON | ID_RECT)
 #define TYPE_STACK                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STACK)
 #define TYPE_DEQUE                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_DEQUE)
 #define TYPE_QUEUE                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_QUEUE)
