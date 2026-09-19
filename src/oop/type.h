@@ -100,6 +100,7 @@
 #define ID_MAT3        0x002Au
 #define ID_MAT4        0x002Bu
 #define ID_QUATERNION  0x002Cu
+#define ID_POINT       0x002Du
 
 // --- SCALAR / WRAPPER CLASSES (Legacy TypeRegister raw IDs) ---
 #define ID_BYTE         0x0010u
@@ -217,6 +218,11 @@
 
 #define TYPE_CHUNKED_LIST           (PROJ_VEXSPOKE | FORM_ARRAY     | ID_CHUNKED_LIST)
 
+// --- EXCEPTION HANDLING ---
+#define ID_EXCEPTION    0x008Bu
+
+#define TYPE_EXCEPTION_SINGLETON    (PROJ_VEXSPOKE | FORM_SINGLETON | ID_EXCEPTION)
+
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
 // Every project ships its own *-type.h registry and numbers its classes
 // from 1: darling classes live in darling/c23/darling-type.h, graphvex in
@@ -266,6 +272,7 @@
 #define TYPE_MAT3_SINGLETON          (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MAT3)
 #define TYPE_MAT4_SINGLETON          (PROJ_VEXSPOKE | FORM_SINGLETON | ID_MAT4)
 #define TYPE_QUATERNION_SINGLETON    (PROJ_VEXSPOKE | FORM_SINGLETON | ID_QUATERNION)
+#define TYPE_POINT_SINGLETON         (PROJ_VEXSPOKE | FORM_SINGLETON | ID_POINT)
 #define TYPE_STACK                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_STACK)
 #define TYPE_DEQUE                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_DEQUE)
 #define TYPE_QUEUE                   (PROJ_VEXSPOKE | FORM_ARRAY     | ID_QUEUE)

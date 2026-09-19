@@ -24,6 +24,7 @@ if(NOT TARGET vexspoke)
 # Core VexSpoke (formerly Anti) Runtime Library
 add_library(vexspoke STATIC
     src/bit/bit.c
+    src/deferred/dispatch.c
     src/nio/mem.c
     src/c23/equals.c
     src/c23/free.c
@@ -55,6 +56,7 @@ add_library(vexspoke STATIC
     src/primitive/long_double.c
     src/primitive/pack.c
     src/engine/loop.c
+    src/spoke/bespoke.c
     src/math/coord_frame.c
     src/math/strict_math.c
     src/math/fast_math.c
@@ -70,6 +72,7 @@ add_library(vexspoke STATIC
     src/lang/vec4.c
     src/lang/vec4/vec4.c
     src/lang/vec4/vec4d.c
+    src/lang/point/point.c
     src/lang/mat4.c
     src/lang/fastmath.c
     src/search/calc.c
@@ -96,6 +99,7 @@ add_library(vexspoke STATIC
     src/struct/sparseset.c
     src/struct/stack.c
     src/security/crypto.c
+    src/exception/exception.c
     src/io/vexhome.c
     src/io/cache.c
     src/io/file.c
@@ -224,6 +228,16 @@ endif()
 set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/vexspoke")
 if(NOT EXISTS "${VEXSPOKE_TEST_DIR}")
     set(VEXSPOKE_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+endif()
+
+# Deferred dispatch queue: MPSC post, one-consumer drain, steal-the-batch
+# semantics, FIFO order, growable slab. Headless — runs everywhere.
+if(EXISTS "${VEXSPOKE_TEST_DIR}/dispatch_test.c" AND NOT TARGET dispatch_test)
+    add_executable(dispatch_test
+        ${VEXSPOKE_TEST_DIR}/dispatch_test.c
+    )
+    target_compile_options(dispatch_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(dispatch_test PRIVATE vexspoke pthread)
 endif()
 
 # System Discovery & Hardware / Display probe target
