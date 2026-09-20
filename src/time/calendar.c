@@ -7,7 +7,23 @@
 // should support calendar at 1500s i think? may regurgitate...
 
 #include "time/calendar.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Calendar
+ * ============================================================================
+ * Stateless date arithmetic over DateTime values: leap-year and daysInMonth
+ * tables, Zeller's congruence for ISO-8601 day-of-week, and addDays/
+ * addMonths/addYears that shift fields then reconstitute the epoch via the
+ * inverse of Hinnant's civil-from-days algorithm. Month/year shifts clip the
+ * day into the target month (Jan 31 + 1 month => Feb 28) so the result is
+ * always a valid date. No state, no allocation — pure functions on the
+ * caller's DateTime.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
