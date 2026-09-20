@@ -17,7 +17,24 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Bit
+ * ============================================================================
+ * The lockless bit-width pool allocator (Legacy: Bit64.java): a fixed arena
+ * of same-sized slots with an ABA-tagged free list, giving zero-allocation
+ * steady-state alloc/free for the primitive type system. Exists because
+ * primitives (Double, IntFloat, ...) need thread-safe slot recycling without
+ * malloc on hot paths. Memory: one calloc'd arena, never grows; each slot is
+ * a BitSlot header (type_id, length, tagged next) plus payload. Lifetime:
+ * the BitPool_init/BitPool_shutdown pair; the 16-bit tag bump defeats the ABA
+ * problem on concurrent push/pop.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
