@@ -5,7 +5,24 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Deque
+ * ============================================================================
+ * Double-ended queue over a circular buffer, ported from struct/Deque.java.
+ * Logical index i maps to physical (head + i) % capacity; addFirst/addLast
+ * and removeFirst/removeLast touch both ends in O(1), and the buffer grows
+ * by DEFAULT_CAPACITY chunks through the Memory arena when full. The
+ * Collection base record (typeId, activeCount, elementClass, stride,
+ * capacity, head, data) is embedded at offset zero so asCollection casts are
+ * layout-safe. All storage is arena-backed; the deque never allocates in
+ * steady state.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
