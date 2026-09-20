@@ -5,7 +5,23 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "util/random.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Probable_objects
+ * ============================================================================
+ * Weighted random-selection pool: a flat arena of 16-byte slot records
+ * (object pointer, running cumulative weight, per-slot weight) behind a
+ * fixed header of count/totalWeight/capacity. add() appends and maintains
+ * the cumulative running total so Random_probablePool can binary-search the
+ * cumulative column for a uniform draw; totalWeight 0 falls back to uniform
+ * index selection. The pool is capacity-bounded at construction and never
+ * reallocates on the hot draw path.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
