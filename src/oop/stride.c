@@ -2,7 +2,22 @@
 
 #include "oop/struct.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Stride
+ * ============================================================================
+ * Class byte-width metadata utility (Legacy: oop/Stride.java): answers the
+ * stride of any class id — runtime-defined custom structs consult the Struct
+ * registry first, then a static switch over the built-in class registry.
+ * Exists because containers (Queue, Collection, arrays) must compute element
+ * strides from class ids without per-instance metadata. Memory: zero state,
+ * zero allocation; pure lookup. Lifetime: stateless.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
