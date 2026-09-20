@@ -5,7 +5,23 @@
 #include <string.h>
 
 #include "primitive/string.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: CommandParser
+ * ============================================================================
+ * Splits a raw command line into a Command block: trims surrounding
+ * whitespace, tokenizes on whitespace runs, and allocates the command name
+ * plus argument strings contiguously. Ported from cli/CommandParser.java; the
+ * token scan itself is allocation-free, but the returned Command and its
+ * strings are allocated through the string primitive. Returns nullptr on
+ * empty input or allocation failure so callers can drop the line safely.
+ * Lives at R2 as a leaf CLI behavior with no dependencies above it.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
