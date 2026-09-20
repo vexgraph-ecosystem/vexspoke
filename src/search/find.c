@@ -3,7 +3,21 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Find
+ * ============================================================================
+ * Evaluates text searches with flags: case-sensitivity, whole-word boundaries,
+ * and SQL '%' and '_' wildcards. Pure procedural — no state, no allocation;
+ * every function walks caller-owned strings and returns a match index or
+ * boolean. Private helpers implement the LIKE state machine, word-boundary
+ * checks, and the substring scan with optional exact-word gating.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -13,6 +27,23 @@
  * ============================================================================
  * Evaluates text searches with flags: case-sensitivity, whole word boundaries,
  * and SQL '%' and '_' wildcards.
+ *
+ * STRUCT FIELDS: none — procedural (operates on caller-owned text/pattern
+ * strings; no state)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Search_match(text, pattern, flags)
+ *   - Search_findFirst(text, pattern, flags)
+ *   - Search_like(text, pattern, caseSensitive)
+ *   - Search_exactWord(text, word, caseSensitive)
+ *
+ * Private Core Functions: (.c static)
+ *   - normalize_char(c, caseSensitive)
+ *   - match_like(t, p, caseSensitive)
+ *   - is_word_boundary(c)
+ *   - find_substring(text, pattern, caseSensitive, exactWord)
  * ============================================================================
  */
 
