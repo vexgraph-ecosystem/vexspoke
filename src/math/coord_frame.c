@@ -1,6 +1,23 @@
 #include "math/coord_frame.h"
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: CoordFrame
+ * ============================================================================
+ * Defines and resolves the 12 canonical 3D coordinate frames formed by the
+ * primary Up axis (+/- Y, +/- Z, +/- X) and handedness (Left vs Right). Each
+ * frame resolves to a CoordBasis — an axis permutation plus per-component
+ * sign — that maps canonical spatial axes (0 horizontal, 1 vertical, 2 depth)
+ * to engine XYZ with branchless one-line indexing math. The basis and name
+ * tables are static const data, so the class is procedural and allocation-
+ * free; out-of-range frames fail closed to the default Y_UP_LEFT basis or
+ * "UNKNOWN". Default frame is COORD_FRAME_Y_UP_LEFT (Unity convention).
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -17,6 +34,13 @@
  *   Axis 2 (Depth):      Negative = Back,  Positive = Front
  *
  * Default frame is COORD_FRAME_Y_UP_LEFT (Unity convention).
+ *
+ * STRUCT FIELDS (Mirroring math/coord_frame.h):
+ * ----------------------------------------------------------------------------
+ *   CoordBasis {
+ *     int8_t axis[3]; // spatial component per XYZ (0=horizontal, 1=vertical, 2=depth)
+ *     int8_t sign[3]; // +1 or -1 multiplier per component
+ *   }
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
