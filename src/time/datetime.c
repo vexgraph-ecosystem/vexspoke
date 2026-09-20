@@ -7,7 +7,22 @@
 #include "time/datetime.h"
 
 #include <time.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: DateTime
+ * ============================================================================
+ * UTC date/time breakdown (Legacy: time/DateTime.java): setEpochMillis
+ * carries the legacy math verbatim — floor-division chains for the
+ * h/m/s/ms fields, then Hinnant's era-based civil-from-days conversion for
+ * the calendar fields, all integer, all branches, zero allocation. The
+ * DateTime struct is caller-owned; DateTime_set snapshots CLOCK_REALTIME.
+ * Lives at R2 as a leaf time behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
