@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: String
+ * ============================================================================
+ * The string class, ported from primitive/string.java: NUL-terminated
+ * uint8_t payloads allocated from the Memory arena with a trailing byte
+ * reserved for the terminator. Provides allocate/free, length/type/capacity
+ * introspection, copy/equals, and the String_* family of compare, contains,
+ * indexOf, substring, and append operations. Appends are dest-last where a
+ * destination buffer is supplied; in-place append requires caller capacity.
+ * Lives at R2 as a leaf primitive behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
