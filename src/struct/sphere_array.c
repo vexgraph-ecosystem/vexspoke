@@ -4,7 +4,24 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: SphereArray
+ * ============================================================================
+ * 3D spherical voxel matrix evaluated via the 3D Pythagorean theorem: a cubic
+ * bounding volume of (2*radius + 1)^3 voxels where only cells whose Euclidean
+ * distance from center satisfies dx^2 + dy^2 + dz^2 <= radius^2 are valid.
+ * A Collection header plus a flat data buffer hold the voxels; the active
+ * count is precomputed at construction so iteration never re-tests the whole
+ * cube. Grid accessors address voxels by [0, diameter) coordinates and offset
+ * accessors by center-relative [-radius, radius] deltas; both bounds-check
+ * before touching memory. forEach walks only the valid spherical shell.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -18,6 +35,42 @@
  * only voxels whose Euclidean distance from center satisfies:
  * dx^2 + dy^2 + dz^2 <= radius^2
  * are considered valid and accessible.
+ *
+ * STRUCT FIELDS (Mirroring struct/sphere_array.h):
+ * ----------------------------------------------------------------------------
+ *   SphereArray {
+ *     Collection collection; // base collection header (typeId, activeCount, stride, data)
+ *     int32_t radius;        // radius in voxels
+ *     int32_t diameter;      // 2 * radius + 1
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Constructors:
+ *   - SphereArray_create(radius, elementClass)
+ *   - SphereArray_createWithStride(radius, elementClass, stride)
+ *
+ * Core Functions:
+ *   - SphereArray_free(self)
+ *   - SphereArray_containsGrid(self, gx, gy, gz)
+ *   - SphereArray_containsOffset(self, dx, dy, dz)
+ *   - SphereArray_distanceSquaredGrid(self, gx, gy, gz)
+ *   - SphereArray_distanceSquaredOffset(dx, dy, dz)
+ *   - SphereArray_slotGrid(self, gx, gy, gz)
+ *   - SphereArray_slotOffset(self, dx, dy, dz)
+ *   - SphereArray_getGrid(self, gx, gy, gz, dest)
+ *   - SphereArray_setGrid(self, gx, gy, gz, src)
+ *   - SphereArray_getOffset(self, dx, dy, dz, dest)
+ *   - SphereArray_setOffset(self, dx, dy, dz, src)
+ *   - SphereArray_forEach(self, callback, userData)
+ *
+ * Private Core Functions: (.c static)
+ *   - SphereArray_index(gx, gy, gz, diameter)
+ *
+ * Getters:
+ *   - SphereArray_radius(self)
+ *   - SphereArray_diameter(self)
+ *   - SphereArray_validVoxelCount(self)
  * ============================================================================
  */
 
