@@ -5,7 +5,22 @@
 #include <string.h>
 
 #include "search/calc.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Spotlight
+ * ============================================================================
+ * Ranked search and math-query engine: scores candidate strings against a
+ * query using tiered relevance (exact > prefix > word-boundary > substring >
+ * fuzzy subsequence) and fills a caller-owned SpotlightMatch array, sorted
+ * descending by score. Also evaluates in-line calculator queries by
+ * delegating to Calc_eval. Pure procedural — no state, no allocation beyond
+ * the caller-provided outMatches buffer.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -15,6 +30,23 @@
  * ============================================================================
  * Scores query strings against candidates using tiered relevance ranking and
  * evaluates in-line mathematical calculations.
+ *
+ * STRUCT FIELDS (Mirroring search/spotlight.h):
+ * ----------------------------------------------------------------------------
+ *   SpotlightMatch {
+ *     uint32_t id;    // candidate index (or caller-supplied id)
+ *     int32_t score;  // relevance score, higher is better
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Spotlight_rank(query, candidates, ids, candidateCount, outMatches, maxCount)
+ *   - Spotlight_tryCalculate(query, outResult)
+ *
+ * Private Core Functions: (.c static)
+ *   - calculate_score(candidate, query)
+ *   - compare_matches(a, b)
  * ============================================================================
  */
 
