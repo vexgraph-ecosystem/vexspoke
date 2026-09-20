@@ -8,7 +8,24 @@
 #include "time/clock.h"
 
 #include <time.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Clock
+ * ============================================================================
+ * The virtual clock (Legacy: time/Clock.java): tick() accrues
+ * elapsedReal * timeScale into the virtual timeline, and pause freezes
+ * accrual while the real reading keeps advancing — so unpausing never dumps
+ * a backlog of phantom milliseconds into the simulation. Accrual reads a
+ * monotonic clock; the baseRealMillis anchor uses the realtime clock for
+ * informational wall time. Clock is a value struct returned by Clock_create
+ * and mutated in place by pointer; reset re-anchors both readings and zeroes
+ * the virtual timeline.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
