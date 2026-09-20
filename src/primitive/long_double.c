@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Long_double
+ * ============================================================================
+ * LongDouble primitive over a global 16-byte-slot BitPool (1024 slots) with
+ * Memory-arena fallback for arrays: alloc/free route through BitPool when the
+ * pointer is pool-owned, otherwise through Memory. The payload is an int64
+ * plus a double in the second 8-byte half (allocWithValues writes both);
+ * get/set address the int64 half, and compareAndSet is a seq-cst
+ * __atomic_compare_exchange_n. type/length dispatch through the owning
+ * allocator so callers never pierce the pool/arena split.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
