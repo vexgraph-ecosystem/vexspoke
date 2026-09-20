@@ -1,4 +1,5 @@
 #include "annotation/intention.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "system/process_probe.h"
 
@@ -10,6 +11,20 @@
 #if defined(__APPLE__)
 #include <libproc.h>
 #endif
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: ProcessProbe
+ * ============================================================================
+ * The concurrency-free "what is running now" primitive: enumerates the live
+ * process table via darwin libproc and matches executable basenames
+ * (case-insensitive), or scans a plugin directory for a loaded driver.
+ * Pure C (libproc + POSIX dirent) — no ObjC, no fork/exec, no permission
+ * prompts. Stateless singleton with a bounded 4096-pid stack scan; non-Apple
+ * builds answer false by contract.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
