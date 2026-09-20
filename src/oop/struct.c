@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Struct
+ * ============================================================================
+ * Dynamic struct instance and allocation engine over the Fields/Class schema
+ * registry. Struct_construct builds a Fields descriptor from a class-id
+ * array; the allocate family materializes singleton, array, coexistent, and
+ * SOA layouts from that schema, and the set/get families read and write
+ * typed fields (int/long/float/double/byte/short/pointer) by index, with
+ * element and nested variants for arrays and sub-structs. All storage is
+ * arena-backed; the engine never owns memory beyond what it allocates.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
