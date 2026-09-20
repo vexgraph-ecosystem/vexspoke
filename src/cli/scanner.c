@@ -4,7 +4,23 @@
 #include <stdio.h>
 
 #include "primitive/string.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Scanner
+ * ============================================================================
+ * CLI stdin scanner ported from cli/Scanner.java: reads lines and whitespace-
+ * delimited words from stdin into a static SCANNER_BUFFER_SIZE byte buffer and
+ * returns them as arena-backed string blocks via string_allocateBytes. The
+ * static buffer costs zero runtime allocation and is single-threaded by
+ * contract (stdin is process-global). hasNextLine reports EOF; a zero-length
+ * read returns nullptr so callers can distinguish empty input from end of
+ * stream.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
