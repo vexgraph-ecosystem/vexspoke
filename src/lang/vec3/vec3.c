@@ -7,7 +7,24 @@
 #include "math/fast_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec3
+ * ============================================================================
+ * Coordinate-agnostic 3D spatial vector: horizontal/vertical/depth components
+ * with the owning CoordFrame stored as true embedded metadata in the 4th
+ * float slot, preserving 16-byte SIMD alignment for NEON/SSE. Directional
+ * accessors (right/left/up/down/front/back) expose semantic axes whose
+ * inverses are exact negations, while frame-mapped X/Y/Z accessors translate
+ * through CoordFrame axis index/sign tables. All arithmetic is dest-last and
+ * null-guarded; normalize uses strict IEEE inv-sqrt while fastNormalize uses
+ * the relaxed Quake approximation.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -25,6 +42,57 @@
  *   getBack() == -getFront()
  *   getLeft() == -getRight()
  *   getDown() == -getUp()
+ *
+ * STRUCT FIELDS (Mirroring lang/vec3/vec3.h):
+ * ----------------------------------------------------------------------------
+ *   Vec3 {
+ *     alignas(16) union {
+ *       struct { float horizontal; float vertical; float depth; uint32_t frame; };
+ *       struct { float x; float y; float z; uint32_t _frame; };
+ *       struct { float right; float up; float front; uint32_t _f; };
+ *       float data[4];
+ *     };
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec3_0(void)
+ *   - Vec3_3(horizontal, vertical, depth)
+ *   - Vec3_4(horizontal, vertical, depth, frame)
+ *   - Vec3_free(v)
+ *
+ * Public Setters: (.h)
+ *   - Vec3_setRight(v, val) / Vec3_setLeft(v, val)
+ *   - Vec3_setUp(v, val) / Vec3_setDown(v, val)
+ *   - Vec3_setFront(v, val) / Vec3_setBack(v, val)
+ *   - Vec3_setFrame(v, frame)
+ *   - Vec3_setX(v, x) / Vec3_setY(v, y) / Vec3_setZ(v, z)
+ *   - Vec3_set(v, horizontal, vertical, depth)
+ *
+ * Public Getters: (.h)
+ *   - Vec3_getRight(v) / Vec3_getLeft(v)
+ *   - Vec3_getUp(v) / Vec3_getDown(v)
+ *   - Vec3_getFront(v) / Vec3_getBack(v)
+ *   - Vec3_getFrame(v)
+ *   - Vec3_getX(v) / Vec3_getY(v) / Vec3_getZ(v)
+ *   - Vec3_getXInFrame(v, frame) / Vec3_getYInFrame(v, frame) / Vec3_getZInFrame(v, frame)
+ *
+ * Public Core Functions: (.h)
+ *   - Vec3_copy(src, dest)
+ *   - Vec3_toFrame(src, targetFrame, dest)
+ *   - Vec3_add(a, b, dest) / Vec3_sub(a, b, dest)
+ *   - Vec3_mul(a, scalar, dest) / Vec3_div(a, scalar, dest)
+ *   - Vec3_dot(a, b)
+ *   - Vec3_cross(a, b, dest)
+ *   - Vec3_lengthSquared(v) / Vec3_length(v)
+ *   - Vec3_normalize(src, dest) / Vec3_fastNormalize(src, dest)
+ *   - Vec3_distance(a, b) / Vec3_angle(a, b)
+ *   - Vec3_project(vector, onto, dest)
+ *   - Vec3_reflect(incident, normal, dest)
+ *   - Vec3_clamp(src, min_val, max_val, dest)
+ *   - Vec3_abs(src, dest)
+ *   - Vec3_lerp(a, b, t, dest)
  * ============================================================================
  */
 
