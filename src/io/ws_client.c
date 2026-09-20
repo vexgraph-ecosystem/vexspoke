@@ -5,7 +5,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: WsClient
+ * ============================================================================
+ * A bounded, thread-free WebSocket frame slot for the R1 leaf layer. Fixed rx
+ * buffer, connection state, cancel flag, and timeout — zero steady-state
+ * allocation, no threads, no sockets. Bytes arrive via WsClient_feed from the
+ * R0 driver (which owns the socket); WsClient_poll drains pending bytes with a
+ * bounded wait: timeoutNs clamped to WS_CLIENT_POLL_MAX_NS (100ms), ~1ms
+ * nanosleep slices, cancel flag re-checked each slice, false (drop-degrade)
+ * on timeout per the Bounded Wait Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
