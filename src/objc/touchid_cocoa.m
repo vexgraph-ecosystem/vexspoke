@@ -8,7 +8,24 @@
 
 #include "security/touchid.h"
 #include "annotation/platform_exclusive.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Touchid_cocoa
+ * ============================================================================
+ * macOS LocalAuthentication bridge for TouchID. Presents an LAContext under
+ * LAPolicyDeviceOwnerAuthentication (biometrics first, passcode fallback),
+ * waits synchronously on a dispatch semaphore for the reply, and returns a
+ * single-use TouchIDToken (two magic words + consumed flag) that the C core
+ * must verify exactly once. The token is tracked in file-local statics so
+ * verify/discard consume it atomically; normal user cancels return a clean
+ * null token while unexpected system errors log to stderr. Platform-exclusive
+ * to macOS per the ;;PLATFORM_EXCLUSIVE marker.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -17,6 +34,13 @@
  * LEVEL: L4 — Self-Management (native biometric OS shim)
  * ============================================================================
  * macOS LocalAuthentication bridge for TouchID.
+ *
+ * STRUCT FIELDS (Mirroring security/touchid.h):
+ * ----------------------------------------------------------------------------
+ *   TouchIDToken {
+ *     uint64_t magic[2]; // randomness, never written by the C core
+ *     bool consumed;     // set true by verify / discard
+ *   }
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
