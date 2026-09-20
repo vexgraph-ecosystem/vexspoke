@@ -2,7 +2,23 @@
 
 #include <math.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Fastmath
+ * ============================================================================
+ * FastMath port (Legacy: lang/FastMath.java): pure, approximation-grade
+ * scalar math for hot paths where full IEEE 754 precision is unnecessary —
+ * abs, round, invSqrt, 32-bit sin/cos/tan via polynomial approximation,
+ * radians/degrees, pow, clamp, cosFromSin. Exists because rendering and
+ * physics loops need branch-light, table-free approximations that beat libm
+ * on throughput. Memory: zero state, zero allocation; only compile-time
+ * constants (INV_PI2, B, C, P). Lifetime: stateless pure functions.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
