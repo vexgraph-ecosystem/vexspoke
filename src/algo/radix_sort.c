@@ -4,7 +4,22 @@
 #include <string.h>
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: RadixSort
+ * ============================================================================
+ * Least-Significant-Digit (LSD) Radix Sort with 256 counting buckets (8-bit
+ * radix). Delivers predictable O(k*N) linear sorting time independent of
+ * initial ordering, ideal for Morton spatial hashing, particle depth sorting,
+ * and ECS entity batches. Procedural: no own state; temp buffers are drawn
+ * from the Memory arena and freed before return, so the caller's arrays are
+ * sorted in place with zero steady-state allocation.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -14,6 +29,16 @@
  * ============================================================================
  * Least-Significant-Digit (LSD) Radix Sort with 256 counting buckets (8-bit radix).
  * Delivers predictable O(k*N) linear sorting time independent of initial ordering.
+ *
+ * STRUCT FIELDS: none — procedural (operates on caller-owned uint32_t/uint64_t
+ * arrays and key/value pair arrays)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - RadixSort_u32(array, count)
+ *   - RadixSort_u64(array, count)
+ *   - RadixSort_pairsU64(keys, values, count)
  * ============================================================================
  */
 
