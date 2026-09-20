@@ -5,7 +5,22 @@
 #include "math/strict_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec3d
+ * ============================================================================
+ * 32-byte SIMD double-precision 3D spatial vector for orbital and
+ * high-fidelity physics, aligned to 32 bytes for AVX2 / Apple NEON pairs.
+ * Arena-allocated at VEC3D_BYTES with zero steady-state allocation. The union
+ * layout aliases horizontal/vertical/depth, x/y/z, and right/up/front plus a
+ * frame tag; frame-mapped getters (getX/getY/getZ) resolve axis sign and
+ * index through CoordFrame. Arithmetic is dest-last per the Dest-Last Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -14,6 +29,44 @@
  * LEVEL: L2 — Behavior (32-byte SIMD double-precision 3D vector)
  * ============================================================================
  * Ultra-precision 3D spatial vector for orbital and high-fidelity physics.
+ *
+ * STRUCT FIELDS (Mirroring lang/vec3/vec3d.h):
+ * ----------------------------------------------------------------------------
+ *   Vec3d {
+ *     alignas(32) union {
+ *       struct { double horizontal; double vertical; double depth; uint64_t frame; };
+ *       struct { double x; double y; double z; uint64_t _frame; };
+ *       struct { double right; double up; double front; uint64_t _f; };
+ *       double data[4];
+ *     };
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec3d()                       : Vec3d_0()
+ *   - Vec3d(h, v, d)                : Vec3d_3(horizontal, vertical, depth)
+ *   - Vec3d(h, v, d, frame)         : Vec3d_4(horizontal, vertical, depth, frame)
+ *
+ * Public Core Functions: (.h)
+ *   - Vec3d_free(v)
+ *   - Vec3d_add(a, b, dest)
+ *   - Vec3d_sub(a, b, dest)
+ *   - Vec3d_mul(a, scalar, dest)
+ *   - Vec3d_dot(a, b)
+ *   - Vec3d_length(v)
+ *   - Vec3d_normalize(src, dest)
+ *
+ * Public Setters: (.h)
+ *   - Vec3d_setRight(v, val) / Vec3d_setLeft(v, val)
+ *   - Vec3d_setUp(v, val) / Vec3d_setDown(v, val)
+ *   - Vec3d_setFront(v, val) / Vec3d_setBack(v, val)
+ *
+ * Public Getters: (.h)
+ *   - Vec3d_getRight(v) / Vec3d_getLeft(v)
+ *   - Vec3d_getUp(v) / Vec3d_getDown(v)
+ *   - Vec3d_getFront(v) / Vec3d_getBack(v)
+ *   - Vec3d_getX(v) / Vec3d_getY(v) / Vec3d_getZ(v)
  * ============================================================================
  */
 
