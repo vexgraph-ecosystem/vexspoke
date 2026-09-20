@@ -15,7 +15,23 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Ring
+ * ============================================================================
+ * Fixed-capacity MPMC FIFO with power-of-two capacity so the slot index is a
+ * cheap mask instead of a modulo. One spinlock serializes the actual copy
+ * in/out while head/tail are monotonic atomic counters, so readers never see
+ * torn data and full/empty are exact (head==tail empty, tail-head==capacity
+ * full). The slots arena is calloc'd once at init and freed at shutdown —
+ * push/pop allocate nothing on the hot path. Capacity is a hard contract:
+ * any burst larger than the ring is rejected, never silently dropped.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
