@@ -1,7 +1,20 @@
 #include "util/arrays.h"
 
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Arrays
+ * ============================================================================
+ * The Arrays utility, ported from util/Arrays.java: in-place quicksort and
+ * binary search over caller-owned int32/int64 buffers, plus byte fill and
+ * memcpy-backed block copy. Pure procedural — no state, no allocation; all
+ * buffers are caller-owned and mutated in place.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
