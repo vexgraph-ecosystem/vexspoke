@@ -9,9 +9,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
 #include "relational/variable_pool.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Variable
+ * ============================================================================
+ * The relational symbol registry: dense VariableRow records (varId == index,
+ * append-only) reference shared StringPool slots by index — never inline
+ * names — and a sparse bySlot hop maps pool slot back to varId. Names are
+ * validated cold (ASCII alnum/underscore/dot, folded lowercase, max
+ * STRING_POOL_NAME_MAX) before interning; typed queries filter rows by
+ * classId over one structure with no segregated lists. Rows and the bySlot
+ * table grow on demand via malloc/realloc; shutdown frees both and marks the
+ * registry inactive.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
