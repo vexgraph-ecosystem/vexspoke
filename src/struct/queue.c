@@ -5,7 +5,22 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Queue
+ * ============================================================================
+ * The Queue class, ported from struct/Queue.java: a circular FIFO over a
+ * Collection header, with a 1024-slot default capacity floor and growth by
+ * 1024-slot increments when full. Push appends at the logical tail,
+ * pop/peek read the head; slot access maps logical indices through the
+ * circular head. Free releases the data buffer before the header. Lives at
+ * R2 as a leaf container behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
