@@ -1,9 +1,24 @@
 #include "lang/point/point.h"
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "math/strict_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Point
+ * ============================================================================
+ * Integer-precision 2D position in native hardware pixel space (the Pixel
+ * Coordinate Contract: layout, hit-testing, and the graphics API all speak
+ * native pixels; NDC exists only inside vertex shaders). The struct is two
+ * int32 fields, arena-allocated via Memory_alloc with the ID_POINT type tag,
+ * and all arithmetic is dest-last with int64 widening so distance math never
+ * overflows. Y is down, matching screen/backing-store orientation.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
