@@ -4,7 +4,22 @@
 #include <math.h>
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Octree
+ * ============================================================================
+ * 3D spatial partitioning octree. Partitions 3D volumes into 8 octants to
+ * accelerate range queries, frustum/AABB intersections, and radius queries.
+ * Arena-allocated: the Octree owns a root OctreeNode; leaves grow their item
+ * arrays by doubling and subdivide into eight children once full. Insert and
+ * query recurse through the octant tree with bounded depth, keeping point
+ * lookups O(log N) on average.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -16,6 +31,60 @@
  *
  * Partitions 3D volumes into 8 octants to accelerate range queries,
  * frustum/AABB intersections, and radius queries.
+ *
+ * STRUCT FIELDS (Mirroring struct/octree.h):
+ * ----------------------------------------------------------------------------
+ *   OctreePoint {
+ *     float x;
+ *     float y;
+ *     float z;
+ *   }
+ *   OctreeAABB {
+ *     float minX; float minY; float minZ;
+ *     float maxX; float maxY; float maxZ;
+ *   }
+ *   OctreeItem {
+ *     OctreePoint point;
+ *     uint64_t    payload;
+ *   }
+ *   OctreeNode {
+ *     OctreeAABB         bounds;
+ *     OctreeItem        *items;
+ *     uint32_t           itemCount;
+ *     uint32_t           itemCapacity;
+ *     bool               isLeaf;
+ *     struct OctreeNode *children[8];
+ *   }
+ *   Octree {
+ *     OctreeNode *root;
+ *     uint32_t    maxDepth;
+ *     uint32_t    maxItemsPerNode;
+ *     size_t      totalItems;
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Octree_create(bounds, maxDepth, maxItemsPerNode)
+ *
+ * Public Core Functions: (.h)
+ *   - Octree_free(self)
+ *   - Octree_insert(self, point, payload)
+ *   - Octree_queryRange(self, range, outPayloads, maxCount)
+ *   - Octree_querySphere(self, center, radius, outPayloads, maxCount)
+ *   - Octree_count(self)
+ *   - Octree_clear(self)
+ *   - OctreeAABB_containsPoint(box, p)
+ *   - OctreeAABB_intersects(a, b)
+ *   - OctreeAABB_intersectsSphere(box, center, radius)
+ *
+ * Private Core Functions: (.c static)
+ *   - OctreeNode_create(bounds, capacity)
+ *   - OctreeNode_free(node)
+ *   - OctreeNode_subdivide(node, childCapacity)
+ *   - OctreeNode_insert(node, item, depth, maxDepth, maxItems)
+ *   - OctreeNode_queryRange(node, range, outPayloads, maxCount, count)
+ *   - OctreeNode_querySphere(node, center, radius, outPayloads, maxCount, count)
  * ============================================================================
  */
 
