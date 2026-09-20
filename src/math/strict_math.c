@@ -2,7 +2,24 @@
 
 #include <math.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: StrictMath
+ * ============================================================================
+ * Strict IEEE 754 math engine: full-precision float and double routines
+ * (trig, inverse trig, sqrt, invSqrt, pow, exp, log, abs, floor, ceil,
+ * round, clamp, lerp, radians/degrees) with guaranteed bit-level conformance
+ * for physics, trajectory integration, and orbital mechanics. Exists because
+ * FastMath's approximations are unacceptable where error bounds must be
+ * exact. Memory: zero state, zero allocation; pure functions over scalar
+ * float/double values. Lifetime: stateless; the D-suffixed twins cover
+ * double precision for celestial/large-world coordinates.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -13,6 +30,19 @@
  * Full-precision floating-point functions conforming strictly to IEEE 754.
  * Guaranteed accuracy, bit-exact roundings, and rigorous domain checks for
  * rigid-body physics, trajectory integration, and orbital mechanics.
+ *
+ * STRUCT FIELDS: none — procedural (operates on scalar float/double values (pure IEEE 754 functions))
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - StrictMath_sin(x) / cos(x) / tan(x) / asin(x) / acos(x) / atan(x)
+ *   - StrictMath_atan2(y, x)
+ *   - StrictMath_sqrt(x) / invSqrt(x) / pow(base, exp) / exp(x) / log(x)
+ *   - StrictMath_abs(x) / floor(x) / ceil(x) / round(x)
+ *   - StrictMath_clamp(val, min, max) / lerp(a, b, t)
+ *   - StrictMath_toRadians(deg) / toDegrees(rad)
+ *   - StrictMath_sinD(x) ... StrictMath_lerpD(a, b, t)  (double-precision twins)
  * ============================================================================
  */
 
