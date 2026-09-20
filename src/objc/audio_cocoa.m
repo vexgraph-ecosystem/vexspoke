@@ -7,7 +7,24 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Audio_cocoa
+ * ============================================================================
+ * The macOS AVFoundation backend of audio.h: one shared AVAudioEngine plus
+ * one AVAudioPlayerNode per voice, with clips as AVAudioPCMBuffers decoded
+ * from disk via AVAudioFile or synthesized sine tones for tests and
+ * chiptunes. The engine refuses to start with zero attached nodes, so init
+ * only constructs it and the first voice attachment flips it live. All
+ * Objective-C objects are ARC-managed; the C-side AudioClip/AudioVoice/Audio
+ * handles are arena-allocated and must be freed through their Audio*_free
+ * seams so nodes detach before the block is reclaimed.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -16,6 +33,29 @@
  * LEVEL: L4 — Self-Management (native audio OS shim)
  * ============================================================================
  * AVFoundation backend (the macOS half of audio.h).
+ *
+ * STRUCT FIELDS (local to this file):
+ * ----------------------------------------------------------------------------
+ *   AudioClip {
+ *     AVAudioPCMBuffer *buffer; // decoded or synthesized PCM block
+ *     float seconds;            // clip duration in seconds
+ *   }
+ *   AudioVoice {
+ *     AVAudioPlayerNode *node;  // attached player node
+ *     AudioClip *clip;          // currently assigned clip
+ *     bool active;              // buffer scheduled and play() pressed
+ *     bool looping;             // loop flag for schedule options
+ *   }
+ *   Audio {
+ *     AVAudioPCMBuffer *buffer; // loaded PCM block
+ *     AVAudioPlayerNode *node;  // wired player node
+ *     bool active;              // play state
+ *     bool looping;             // loop flag
+ *     float gain;               // volume 0.0 .. 1.0+
+ *     float pitch;              // rate 1.0 = native
+ *     double rate;              // sample rate
+ *     int channels;             // AUDIO_MONO / AUDIO_STEREO
+ *   }
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
