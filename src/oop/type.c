@@ -1,10 +1,27 @@
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 
 #include <stddef.h>
 #include <string.h>
 
 #include "nio/mem.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Type
+ * ============================================================================
+ * The type-id metadata registry: 64-bit ids carry an 8-bit project byte, a
+ * form nibble, and a 32-bit per-project class number, and this file resolves
+ * them — Type_arch reads the project byte, Type_class masks the local number,
+ * and Type_getParentClass walks a per-project parent chain granted once via
+ * Type_registerParents (idempotent, rejects PROJ_VEXSPOKE and null/count
+ * mismatches). The chain slate is a growable arena-backed table that doubles
+ * exponentially per the Dynamic Scalability & Anti-Hardcoding Law; an
+ * unregistered project resolves every class as a root.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
