@@ -4,7 +4,23 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "objects/probable.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Free
+ * ============================================================================
+ * The relational destructor dispatcher: c23_free routes a pointer's runtime
+ * Memory_type through a fixed 64-entry dynamic destructor table (registered
+ * via Destructor_register, first-match wins), then through the built-in type
+ * cases, and finally reclaims the raw block with Memory_free. It is the cold
+ * teardown seam for every arena-backed object, so it must never allocate,
+ * block, or recurse. Registration is idempotent: re-registering a typeId
+ * replaces the handler in place.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
