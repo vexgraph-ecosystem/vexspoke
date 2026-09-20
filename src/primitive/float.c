@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Float
+ * ============================================================================
+ * Float primitive (Legacy: primitive/Float.java): a procedural class over a
+ * process-wide BitPool (4-byte elements, 1024 fixed slots) with a Memory
+ * arena fallback for large arrays. Float_alloc hands out pool slots typed
+ * ID_FLOAT; Float_allocArray switches to the arena when contiguity or size
+ * demands it, and Float_free routes to whichever owner holds the pointer.
+ * Float_compareAndSet compares the payload's IEEE-754 bit pattern as an
+ * int32 so the CAS is exact. Float_init/Float_shutdown bracket the pool.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
