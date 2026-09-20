@@ -2,10 +2,29 @@
 
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
 #include "atomic/spin.h"
 #include "oop/type.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: StringPoolService
+ * ============================================================================
+ * Process-wide interned string pool: each distinct name is stated once in a
+ * fixed 32-byte slot ([ptr][str1][str2][str3]) and shared by pointer, never
+ * copied — name identity is inherently global, so two arenas interning the
+ * same name must share rather than duplicate. The static table is arena-
+ * backed: zero-initialized statics fail closed pre-init (magic gate), and
+ * teardown composes with the owning arena. Lookup runs binary search over a
+ * separate sorted u32 index so growth never moves a slot's identity; growth
+ * copies slots verbatim then rewrites every self link. Every public entry
+ * serializes on one spinlock (cold paths only; lock order is pool-then-arena
+ * with no reverse path, so no cycle).
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -22,6 +41,24 @@
  * Every public entry serializes on one spinlock (cold paths only; the
  * critical section is bounded by pool size, lock order is pool-then-arena
  * with no reverse path, so no cycle).
+ *
+ * STRUCT FIELDS (Mirroring relational/variable_pool.h):
+ * ----------------------------------------------------------------------------
+ *   StringSlot {
+ *     uint64_t self;  // intrusive validity: must equal own address
+ *     char name[24];  // NUL-terminated, zero-padded, exact bytes
+ *   }
+ *
+ * PRIVATE HELPERS (kept file-local pure-data only, each with full fields):
+ * ----------------------------------------------------------------------------
+ *   StringPoolState {
+ *     uint32_t magic;     // STRING_POOL_MAGIC when live (fail-closed gate)
+ *     MemoryArena *arena; // backing arena (borrowed; teardown frees all)
+ *     StringSlot *slots;  // slot array (append-only; may move on grow)
+ *     uint32_t *order;    // sorted slot indices
+ *     uint32_t count;     // live slots
+ *     uint32_t capacity;  // allocated slots
+ *   }
  *
  * SLOT RECORD (owned by this service, behaviorless, see variable_pool.h):
  * ----------------------------------------------------------------------------
