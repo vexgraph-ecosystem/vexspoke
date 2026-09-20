@@ -5,7 +5,23 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Array
+ * ============================================================================
+ * The Array class, ported from struct/Array.java: a typed contiguous buffer
+ * under a Collection header. Construction resolves the element stride from
+ * the class registry, allocates the header and the data buffer from the
+ * Memory arena, and zero-fills the payload. Array_get/set read and write
+ * slots as uint64 through the Collection slot machinery with bounds checks;
+ * Array_slot returns a typed pointer for direct access. Free releases the
+ * data buffer before the header.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
