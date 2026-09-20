@@ -26,7 +26,24 @@
 
 #include "net/url.h"
 #include "net/tls.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Http
+ * ============================================================================
+ * HTTP/1.1 client and micro server over BSD sockets: one blocking TCP
+ * connection per request, header block parsed in place, body received per
+ * Content-Length or chunked framing into the caller's buffer — zero
+ * allocation, every buffer caller-owned. The client fails closed on CRLF
+ * injection and refuses https without a TLS backend rather than downgrading.
+ * The micro server runs a single accept thread that polls with a 100ms
+ * budget (the Bounded Wait Law) so stop stays cooperative, and rejects
+ * attacker Content-Lengths that overflow the fixed server body box.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
