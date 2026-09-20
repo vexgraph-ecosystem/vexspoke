@@ -4,7 +4,22 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: CircleArray
+ * ============================================================================
+ * 2D circular matrix evaluated via the Pythagorean Theorem. Encapsulates a
+ * square bounding grid of size (2*radius + 1)^2 where only cells whose
+ * Euclidean distance from the center satisfies dx^2 + dy^2 <= radius^2 are
+ * valid and accessible. Arena-allocated: the CircleArray embeds a Collection
+ * header and owns a flat byte data buffer with per-element stride, so cell
+ * access is index math into one contiguous block with zero pointer chasing.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -17,6 +32,46 @@
  * Encapsulates a square bounding grid of size (2*radius + 1)^2 where only cells
  * whose Euclidean distance from the center satisfies dx^2 + dy^2 <= radius^2
  * are considered valid and accessible.
+ *
+ * STRUCT FIELDS (Mirroring struct/circle_array.h + struct/collection.h):
+ * ----------------------------------------------------------------------------
+ *   CircleArray {
+ *     Collection collection; // base collection header (typeId, activeCount, etc.)
+ *     int32_t    radius;     // radius in cells
+ *     int32_t    diameter;   // 2 * radius + 1
+ *   }
+ *   Collection {
+ *     uint64_t typeId;       // mirror of the block-header type (for debug)
+ *     uint32_t activeCount;  // number of live elements
+ *     uint32_t elementClass; // class of elements (Map: key class)
+ *     uint32_t stride;       // bytes per element (Map: val class)
+ *     uint32_t capacity;     // element capacity (or slot capacity)
+ *     uint32_t head;         // circular head index (Deque/Queue); else 0
+ *     uint8_t *data;         // element / slot buffer
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - CircleArray_create(radius, elementClass)
+ *   - CircleArray_createWithStride(radius, elementClass, stride)
+ *
+ * Public Core Functions: (.h)
+ *   - CircleArray_free(self)
+ *   - CircleArray_radius(self)
+ *   - CircleArray_diameter(self)
+ *   - CircleArray_validCellCount(self)
+ *   - CircleArray_containsGrid(self, gridX, gridY)
+ *   - CircleArray_containsOffset(self, dx, dy)
+ *   - CircleArray_distanceSquaredGrid(self, gridX, gridY)
+ *   - CircleArray_distanceSquaredOffset(dx, dy)
+ *   - CircleArray_getGrid(self, gridX, gridY, dest)
+ *   - CircleArray_setGrid(self, gridX, gridY, src)
+ *   - CircleArray_getOffset(self, dx, dy, dest)
+ *   - CircleArray_setOffset(self, dx, dy, src)
+ *   - CircleArray_slotGrid(self, gridX, gridY)
+ *   - CircleArray_slotOffset(self, dx, dy)
+ *   - CircleArray_forEach(self, callback, userData)
  * ============================================================================
  */
 
