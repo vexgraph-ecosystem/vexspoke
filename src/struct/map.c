@@ -5,7 +5,23 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "util/hash.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Map
+ * ============================================================================
+ * The Map class, ported from struct/Map.java: an open-addressing hash map
+ * over 32-byte slots (key, value, hash, state) under a Collection header.
+ * Capacity rounds up to a power of two and rehashes at a 0.75 load factor,
+ * doubling the slot array; deleted slots are tombstones reused by later
+ * inserts. Reference-class keys (strings and lists) hash and compare by
+ * content through the Memory type/length introspection; scalar keys use a
+ * murmur3 mix. Map_keys materializes the live keys as an Array.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
