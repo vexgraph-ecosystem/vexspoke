@@ -16,6 +16,7 @@
 | **Coordinate-Agnostic Vector Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
 | **Self-Describing Memory Block Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
 | **BitPool Slot Segregation Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
+| **24-Byte Variable Slot Law (The 23+1 Rule)** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
 
 ## 2. Exclusive Repo-Local Laws (FULL PROSE RESTATEMENT)
 
@@ -63,6 +64,22 @@ Dynamic general-purpose `malloc` degrades cache coherence and introduces non-det
 #### The Rule:
 1. **Fixed Stride:** Objects of identical size belong in a dedicated `BitPool`.
 2. **Generational Tagging:** Freelist indices carry generational counters to prevent ABA hazards in lockless access.
+
+---
+
+### 24-Byte Variable Slot Law (The 23+1 Rule)
+
+#### Definition:
+Every interned variable name in `vexspoke` is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 bytes total). Variable names are paired with an 8-byte intrusive self-pointer (`uint64_t self`) to form a cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`). Two slots pack with byte-level perfection into a single 64-byte CPU cache line with zero padding waste.
+
+#### The Why:
+In a relational memory substrate where symbols resolve to addresses, string allocation must never cause heap fragmentation, cache-line thrashing, or indeterminate hashing latency. Unbounded string names lead to variable-stride records, secondary pointers, and cache misses. By pinning names to 23 ASCII characters ($3 \times \text{uint64}$ plus $1 \times \text{uint64}$ pointer), slots are strictly uniform (32 bytes), identity is stated once per process, and lookups execute via branchless binary search with direct 24-byte scalar compares. Names longer than 23 characters are rejected cold at the gate, because silent truncation would corrupt identity.
+
+#### The Rule:
+1. **Name Character Limit:** Variable and string pool names must be between 1 and 23 characters (`STRING_POOL_NAME_MAX = 23u`). Overlong names are rejected immediately.
+2. **Exact 24-Byte Buffer:** The name buffer is exactly 24 bytes, NUL-terminated, and zero-padded.
+3. **8-Byte Self Link:** Every slot reserves an 8-byte `self` pointer for $O(1)$ intrusive address validity checks.
+4. **Zero Dynamic Allocation in Lookups:** Name resolution yields permanent slot indices (`int32_t`) that remain valid across table rehashes.
 
 ---
 
