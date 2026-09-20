@@ -2,7 +2,21 @@
 
 #include "annotation/draft.h"
 #include "annotation/intention.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Tls_curl
+ * ============================================================================
+ * libcurl TLS backend for non-Apple platforms. Fail-closed: the handshake is
+ * not wired yet, so no bytes are ever sent and every operation returns false
+ * (the Cold-Strict, Hot-Minimal Validation Law drop-degrade). TlsConn is an
+ * opaque two-word handle (backend + opaque) owned by the caller; Tls_close
+ * zeroes both words. Marked ;;DRAFT until the libcurl handshake lands.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
