@@ -4,7 +4,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Brain
+ * ============================================================================
+ * Brain primitive (Legacy: primitive/Brain.java): 16-bit bfloat16 payloads
+ * backed by a fixed 1024-slot BitPool for singletons and the Memory arena for
+ * arrays. Provides alloc/free, acquire/release get/set, compare-and-set,
+ * type/length introspection, and lossy float-to-bfloat16 conversion with
+ * round-to-nearest-even bias. Lives at R2 as a leaf primitive behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
