@@ -3,7 +3,22 @@
 #include <string.h>
 
 #include "system/discovery.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: HardwareInfo
+ * ============================================================================
+ * Host hardware information query (Legacy: system/HardwareInfo.java): a
+ * static snapshot of OS name, architecture, device model, CPU brand/core/
+ * thread counts, RAM and storage totals/available, and battery state. Every
+ * getter lazily triggers SystemDiscovery_bootstrap once so the snapshot is
+ * populated before first read; setters allow test seams to override values.
+ * Lives at R2 as a leaf system-query behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
