@@ -37,13 +37,14 @@ This boilerplate is **not** an accident, nor is it a misunderstanding of idiomat
 
 ---
 
-## 3. Supreme Living Document: `preferences.md`
+## 3. Supreme Living Document: `preferences.md` & Repo-Local Preferences
 
-All architectural rules and style invariants are governed by the central constitution:
+All architectural rules and style invariants are governed by the central universal constitution:
 
-- **[preferences.md](preferences.md)** (living document, also accessible locally at `../../preferences.md`)
+- **[preferences.md](preferences.md)** (universal supreme constitution, also accessible locally at `../../preferences.md`)
+- **[vexspoke-preferences.md](vexspoke-preferences.md)** (repo-local mirror binding vexspoke)
 
-Whenever preferences or conventions evolve, [`preferences.md`](preferences.md) is updated and committed locally in the same cycle (Zero Drift Law).
+Whenever preferences or conventions evolve, [`preferences.md`](preferences.md) and [`vexspoke-preferences.md`](vexspoke-preferences.md) are updated and committed locally in the same cycle (the Living Preferences Law / Zero Drift).
 
 ---
 

@@ -1,113 +1,25 @@
-# vexgraph's vexspoke — C23 Engine & Multi-Repo Preferences
+# vexspoke — Repo-Local Living Preferences
+> Title-cited slice of the supreme constitution (the Living Preferences Law).
+> Canonical og: preferences.md (vexspoke). This file is a per-repo mirror.
 
-;;EDITION("2026.09-universal")
+;;SYNC("mirrors ecosystem/vexspoke/preferences.md @ 2026.09-universal")
 
-The engine is a relational system where **everything is a pointer**.
-These laws are hard requirements, not suggestions. This document is the
-**Universal Supreme Constitution** governing all repositories across the vexgraph ecosystem.
-Repo-specific laws and subsystem slices are codified in repo-local `<repo>-preferences.md` files
-per the *Per-Repo Preferences Extension Law*.
+## 0. Constitution Link (supreme)
+- [preferences.md](https://github.com/vexgraph-dev/vexspoke/blob/main/preferences.md) (canonical, vexspoke) — accessible locally at ../../preferences.md
+- Zero Drift: this mirror regenerates in the SAME cycle the og changes (the Living Preferences Law).
 
----
+## 1. Law Binding Matrix (repo × law-title, Title-only per the Law Identity Doctrine)
 
-## The Law Identity Doctrine (Title Over Number)
+| Tier | Category | Binding Laws |
+| :--- | :--- | :--- |
+| **Tier 1** | Critical Architectural Invariants | Single Class Per File Law (Java Law), Cohesive Commits Law, Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo), Build & Naming Conventions Law, Teardown Order Law (Destroy Top-Down, Free Last), Bounded Wait Law (No Unbounded Waits on Joined Threads), Four System Levels Law (L1–L4 — File Stability, NOT Runtime Rank R1–R5), Cold-Strict, Hot-Minimal Validation Law (Crash-Guard Split), Test Segregation Law (Zero Source Pollution — No Tests in Source Trees), Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits) |
+| **Tier 2** | Semantics, Object Models & Contracts | Dest-Last Law, Two-Layer Access Cap Law, Vertical Integration Law — Single Order To Follow (R1 > R2 > R3 > R4 > R5), One Type Registry Law (Project-Scoped Identity, Uniform Per-Project Numbering), Canonical Include Paths Law (Zero Parent Hops), Standalone Autonomy Law (Target Seam), Identity & Naming Transition Law (Anti → Vexspoke / VexHome), Living `;;OVERVIEW` Blueprint Law, Symmetric Getter/Setter Completeness Law (Java-Library Standard), AI-First Architecture Manifesto Law, Living Preferences Law (Zero Drift for Invariants), Conflict Triage Law — Managed Exception, Not Veto, Data-Oriented Storage Law & Object-Oriented Ergonomics, Living Feature Readiness Law (Zero Drift for Status), Per-Repo Preferences Extension Law |
+| **Tier 3** | Syntactic Aesthetics & Determinism | No Arrow Sugar Law, Cast Spacing Law, Function Naming Law, Single-Line If Law, No Auto-Pushing Law, Two-Semicolon Annotation Style Law, Commit and Push Discipline Law, Pointer Declaration Spacing Law, Per-Repo Commit Message Scope Law (No Repo Prefix — Scope to Class/Subsystem), No Section Sign Law |
+| **Domain-Specific** | R2 Core Substrate | None (Governed directly by Universal Constitution) |
 
-> [!WARNING]
-> **A law is its Title, never its number.** Every law in this document
-> carries exactly one canonical Title — *No Arrow Sugar Law*, *Dest-Last Law*,
-> *Teardown Order Law*. The integer that prefixes a section is a **positional
-> ordinal**: it keeps the document in a readable order and nothing more. It is
-> not the law's identity, it never participates in a citation, and it may
-> change at any moment as laws are inserted, promoted, split, or merged.
->
-> This is a living document (the *Living Preferences Law*). Numbers drift
-> under that life — laws grow, split, and renumber — so a citation pinned to a
-> number silently goes stale and starts pointing at the wrong law. A citation
-> pinned to a Title is immune to renumbering. **Never quote a number when you
-> mean a law.** Everywhere a law is referenced — code annotations
-> (`;;INTENTION("per the No Arrow Sugar Law")`), `;;OVERVIEW` headers,
-> README/CONTRIBUTING taxonomies, `_docs/*`, commit messages — cite the Title,
-> in this exact form:
->
-> ```c
-> ;;INTENTION("per the Single Class Per File Law + the Living ;;OVERVIEW Blueprint Law")
-> ```
->
-> **Sub-numbering is abolished.** There are no `11.4` or `35.3` laws.
-> Anything that once carried a fractional number is now a whole law with its
-> own Title and its own ordinal. The literal `n.n` notation is a defect on
-> arrival and must never be re-introduced.
+## 2. The Laws That Bind This Repo (FULL PROSE RESTATEMENT)
 
----
-
-## The Law Index (Canonical Titles)
-
-The only authoritative list of universal law names. A law keeps this Title forever;
-its ordinal may move as the document evolves.
-
-| # | Law Title |
-| :-- | :--- |
-| 1 | No Arrow Sugar Law |
-| 2 | Cast Spacing Law |
-| 3 | Single Class Per File Law (Java Law) |
-| 4 | Function Naming Law |
-| 5 | Single-Line If Law |
-| 6 | Cohesive Commits Law |
-| 7 | No Auto-Pushing Law |
-| 8 | Two-Semicolon Annotation Style Law |
-| 9 | Dest-Last Law |
-| 10 | Two-Layer Access Cap Law |
-| 11 | Build & Naming Conventions Law |
-| 12 | Commit and Push Discipline Law |
-| 13 | Pointer Declaration Spacing Law |
-| 14 | Vertical Integration Law — Single Order To Follow (R1 > R2 > R3 > R4 > R5) |
-| 15 | One Type Registry Law (Project-Scoped Identity, Uniform Per-Project Numbering) |
-| 16 | Canonical Include Paths Law (Zero Parent Hops) |
-| 17 | Standalone Autonomy Law (Target Seam) |
-| 18 | Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo) |
-| 19 | Identity & Naming Transition Law (Anti → Vexspoke / VexHome) |
-| 20 | Living `;;OVERVIEW` Blueprint Law |
-| 21 | Symmetric Getter/Setter Completeness Law (Java-Library Standard) |
-| 22 | Per-Repo Commit Message Scope Law (No Repo Prefix — Scope to Class/Subsystem) |
-| 23 | Teardown Order Law (Destroy Top-Down, Free Last) |
-| 24 | Bounded Wait Law (No Unbounded Waits on Joined Threads) |
-| 25 | Four System Levels Law (L1–L4 — File Stability, NOT Runtime Rank R1–R5) |
-| 26 | AI-First Architecture Manifesto Law |
-| 27 | Living Preferences Law (Zero Drift for Invariants) |
-| 28 | Conflict Triage Law — Managed Exception, Not Veto |
-| 29 | Cold-Strict, Hot-Minimal Validation Law (Crash-Guard Split) |
-| 30 | Data-Oriented Storage Law & Object-Oriented Ergonomics |
-| 31 | Living Feature Readiness Law (Zero Drift for Status) |
-| 32 | Test Segregation Law (Zero Source Pollution — No Tests in Source Trees) |
-| 33 | Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits) |
-| 34 | No Section Sign Law |
-| 35 | Per-Repo Preferences Extension Law |
-
----
-
-## Separation of Concerns: Rule Taxonomy
-
-To ensure uncompromising architectural consistency across all repositories and contributors (human and AI), the universal laws are partitioned into three distinct tiers of concern, each defined with its architectural **Definition** and foundational **Why**:
-
-1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
-   - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Laws*: the Single Class Per File Law, the Cohesive Commits Law & the Multi-Repo Atomic Commit Discipline Law, the Build & Naming Conventions Law (Apple Silicon native), the Teardown Order Law, the Bounded Wait Law, the Four System Levels Law (L1–L4, distinct from R1–R5 Supervisor Order), the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Dynamic Scalability & Anti-Hardcoding Law.
-   - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
-
-2. **Tier 2: Semantics, Object Models & Living Contracts**
-   - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
-   - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
-
-3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
-   - *Concern*: Eliminating ambiguous syntax, visual sugar, and aliasing that obscures pointer operations or impairs machine readability.
-   - *Laws*: the No Arrow Sugar Law, the Cast Spacing Law, the Function Naming Law, the Single-Line If Law, the No Auto-Pushing Law, the Two-Semicolon Annotation Style Law, the Commit and Push Discipline Law, the Pointer Declaration Spacing Law, the Per-Repo Commit Message Scope Law, the No Section Sign Law.
-   - *The Why*: The codebase is engineered for AI-human pair systems programming. Machine reasoning thrives on explicit, un-sugared syntax where every dereference is visible and unambiguous.
-
----
-
-
-## 1. No Arrow Sugar Law
+### No Arrow Sugar Law
 
 Never use `->`. Field access is always `(*ptr).field`.
 
@@ -118,7 +30,7 @@ this->x = 5;              // no
 
 ---
 
-## 2. Cast Spacing Law
+### Cast Spacing Law
 
 A cast has exactly one space to the right of `)`.
 
@@ -129,7 +41,7 @@ uintptr_t addr = (uintptr_t)ptr;       // no
 
 ---
 
-## 3. Single Class Per File Law (Java Law)
+### Single Class Per File Law (Java Law)
 
 A class is `typedef struct Class {} Class;` — same name for tag and typedef.
 
@@ -169,7 +81,7 @@ under `PRIVATE HELPERS` with their own fields.
 
 ---
 
-## 4. Function Naming Law
+### Function Naming Law
 
 - The symbol name in the source is lowercase camelCase (`functionName`).
 - It is called as `Class_functionName(params)`.
@@ -182,7 +94,7 @@ uint32_t t = SpinLock_ticket(0);                    // call site
 
 ---
 
-## 5. Single-Line If Law
+### Single-Line If Law
 
 An `if` with one statement uses no braces — a bare one-liner on the next line.
 
@@ -195,7 +107,7 @@ Multi-statement bodies always use braces.
 
 ---
 
-## 6. Cohesive Commits Law
+### Cohesive Commits Law
 
 Commits must be strictly cohesive and buildable: **one logical feature or subsystem unit per repository**. Because the ecosystem consists of multiple specialized repositories that are assessed independently, git histories must be clean, traceable, and fully bisectable.
 - **Per Repository**: Commits must be executed locally inside the specific repository's git root (`../<repo>`). Never cross repository boundaries in a single commit, and never bundle multiple repos into one untracked commit.
@@ -209,13 +121,13 @@ Per-file means per-class file pair: one commit lands the owning `.h` plus its `.
 
 ---
 
-## 7. No Auto-Pushing Law
+### No Auto-Pushing Law
 
 Never run `git push` on your own. When I explicitly tell you to "push", treat it as a one-off command: execute a single `git push` to sync the repository, and then immediately revert to your default state of never auto-pushing. Regardless of pushing, you must always continue making local, granular commits for every completed feature.
 
 ---
 
-## 8. Two-Semicolon Annotation Style Law
+### Two-Semicolon Annotation Style Law
 
 Annotations (src/annotation/*.h) are written with two semicolons on the left
 side only, so they read as explicit markers:
@@ -233,7 +145,7 @@ inside expands to a `_Static_assert` that validates the annotation text.
 
 ---
 
-## 9. Dest-Last Law
+### Dest-Last Law
 
 Output parameters come LAST: `(a, b, dest)` / `(left, right, dest)`. Reads
 left-to-right like math; the result lands where it belongs, at the end.
@@ -246,7 +158,7 @@ Vec4_add(dest, a, b);        // no
 
 ---
 
-## 10. Two-Layer Access Cap Law
+### Two-Layer Access Cap Law
 
 A member/index chain touches at most TWO layers deep:
 
@@ -260,7 +172,7 @@ obj.field.field2.field3      // no — three layers
 Anything deeper must hoist an intermediate into a local first
 (`Field *f = &(*layout).items[i];` then `(*f).offset`).
 
-### The Rationale (Java Object References & Eliminating Pointer Chasing):
+#### The Rationale (Java Object References & Eliminating Pointer Chasing):
 In Java, an object reference (`Car car = new Car();`) is never an inline struct; it is purely a pointer under the hood. Instead of hiding behind syntactical illusions or garbage collection, `vexspoke` **embraces the pointer directly**.
 When high-level languages allow arbitrary dot-chaining (`car.engine.turbo.valve.pressure`), software falls into the trap of **pointer chasing**—drifting from address to pointer to pointer across disparate memory pages, thrashing CPU cache lines and obscuring memory latency.
 Physical hardware memory access is fundamentally simple: **one level + offset**. That is precisely what `(*ptr).field` is: `base_address + field_offset`.
@@ -268,7 +180,7 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 
 ---
 
-## 11. Build & Naming Conventions Law
+### Build & Naming Conventions Law
 
 - `-Wall -Wextra -Werror`, `-mcpu=native` (host apple-mN; portable across Apple Silicon — baseline `apple-m1`/`generic` if strict M1 compat needed), C23 (gnu23).
 - Files are lowercase (`variable.c`, `spin.h`); classes are CapitalCase.
@@ -279,7 +191,7 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 
 ---
 
-## 12. Commit and Push Discipline Law
+### Commit and Push Discipline Law
 
 - **Never push unless explicitly asked.** A push request is a one-time button press; do not auto-push subsequent changes.
 - **Always commit locally.** Continue implementing granular, per-class local commits regardless of whether a push was requested.
@@ -289,7 +201,7 @@ By capping access to at most two layers, pointer hops remain explicit, measurabl
 
 ---
 
-## 13. Pointer Declaration Spacing Law
+### Pointer Declaration Spacing Law
 
 Pointer declarators are always `T *name` — one space before `*`, `*` binds to the name, no space after `*`.
 
@@ -324,7 +236,7 @@ Declarators vs casts: `T *name` in declarations, `(T*) var` in casts — star bi
 
 ---
 
-## 14. Vertical Integration Law — Single Order To Follow (R1 > R2 > R3 > R4 > R5)
+### Vertical Integration Law — Single Order To Follow (R1 > R2 > R3 > R4 > R5)
 
 The stack has ONE order. Lower R = boots earlier, more stable, tears down later. Follow this everywhere.
 
@@ -511,7 +423,7 @@ first.
 
 ---
 
-## 15. One Type Registry Law (Project-Scoped Identity, Uniform Per-Project Numbering)
+### One Type Registry Law (Project-Scoped Identity, Uniform Per-Project Numbering)
 
 - **Type identity is project-scoped, never class-number-scoped.** A bare class number is meaningless without its project: vexspoke `#3` (`ID_DOUBLE`) and darling `#3` (`ID_CANVAS`) are entirely different types, because their 64-bit ids carry different PROJECT bytes. To identify any id you **must first resolve its project, then switch on the class number within that project's scope**:
   ```c
@@ -529,7 +441,7 @@ first.
 
 ---
 
-## 16. Canonical Include Paths Law (Zero Parent Hops)
+### Canonical Include Paths Law (Zero Parent Hops)
 
 Headers must **never** traverse upwards with `../` or `../../` to cross module or repository boundaries. Every `#include` must be rooted at the canonical subsystem directory.
 
@@ -554,7 +466,7 @@ This ensures that every source file compiles identically whether it is built ins
 
 ---
 
-## 17. Standalone Autonomy Law (Target Seam)
+### Standalone Autonomy Law (Target Seam)
 
 Every repository (`vexspoke`, `graphvex`, `hotcwap`, `darling`, `api-haven`) must remain buildable both **standalone** and **in-tree** inside `vexgraph`.
 
@@ -578,7 +490,7 @@ When building inside `vexgraph`, `vexspoke` already exists as an in-tree target.
 
 ---
 
-## 18. Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo)
+### Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo)
 
 The Cohesive Commits Law and the No Auto-Pushing Law apply across all repositories:
 - **Per-Repository Execution**: When a change touches a class or feature within a repo, commit locally inside that repository's git root (`../<repo>`). Never commit from the umbrella root for sub-repository changes.
@@ -593,7 +505,7 @@ Upstream-first ordering applies to file-pair commits; each repo-local commit is 
 
 ---
 
-## 19. Identity & Naming Transition Law (Anti → Vexspoke / VexHome)
+### Identity & Naming Transition Law (Anti → Vexspoke / VexHome)
 
 The codebase is actively transitioning from the initial `anti` prototype name to the permanent **`vex`** family identity:
 - Engine core: `anti` → `vexspoke` (the central spoke of the graph).
@@ -603,7 +515,7 @@ The codebase is actively transitioning from the initial `anti` prototype name to
 
 ---
 
-## 20. Living `;;OVERVIEW` Blueprint Law
+### Living `;;OVERVIEW` Blueprint Law
 
 `;;OVERVIEW` is the documentation & file layout standard. Every `.c` (and `.m` where applicable) must be self-contained so that a developer can understand the class, its memory layout, and all its capabilities from the first 100–150 lines of the implementation file without having to tab back and forth to the `.h` file.
 
@@ -613,7 +525,7 @@ Constructors are not generic functions—they are arity-overloaded instance init
 3. **`setters`** (Mutators: `setX(ptr, x)`, `setSize(ptr, w, h)`, `setImage(ptr, img)`)
 4. **`getters`** (Accessors: `getX(ptr)`, `getSize(ptr, &w, &h)`, `getImage(ptr)`)
 
-### Required Header Structure (Single CLASS — No MODULE):
+#### Required Header Structure (Single CLASS — No MODULE):
 ```c
 #include "annotation/overview.h"
 #include "subsystem/class.h"
@@ -656,14 +568,14 @@ Constructors are not generic functions—they are arity-overloaded instance init
  */
 ```
 
-### Source Body Organization:
+#### Source Body Organization:
 The implementation body must be grouped under distinct visual comment banners in strict order:
 1. **`// CONSTRUCTORS`**: `Class_0()`, `Class_1(...)`, and lifecycle instantiators.
 2. **`// CORE FUNCTIONS`**: Compute, tick, render handlers, layout algorithms, transformation logic.
 3. **`// SETTERS`**: All state mutators (`Class_set*(...)`).
 4. **`// GETTERS`**: All field inspectors and state accessors (`Class_get*(...)`).
 
-### The Living Overview Law (Zero Drift):
+#### The Living Overview Law (Zero Drift):
 Any modification, refactor, or addition that touches a struct's fields, constructors, or methods **must update the `;;OVERVIEW` header block in the same commit**. An out-of-date overview is a compiler/code defect.
 
 `MODULE:` headers are banned except for true procedural entry points
@@ -675,7 +587,7 @@ are listed under a `PRIVATE HELPERS` section, never as a second `CLASS:`.
 
 ---
 
-## 21. Symmetric Getter/Setter Completeness Law (Java-Library Standard)
+### Symmetric Getter/Setter Completeness Law (Java-Library Standard)
 
 In `darling` and high-level class abstractions, every state-bearing field on a class struct must provide complete, symmetric getters and setters, exactly like an idiomatic Java or C# library.
 
@@ -683,7 +595,7 @@ A consumer of the library should never have to manually pierce struct internals 
 - If a `Label` has a `char *text`, it must provide `Label_setText(lbl, text)` and `const char *Label_getText(const Label *lbl)`.
 - If a `Label` has `fontSize`, it must provide `Label_setFontSize(lbl, size)` and `float Label_getFontSize(const Label *lbl)`.
 
-### Signature Conventions:
+#### Signature Conventions:
 1. **Mutators**: `void Class_set<Prop>(Class *self, <Type> val)`
 2. **Scalar / Pointer Accessors**: `<Type> Class_get<Prop>(const Class *self)`
 3. **Boolean Accessors**: `bool Class_is<Prop>(const Class *self)` or `bool Class_has<Prop>(const Class *self)`
@@ -696,7 +608,7 @@ A consumer of the library should never have to manually pierce struct internals 
 
 ---
 
-## 22. Per-Repo Commit Message Scope Law (No Repo Prefix — Scope to Class/Subsystem)
+### Per-Repo Commit Message Scope Law (No Repo Prefix — Scope to Class/Subsystem)
 
 A commit lives inside exactly one repository, so the message must read as if
 that repository is the whole world. Never prefix with the repo name.
@@ -722,7 +634,7 @@ message. Scope names the class/subsystem; the unit shipped is its file pair
 
 ---
 
-## 23. Teardown Order Law (Destroy Top-Down, Free Last)
+### Teardown Order Law (Destroy Top-Down, Free Last)
 
 Shutdown runs the stack in reverse, and `Memory_freeAll` is always the final
 step — never earlier. Shims allocate outside the slabs (`calloc`,
@@ -753,7 +665,7 @@ Window_destroy(w)            // detach adapters, close (never release-then-use)
 
 ---
 
-## 24. Bounded Wait Law (No Unbounded Waits on Joined Threads)
+### Bounded Wait Law (No Unbounded Waits on Joined Threads)
 
 Any thread another thread joins must reach its exit check within a bounded
 time on every path. An infinite wait (`UINT64_MAX` fence, endless queue poll)
@@ -777,7 +689,7 @@ if (WaitForFences_fn(dev, 1, &fence, VK_TRUE, 100000000ULL) != VK_SUCCESS)
 
 ---
 
-## 25. Four System Levels Law (L1–L4 — File Stability, NOT Runtime Rank R1–R5)
+### Four System Levels Law (L1–L4 — File Stability, NOT Runtime Rank R1–R5)
 
 Every file lives on exactly one L level. Stability increases downward; replaceability increases upward. `L` answers "how safe is it to edit this file?" `R` (the Vertical Integration Law) answers "who boots/supervises whom at runtime?" Never mix them: `R1 hotcwap > R2 vexspoke > R3 graphvex/api-haven > R4 interfaces > R5 engines` is supervision; `L1–L4` below is edit-risk. A `Kernel` file is `LEVEL: L4` living at `R1` — write `LEVEL: L4`, never `LEVEL: R1`.
 
@@ -822,12 +734,12 @@ L4  SELF-MANAGEMENT .......... the bottom that manages everything above:
 
 ---
 
-## 26. AI-First Architecture Manifesto Law
+### AI-First Architecture Manifesto Law
 
-### Definition:
+#### Definition:
 The extreme, verbose, and "masochistic" boilerplate spanning this codebase (zero arrow sugar `(*ptr).field`, strict single-class-per-file Java Law, explicit C constructor overloads, vtable dispatches, symmetric getters/setters, dest-last parameters, two-layer member dereference caps, and zero steady-state allocation) is NOT an accident, nor a misunderstanding of idiomatic C. It is an intentional, rigorous architectural manifesto of **AI-Human Pair Systems Programming**.
 
-### The Why:
+#### The Why:
 1. **Machine Comprehension & Context Density**:
    Modern LLMs and AI coding agents operate with maximum precision and zero hallucination when code contracts are explicit, typed, un-aliased, and local. Arrow sugar `->` obscures the pointer dereference boundary; implicit constructors hide initialization order; packing multiple classes into a single file pollutes the model's context window and causes cross-struct hallucinations. By restricting every file to a single class struct and its explicit methods, an AI agent can hold the complete, un-truncated operational reality of any class in its active reasoning window.
 2. **Deterministic Mechanical Syntax (`(*ptr).field`)**:
@@ -835,7 +747,7 @@ The extreme, verbose, and "masochistic" boilerplate spanning this codebase (zero
 3. **The AI Agent as Boilerplate Engine**:
    Human developers historically embraced macro trickery, implicit casting, and sloppy multi-class dumping to avoid typing repetitive boilerplate. In this project, **an AI coding agent writes, verifies, refactors, and maintains the dense boilerplate**. The human software architect directs high-level architectural invariants, algorithms, and concurrency semantics, while the AI agent reliably stamps out the explicit getters, setters, overviews, and constructor dispatches. The boilerplate is no longer a human typing burden—it is a machine-readable safety scaffold.
 
-### The Sanity Warning:
+#### The Sanity Warning:
 > [!WARNING]
 > **SANITY NOTICE FOR EXTERNAL CONTRIBUTORS**
 > This repository is not designed for traditional C conveniences, casual hacking, or stylistic shortcuts. It is an unapologetic, machine-verifiable manifesto of AI-augmented systems architecture.
@@ -846,15 +758,15 @@ The extreme, verbose, and "masochistic" boilerplate spanning this codebase (zero
 
 ---
 
-## 27. Living Preferences Law (Zero Drift for Invariants)
+### Living Preferences Law (Zero Drift for Invariants)
 
-### Definition:
+#### Definition:
 `preferences.md` at the root of the `vexgraph` workspace is the supreme constitutional law and single source of truth for the entire multi-repo ecosystem (`hotcwap`, `darling`, `vexspoke`, `graphvex`, `api-haven`).
 
-### The Why:
+#### The Why:
 In a multi-repository workspace consisting of independently versioned C and native libraries, architectural entropy and convention drift are fatal. If rules live only in developer memory, chat histories, or scattered READMEs, rules will be contradicted and broken within days. A system with zero GC and manual memory layouts requires absolute, unbroken alignment across all subsystems.
 
-### The Rule:
+#### The Rule:
 1. **Same-Cycle Update & Local Commit**:
    Whenever an architectural invariant, convention, rule, or preference is introduced, modified, refined, or clarified, `preferences.md` must be updated and locally committed in the same development cycle. Out-of-date preferences are an architectural defect.
 2. **Universal Reference Link**:
@@ -866,15 +778,15 @@ In a multi-repository workspace consisting of independently versioned C and nati
 
 ---
 
-## 28. Conflict Triage Law — Managed Exception, Not Veto
+### Conflict Triage Law — Managed Exception, Not Veto
 
-### Definition:
+#### Definition:
 When laws conflict, or intent outgrows a law, the answer is never a bare "this violates X." It is "unless you want it, here is how we manage it." The thought prevails; the laws adapt in the same cycle per the Living Preferences Law.
 
-### The Why:
+#### The Why:
 A veto-only system freezes ambition (multi-app Kernel, R1–R5 ecosystem, 30 grammars, game engines). Tier 1 exists to prevent crashes, not to prevent thinking. Every conflict is triaged, given a managed path, and codified so the next agent inherits the decision.
 
-### The Protocol:
+#### The Protocol:
 1. **Name the tiers:** Tier 1 (crash/leak/deadlock/memory/thread safety) beats Tier 2 (model/contracts) beats Tier 3 (syntax). State which tier each conflicting law lives on.
 2. **Assess before blocking:** state applicability first — does the law actually cover this case (link-time vs runtime, single-app vs Kernel multi-app, global vs per-arena)? A misapplied law is not a violation.
 3. **Managed exception:** propose the indirection that preserves Tier 1 while granting intent. Canonical moves: opaque handle + callbacks instead of downstream `#include` (keeps the Vertical Integration Law / Standalone Autonomy Law); fixed array + count + getter instead of `**` chains (keeps the Two-Layer Access Cap Law); `MemoryArena_create/freeAll` + bounded-join instead of globals (keeps the Teardown Order Law / Bounded Wait Law); `;;INTENTION("reason")` + `;;DRAFT` markers for Tier 2/3 waivers.
@@ -883,9 +795,9 @@ A veto-only system freezes ambition (multi-app Kernel, R1–R5 ecosystem, 30 gra
 
 ---
 
-## 29. Cold-Strict, Hot-Minimal Validation Law (Crash-Guard Split)
+### Cold-Strict, Hot-Minimal Validation Law (Crash-Guard Split)
 
-### Definition:
+#### Definition:
 Validation splits by path temperature. The Tier-1 crash-guard half: no function
 ever crashes, blocks unboundedly, allocates, or use-after-frees on null,
 out-of-bounds, overflow, cancelled, or timed-out input — it returns `false` or
@@ -894,14 +806,14 @@ contract half: setters validate at least as strictly as getters, with the
 reject-or-clamp policy stated in the `;;OVERVIEW`; getters return safe
 defaults per the Symmetric Getter/Setter Completeness Law.
 
-### The Why:
+#### The Why:
 Unvalidated cold input (network bytes, JSON, spawned output, checksums) is how
 null dereferences and overflows enter the system; re-validating every element
 on a 60fps hot path is how frames die. Validate once where input enters, trust
 the validated handle where pixels move. A silent truncation or an unlogged
 cold drop corrupts state; a log line per hot frame corrupts performance.
 
-### The Rule:
+#### The Rule:
 1. **Cold paths validate exhaustively, once.** R1-entry / R2-boundary seams
    (`AiProvider_get`, `ApiAuth_apply`, `Rest_postJson`,
    `McpServer_handleLine`, `HavenWsFanout_pollStep`, `ProcessSpawn_spawn`,
@@ -935,9 +847,9 @@ cold drop corrupts state; a log line per hot frame corrupts performance.
 
 ---
 
-## 30. Data-Oriented Storage Law & Object-Oriented Ergonomics
+### Data-Oriented Storage Law & Object-Oriented Ergonomics
 
-### Definition:
+#### Definition:
 Collection patterns (nodes, lists, tables, trees) use data-oriented storage — flat
 arrays, index-based relationships, zero pointer chasing — with object-oriented
 ergonomic API: class methods, part verbs (the Sub-Part Field Segregation Law),
@@ -945,14 +857,14 @@ symmetric getters/setters (the Symmetric Getter/Setter Completeness Law),
 dest-last parameters (the Dest-Last Law). This is the default for any
 collection of records.
 
-### The Why:
+#### The Why:
 Index-based flat arrays keep CPU cache lines hot and make bulk traversal
 mechanically simple; object-oriented ergonomics (methods, getters/setters,
 dest-last) make the resulting API feel familiar to anyone trained in Java or C#,
 without sacrificing hardware-level performance. The two are not in tension —
 they are complementary halves of a modern C23 collection design.
 
-### The Rule:
+#### The Rule:
 1. **Storage is flat and index-based.** Parent/child relationships are encoded
    as integer indices into a flat array, never as pointer-chased linked lists.
    Pre-order array layout is the canonical form for trees: a node's entire
@@ -978,15 +890,15 @@ they are complementary halves of a modern C23 collection design.
 
 ---
 
-## 31. Living Feature Readiness Law (Zero Drift for Status)
+### Living Feature Readiness Law (Zero Drift for Status)
 
-### Definition:
+#### Definition:
 Each repository's feature readiness matrix lives in the ecosystem wiki repo (`../../_repositories/.ecosystem/<repo>.md`, rendered as the `[[<repo>]]` wiki pages), one row per feature (container/widget/module/command), each carrying a scope line and a status emoji. The matrix is a **living inventory**, not a snapshot: its status column is the machine-readable handshake the ecosystem uses to know what is real vs stubbed vs absent.
 
-### The Why:
+#### The Why:
 Multi-repo ecosystems rot silently — a header-only dialog or a half-stubbed picker looks "implemented" from the call site until someone depends on it and hits the empty paint. A single, always-current matrix — one row per unit, read by machines and humans alike — makes build-readiness legible at a glance, keeps scope lines honest, and exposes the next structural wedge (the largest contiguous 🟥 block) the moment it appears.
 
-### The Rule:
+#### The Rule:
 1. **Same-cycle status law, per file pair.** Any commit that ships, stubs, retires, or re-scopes a feature **must move its `../../_repositories/.ecosystem/<repo>.md` row in the same cycle** — code commit first, wiki row-write immediately after, never a deferred "update checklist" blob (the Cohesive Commits Law / Commit and Push Discipline Law). Code and wiki live in different repos so they ship as separate per-repo commits, but a green-on-disk row that is stale-red on the sheet is still a broken intermediate state.
 2. **Status legend (canonical, mirrors the wiki `Home.md` Status Legend):** 💚 98% done, production-ready · 🟩 95% done, implemented & functional · 🟨 85% done, substantially implemented · 🟧 75% done, partial/draft · 🟥 concept/draft, zero working source · ⬜ vital future work, not implemented (⬜ is never "dropped/archived"; it marks an important concept not yet built). A row's scope line is rewritten when the actor or deliverable changes, not just the emoji.
 3. **Test proof gates the status.** 🟨 rows carry test names in the scope column (`tests/<name>_test`); a row is never 🟩 before its unit tests pass under `-Wall -Wextra -Werror` (the Cohesive Commits Law). Moving a row up without its proof is inflation; use the Conflict Triage Law (`;;INTENTION`) instead of silently overstating.
@@ -995,15 +907,15 @@ Multi-repo ecosystems rot silently — a header-only dialog or a half-stubbed pi
 
 ---
 
-## 32. Test Segregation Law (Zero Source Pollution — No Tests in Source Trees)
+### Test Segregation Law (Zero Source Pollution — No Tests in Source Trees)
 
-### Definition:
+#### Definition:
 Test code and harnesses NEVER reside inside production source directories (`src/`, `darling/`, `render/`, `main/`, `app/`, etc.). All unit tests, integration tests, benchmark harnesses, and test fixtures across the ecosystem live in dedicated test trees partitioned by subsystem under `_tests/<subsystem>/`. Production source trees contain only production classes, headers, and build scripts.
 
-### The Why:
+#### The Why:
 Colocating tests alongside production source files pollutes the clean 1:1 class-to-file architecture (the Single Class Per File Law), confuses directory-based build tools and file watchers, muddles static analysis, degrades search/grep ergonomics, and creates risks of circular dependencies or accidental linkage of test helpers into production shared libraries. A source directory must be purely production code; test suites are clients of the subsystems they test and must sit in segregated test directories.
 
-### The Rule:
+#### The Rule:
 1. **Zero test files in production trees.** No file named `*_test.c`, `test_*.c`, `*_test.h`, `test_*.h`, or `*_demo.c` may ever be placed in or committed to a production source directory (`src/`, `darling/`, `render/`, `text/`, `event/`, `app/`, `hot/`, etc.). Violations must be rejected in review and failed in CI.
 2. **Unified test hierarchy.** All test sources reside under `_tests/<subsystem>/` (e.g., `_tests/darling/`, `_tests/vexspoke/`, `_tests/graphvex/`, `_tests/hotcwap/`, `_tests/api-haven/`).
 3. **Subsystem partitioning.** Tests are grouped strictly by the subsystem they exercise:
@@ -1017,15 +929,15 @@ Colocating tests alongside production source files pollutes the clean 1:1 class-
 
 ---
 
-## 33. Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits)
+### Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits)
 
-### Definition:
+#### Definition:
 No algorithm, container, layout engine, or rendering pass may ever hardcode fixed task counts, capacity ceilings, or artificial element limits (e.g. `for (int i = 0; i < 4; i++)`, fixed array sizes for dynamic entities, or assumptions like "there are only 2 panels"). Systems must be engineered to handle whatever volume, resolution, or throughput is thrown at them — scaling seamlessly from 0 to $N$.
 
-### The Why:
+#### The Why:
 Hardcoded iteration limits and static capacity assumptions turn code into throwaway prototypes. When an engine assumes a fixed count or bakes dimensions (like hardcoded `640x400` or fixed 4 corners), any real-world workload breaks it. True systems architecture is scale-invariant: the same code that handles 1 child must handle 10,000 children with zero structural rewrites.
 
-### The Rule:
+#### The Rule:
 1. **No Hardcoded Loops for Dynamic Work:**
    Writing loops bounded by magic constants (`i < 4`, `i < 2`) to perform structural tasks is a defect. Iteration must be driven by dynamic child counts, queryable collections, or data-driven descriptor streams.
 2. **No Capacity Ceilings:**
@@ -1039,32 +951,32 @@ Hardcoded iteration limits and static capacity assumptions turn code into throwa
 
 ---
 
-## 34. No Section Sign Law
+### No Section Sign Law
 
-### Definition:
-The section sign (§, U+00A7) — the "double-S" — is forbidden everywhere: source comments, `;;OVERVIEW` blocks, docs, commit messages, wiki rows, and this document. Section references are always written as plain ASCII words: "see section 32", "the KeyMap section", "sections 41–48" — never "§32", "§KeyMap", or "§41–§48".
+#### Definition:
+The section sign (U+00A7) — the section sign (U+00A7) / "double-S" — is forbidden everywhere: source comments, `;;OVERVIEW` blocks, docs, commit messages, wiki rows, and this document. Section references are always written as plain ASCII words: "see section 32", "the KeyMap section", "sections 41–48" — never "(section)32", "(section)KeyMap", or "(section)41–(section)48".
 
-### The Why:
+#### The Why:
 The glyph renders as an ugly double-S that reads as a typo in monospace, breaks `grep` for section references, and mangles in fonts, terminal pipelines, and localized tooling. The word "section" costs nothing and survives every tool, font, and copy-paste intact. A codebase that already bans arrow sugar for machine-readability has no business smuggling invisible punctuation into comments.
 
-### The Rule:
-1. **Never write §.** New code, new docs, new commits: the character is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
-2. **Migration on touch.** Existing occurrences migrate when their file is next modified: any commit that touches a file containing § must scrub those occurrences in the same commit. A § surviving a touch is a defect (the Living Preferences Law zero-drift rule applies to this migration too).
-3. **Canonical artifacts migrate with this law.** The occurrences present in `preferences.md` and the canonical docs at the time this law lands are scrubbed in this same commit; the umbrella-local legacy markers (`// §N` test-section comments, `_docs/code.txt` notes) migrate file-by-file as each is next touched.
+#### The Rule:
+1. **Never write (section).** New code, new docs, new commits: the character is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
+2. **Migration on touch.** Existing occurrences migrate when their file is next modified: any commit that touches a file containing (section) must scrub those occurrences in the same commit. A (section) surviving a touch is a defect (the Living Preferences Law zero-drift rule applies to this migration too).
+3. **Canonical artifacts migrate with this law.** The occurrences present in `preferences.md` and the canonical docs at the time this law lands are scrubbed in this same commit; the umbrella-local legacy markers (`// (section)N` test-section comments, `_docs/code.txt` notes) migrate file-by-file as each is next touched.
 
 ---
 
 ---
 
-## 35. Per-Repo Preferences Extension Law
+### Per-Repo Preferences Extension Law
 
-### Definition:
+#### Definition:
 The central `preferences.md` codified in `vexspoke` serves exclusively as the universal supreme constitution, containing only the foundational invariants mandatory across all ecosystems and repositories. Individual repositories maintain their own standalone, self-identifying `<repo>-preferences.md` file at their repository root. Each per-repo preferences file carries the universal constitution plus any domain-specific laws that physically bind that repository's system level and responsibilities.
 
-### The Why:
+#### The Why:
 Monolithic constitutions force developers and AI agents working on isolated subsystems (e.g. GPU shaders, database persistence, or audio processing) to parse through dozens of irrelevant UI or windowing rules with no clear signal of which laws actually bind their work. Conversely, fragmenting rules without a central authority causes silent divergence and rule drift. Decoupling repo-local mirrors from the universal constitution ensures immediate clarity of local obligations while preserving universal invariants with zero drift.
 
-### The Rule:
+#### The Rule:
 1. **Naming:** Every repository-local preferences file must be named `<repo>-preferences.md` (e.g., `graphvex-preferences.md`, `hotcwap-preferences.md`) located at the repository root. It never shadows or renames the universal `preferences.md`.
 2. **Standalone Autonomy:** Each file sits physically at its own repository root and is never a symlink into `vexspoke`. Repositories checked out standalone remain fully self-describing.
 3. **Restatement Policy:** Each `<repo>-preferences.md` carries the full canonical prose of every law that binds it (the universal core plus applicable domain-specific laws). Restated section headers use canonical Titles only (`### <Law Title>`) without numeric ordinals.
@@ -1073,3 +985,15 @@ Monolithic constitutions force developers and AI agents working on isolated subs
    referencing the canonical edition of the universal constitution.
 5. **Zero Drift Same-Cycle Regeneration:** Whenever the universal `preferences.md` is updated, all affected per-repo mirror files must be regenerated and committed in the same development cycle.
 6. **Law Binding Matrix:** Each per-repo preferences file maintains an explicit Law Binding Matrix table categorizing all binding laws by their architectural tiers.
+
+---
+
+## 3. Repo-Local Extensions (managed, per the Conflict Triage Law)
+
+;;INTENTION("R2 Relational Memory Substrate: bit-packed memory headers, bitpools, zero steady-state allocation, relational symbol resolution.")
+
+---
+
+## 4. Readiness Cross-Reference (the Living Feature Readiness Law)
+
+- Feature readiness matrix tracked in [`../../_repositories/.ecosystem/vexspoke.md`](../../_repositories/.ecosystem/vexspoke.md) (rendered as `[[vexspoke]]` wiki page).
