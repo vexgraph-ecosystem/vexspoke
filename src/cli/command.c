@@ -5,7 +5,23 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "primitive/string.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Command
+ * ============================================================================
+ * The Command class, ported from cli/Command.java: an opaque Memory block
+ * holding a command name pointer, an argument count, and a pointer array of
+ * argument strings. The block is allocated from the Memory arena with the
+ * TYPE_COMMAND_SINGLETON type id so Command_type can recover the type from
+ * any pointer. Lifetime is arena-scoped; Command_free releases the owned name
+ * and argument strings before freeing the block. All accessors null-guard
+ * and bounds-check the argument index.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
