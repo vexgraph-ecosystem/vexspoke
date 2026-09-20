@@ -8,9 +8,26 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 
 extern char **environ;
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: ProcessSpawn
+ * ============================================================================
+ * A bounded child-process job table for the R1 leaf layer: fixed slots
+ * (PROCESS_SPAWN_JOBS_MAX), per-job pid/exit/done rows, table-level mirrors,
+ * a cancel flag, and a timeout — zero steady-state allocation, no threads.
+ * Spawns via posix_spawnp (never system(), never a blocking waitpid, never
+ * UINT64_MAX); poll reaps with WNOHANG in ~1ms slices up to a 100ms budget,
+ * and cancel raises the flag and SIGTERMs unfinished jobs. This is the
+ * decoder-binary seam: callers such as graphvex FrameImporter spawn external
+ * decoders through this shape instead of popen or libav links.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
