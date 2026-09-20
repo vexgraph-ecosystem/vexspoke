@@ -5,7 +5,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Future
+ * ============================================================================
+ * Asynchronous single-assignment Future wrapper: an atomic isGiven flag plus
+ * a uint64 payload. Future_setDesiredValue fulfills the future exactly once
+ * via a CAS on the flag (acq_rel publish), so the first writer wins and later
+ * writers are rejected; readers observe the payload with acquire ordering.
+ * Future_2 builds arrays of futures from an init sample or zeroed memory.
+ * Instances are Memory-arena allocated with the WRAP2_FUTURE type id.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
