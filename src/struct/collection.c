@@ -3,7 +3,23 @@
 #include <string.h>
 
 #include "nio/mem.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Collection
+ * ============================================================================
+ * The Collection metadata struct, ported from struct/Collection.java: a
+ * header describing a typed element buffer — type id, active count, element
+ * class, stride, capacity, circular head index, and the data pointer.
+ * Provides stride-aware slot read/write (bounded and unsafe variants) plus
+ * size/length/capacity/head/data introspection. Queue and Deque embed this
+ * header as their first member and reuse its slot machinery. Lives at R2 as
+ * a leaf container behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
