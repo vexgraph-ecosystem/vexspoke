@@ -5,7 +5,21 @@
 // every control is a no-op, so callers stay identical across platforms.
 
 #include "annotation/incomplete.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Audio_stub
+ * ============================================================================
+ * The silence backend for platforms without the Cocoa seam yet. Same contract,
+ * zero sound: every handle fails to allocate and every control is a no-op, so
+ * callers stay identical across platforms. Keeps the Audio API surface
+ * compilable and linkable on non-Apple hosts while the real backend lands;
+ * marked ;;INCOMPLETE until Windows/X11 audio backends arrive.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
