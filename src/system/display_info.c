@@ -3,7 +3,23 @@
 #include <string.h>
 
 #include "system/discovery.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Display_info
+ * ============================================================================
+ * Global display subsystem query facade (Legacy: system/DisplayInfo.java).
+ * Lazily bootstraps the monitor registry through SystemDiscovery on first
+ * getter call, then serves cached monitor list, primary monitor, resolution
+ * (monitor/point/native), refresh rate, HDR, and density state through
+ * symmetric getters/setters. The registry is a fixed 16-slot array of
+ * DisplayMonitor pointers — a bounded hardware reality, not a workload
+ * ceiling. Setters are cold-path test seams; getters return safe defaults.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
