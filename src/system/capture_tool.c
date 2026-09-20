@@ -1,9 +1,27 @@
 #include "annotation/intention.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "system/capture_tool.h"
 #include "system/process_probe.h"
 
 #include <string.h>
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: CaptureTool
+ * ============================================================================
+ * The capture/recording directory: a singleton registry of 15 static
+ * descriptor rows over the capture-capable tools of the platform (OBS,
+ * QuickTime Player, the macOS Screenshot utility, Screen Studio, CleanShot X,
+ * Kap, Loom, ScreenFlow, Camtasia, Filmage, Zoom, Voice Memos, Loopback,
+ * plus the BlackHole / Soundflower CoreAudio HAL virtual-audio drivers).
+ * Each row is probed live through ProcessProbe: process rows match the
+ * executable basename, driver rows scan the plugin directory. No fork/exec,
+ * no permission prompts, no allocation; liveness answers are honest
+ * proxies — a running tool may or may not be capturing.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
