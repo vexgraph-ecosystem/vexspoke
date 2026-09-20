@@ -7,7 +7,23 @@
 #include <string.h>
 
 #include "math/strict_math.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Calc
+ * ============================================================================
+ * Allocation-free recursive-descent math expression parser: evaluates strings
+ * like "sin(rad(90)) * atan(34) * pi" into double/float scalars with full
+ * operator precedence (+, -, *, /, %, ^), unary minus, constants (pi, e,
+ * tau), and scientific/trigonometric functions. The CalcParser cursor struct
+ * lives on the stack — zero heap traffic on the eval path; syntax errors
+ * fail closed with false and a fallback value. Lives at R2 as a leaf search
+ * behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -17,6 +33,26 @@
  * ============================================================================
  * Fast recursive-descent math parser supporting operator precedence, constants,
  * and scientific / trigonometric functions. Evaluates in-place on the stack.
+ *
+ * STRUCT FIELDS (local to this file):
+ * ----------------------------------------------------------------------------
+ *   CalcParser {
+ *     const char *p;  // current parse cursor into the expression string
+ *     bool hasError;  // syntax-error latch, fails the eval closed
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Calc_eval(expr, outValue)
+ *   - Calc_evalFloat(expr, outValue)
+ *   - Calc_evalWithFallback(expr, fallback)
+ * Private Core Functions: (.c static)
+ *   - skip_whitespace(cp)
+ *   - parse_primary(cp)
+ *   - parse_factor(cp)
+ *   - parse_term(cp)
+ *   - parse_expression(cp)
  * ============================================================================
  */
 
