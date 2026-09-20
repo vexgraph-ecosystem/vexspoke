@@ -1,4 +1,5 @@
 #include "nio/mem.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
 #include "atomic/spin.h"
@@ -7,6 +8,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: ForeignMemory
+ * ============================================================================
+ * Pre-allocated Master Arena and Size-Class Slab Allocator fulfilling the
+ * Vex Paradigm: zero steady-state malloc, cache-hot slot recycling, and
+ * 32-byte negative pointer math. The 16-byte MemoryHeader (typeId, length,
+ * sugar) is read backwards from the user pointer; the sugar is a
+ * hash-clarification veto over (self, length) so cleared headers always fail
+ * verification with no special case. Phase-4 instancing makes the globals the
+ * default MemoryArena while secondaries register for address-range free
+ * routing. Teardown is Memory_freeAll last, after every dependent subsystem
+ * has released its blocks.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
