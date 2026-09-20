@@ -3,7 +3,23 @@
 #include <string.h>
 
 #include "system/discovery.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Graphics_info
+ * ============================================================================
+ * GPU and graphics capabilities query (Legacy: system/GraphicsInfo.java): a
+ * procedural class over static state — GPU name/vendor/device, primary
+ * graphics API, unified-memory/compute/mesh/ray-tracing feature flags, max
+ * texture size, and VRAM totals. Getters lazily trigger SystemDiscovery_
+ * bootstrap once so the first query reflects the real device; setters let
+ * callers override or stub the reported values. All state is process-global
+ * and allocation-free.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
