@@ -10,7 +10,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Json
+ * ============================================================================
+ * Off-heap JSON documents (Legacy: net/JSON.java): a single-pass
+ * recursive-descent parser over the caller's text that writes into a
+ * caller-owned node pool and scratch arena — zero allocation of its own.
+ * Depth is bounded by JSON_MAX_DEPTH; every pool exhaustion or syntax error
+ * flips (*doc).ok once and the parse unwinds. Escaped strings decode forward
+ * into the scratch arena so value views stay pointer-stable and contiguous,
+ * while unescaped strings view the source text in place (the source must
+ * outlive all string views). A streaming writer (JsonWriter) emits
+ * JSON.stringify-style output into a caller buffer with the same zero-alloc
+ * discipline.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
