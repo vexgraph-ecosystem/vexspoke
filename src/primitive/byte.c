@@ -4,7 +4,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Byte
+ * ============================================================================
+ * Byte primitive (Legacy: primitive/Byte.java). Singleton 1-byte payloads come
+ * from a fixed 1024-slot BitPool; arrays fall back to the Memory arena because
+ * the pool is not sized for large contiguous blocks. Byte_free routes to the
+ * owning allocator via BitPool_contains, and Byte_compareAndSet provides an
+ * atomic CAS on the payload.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
