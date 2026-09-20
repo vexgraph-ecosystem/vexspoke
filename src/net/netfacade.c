@@ -7,7 +7,21 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Netfacade
+ * ============================================================================
+ * Thin glue layer delivering the combined conveniences promised by net/net.h:
+ * each call is one HttpRequest plus (for the JSON variants) one Json_parse.
+ * All storage is the caller's — nothing here allocates; the JSON GET path
+ * uses a fixed 16 KiB thread-local body buffer. Lives at R2 as a leaf network
+ * behavior consumed by api-haven connectors and R5 applications.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
