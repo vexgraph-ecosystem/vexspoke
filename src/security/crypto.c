@@ -1,7 +1,23 @@
 #include "security/crypto.h"
 
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Crypto
+ * ============================================================================
+ * Zero-allocation cryptographic and hashing core: streaming NIST SHA-256
+ * (init/update/final plus one-shot and hex forms), constant-time equality
+ * immune to timing attacks, FNV-1a + avalanche relational hash mixers, and
+ * an XorShift128+ PRNG with a seeded global default. Every function operates
+ * on caller-owned state (CryptoSha256, CryptoRng) or stack buffers — no
+ * allocation, no globals except the default RNG. All digests and hex output
+ * are dest-last per the Dest-Last Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -11,6 +27,43 @@
  * ============================================================================
  * Zero-allocation cryptographic digests (NIST SHA-256), side-channel-safe
  * constant-time equality checks, relational hash mixers, and XorShift128+ PRNG.
+ *
+ * STRUCT FIELDS (Mirroring security/crypto.h):
+ * ----------------------------------------------------------------------------
+ *   CryptoSha256 {
+ *     uint32_t state[8];  // SHA-256 working state (8 x 32-bit words)
+ *     uint64_t count;     // total bytes fed (bit length for the final block)
+ *     uint8_t buffer[64]; // pending input block
+ *   }
+ *   CryptoRng {
+ *     uint64_t s[2]; // XorShift128+ state words
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Crypto_sha256Init(ctx)
+ *   - Crypto_sha256Update(ctx, data, len)
+ *   - Crypto_sha256Final(ctx, outDigest)
+ *   - Crypto_sha256(data, len, outDigest)
+ *   - Crypto_sha256Hex(data, len, outHex)
+ *   - Crypto_constantTimeEquals(a, b, len)
+ *   - Crypto_hash64(data, len)
+ *   - Crypto_hash32(data, len)
+ *   - Crypto_rngInit(rng, seed)
+ *   - Crypto_rngNextU64(rng)
+ *   - Crypto_rngBytes(rng, dest, len)
+ *   - Crypto_randomSeed(seed)
+ *   - Crypto_randomU64(void)
+ *   - Crypto_randomBytes(dest, len)
+ *   - Crypto_toHex(bytes, len, outHex)
+ *   - Crypto_fromHex(hex, outBytes, maxBytes)
+ *
+ * Private Core Functions: (.c static)
+ *   - Crypto_rotr(x, n)                  : rotate-right helper
+ *   - Crypto_sha256Transform(ctx, data)  : one 64-byte block transform
+ *   - splitmix64(seed)                   : PRNG seed expansion
+ *   - hexVal(c)                          : hex digit decode
  * ============================================================================
  */
 
