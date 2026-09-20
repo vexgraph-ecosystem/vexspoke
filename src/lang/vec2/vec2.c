@@ -5,7 +5,23 @@
 #include "math/strict_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec2
+ * ============================================================================
+ * 2D spatial vector with horizontal and vertical components, arena-allocated
+ * at VEC2_BYTES (8 bytes) with zero steady-state allocation. Provides
+ * directional getters/setters (right/left/up/down/x/y), frame-aware Y access,
+ * and dest-last arithmetic (add/sub/mul/div, normalize, perpendicular,
+ * distance, angle, lerp) per the Dest-Last Law. The union layout aliases
+ * horizontal/vertical, x/y, and right/up so all naming conventions read the
+ * same two floats.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -14,6 +30,51 @@
  * LEVEL: L2 — Behavior (2D spatial vector)
  * ============================================================================
  * 2D spatial vector with horizontal and vertical components.
+ *
+ * STRUCT FIELDS (Mirroring lang/vec2/vec2.h):
+ * ----------------------------------------------------------------------------
+ *   Vec2 {
+ *     union {
+ *       struct { float horizontal; float vertical; };
+ *       struct { float x; float y; };
+ *       struct { float right; float up; };
+ *       float data[2];
+ *     };
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec2()                    : Vec2_0()
+ *   - Vec2(horizontal, vertical): Vec2_2(horizontal, vertical)
+ *
+ * Public Core Functions: (.h)
+ *   - Vec2_free(v)
+ *   - Vec2_set(v, horizontal, vertical)
+ *   - Vec2_copy(src, dest)
+ *   - Vec2_add(a, b, dest)
+ *   - Vec2_sub(a, b, dest)
+ *   - Vec2_mul(a, scalar, dest)
+ *   - Vec2_div(a, scalar, dest)
+ *   - Vec2_dot(a, b)
+ *   - Vec2_lengthSquared(v)
+ *   - Vec2_length(v)
+ *   - Vec2_normalize(src, dest)
+ *   - Vec2_perpendicular(src, dest)
+ *   - Vec2_distance(a, b)
+ *   - Vec2_angle(a, b)
+ *   - Vec2_lerp(a, b, t, dest)
+ *
+ * Public Setters: (.h)
+ *   - Vec2_setRight(v, val) / Vec2_setLeft(v, val)
+ *   - Vec2_setUp(v, val) / Vec2_setDown(v, val)
+ *   - Vec2_setX(v, x) / Vec2_setY(v, y)
+ *
+ * Public Getters: (.h)
+ *   - Vec2_getRight(v) / Vec2_getLeft(v)
+ *   - Vec2_getUp(v) / Vec2_getDown(v)
+ *   - Vec2_getX(v) / Vec2_getY(v)
+ *   - Vec2_getYInFrame(v, frame)
  * ============================================================================
  */
 
