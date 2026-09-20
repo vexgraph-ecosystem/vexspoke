@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Double
+ * ============================================================================
+ * Double primitive (Legacy: primitive/Double.java): a 1024-slot BitPool of
+ * 8-byte payloads plus arena-backed arrays for larger allocations. Exists
+ * because the relational type system needs typed double blocks with
+ * lock-free alloc/free and CAS. Memory: single blocks come from the fixed
+ * BitPool; arrays go through the Memory arena with FORM_ARRAY type ids.
+ * Lifetime: the Double_init/Double_shutdown pair; Double_free routes to
+ * BitPool or Memory by containment.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
