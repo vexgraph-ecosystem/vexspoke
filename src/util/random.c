@@ -7,7 +7,23 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "util/hash.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Random
+ * ============================================================================
+ * Deterministic pseudo-random generator: a 16-byte Random struct (seed +
+ * counter) mixed through Hash_murmur3Mix64 with the golden ratio, so each
+ * nextLong advances the state and the sequence is reproducible from a seed.
+ * Random_system lazily seeds a process singleton from mach_absolute_time.
+ * Weighted sampling draws a uniform 63-bit value and compares against
+ * weight/total, or binary-searches a ProbableObjects cumulative column;
+ * totalWeight 0 falls back to uniform index selection.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
