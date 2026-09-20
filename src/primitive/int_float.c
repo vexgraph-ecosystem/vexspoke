@@ -4,7 +4,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: IntFloat
+ * ============================================================================
+ * IntFloat primitive (Legacy: primitive/IntFloat.java): a 64-bit payload
+ * holding an int32/float pair, backed by a fixed 1024-slot BitPool for
+ * singletons and the Memory arena for arrays. Provides alloc/free,
+ * get/set, compare-and-set, type/length introspection, and
+ * alloc-with-values convenience. Lives at R2 as a leaf primitive behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
