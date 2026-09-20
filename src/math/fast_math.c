@@ -2,7 +2,24 @@
 
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: FastMath
+ * ============================================================================
+ * High-speed mathematical approximations for real-time 3D, procedural
+ * animations, particles, and graphics: replaces expensive libm routines with
+ * branchless bit manipulations (Quake III inverse sqrt, magic-float rounding,
+ * sign-bit absolute value) and low-order polynomial / rational approximations
+ * (Bhaskara I sine, minimax atan). Deliberately trades IEEE 754 bit-exactness
+ * for speed; callers needing exact results use math/strict_math.h. Stateless
+ * and allocation-free — every function is a pure scalar transform. Lives at
+ * R2 as a leaf math primitive.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -13,6 +30,28 @@
  * High-speed mathematical approximations for real-time 3D, procedural animations,
  * particles, and graphics. Replaces expensive libm routines with branchless
  * bit manipulations and low-order polynomial / rational approximations.
+ *
+ * STRUCT FIELDS: none — procedural (operates on scalar float operands; stateless)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - FastMath_invSqrt(x)
+ *   - FastMath_inv(x)
+ *   - FastMath_sin(x)
+ *   - FastMath_cos(x)
+ *   - FastMath_tan(x)
+ *   - FastMath_atan(x)
+ *   - FastMath_atan2(y, x)
+ *   - FastMath_abs(x)
+ *   - FastMath_round(x)
+ *   - FastMath_clamp(val, min, max)
+ *   - FastMath_lerp(a, b, t)
+ *   - FastMath_approxEqual(a, b, epsilon)
+ *   - FastMath_toRadians(deg)
+ *   - FastMath_toDegrees(rad)
+ * Private Core Functions: (.c static)
+ *   - wrap_pi(x)
  * ============================================================================
  */
 
