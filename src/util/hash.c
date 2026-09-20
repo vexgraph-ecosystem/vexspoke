@@ -1,5 +1,19 @@
 #include "util/hash.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Hash
+ * ============================================================================
+ * Pure hash utility, ported from util/Hash.java: FNV-1a 64-bit over byte
+ * buffers and Murmur3 final-mix avalanche functions for 64-bit and 32-bit
+ * keys. Stateless and allocation-free — every function is a pure mapping
+ * from input to output, safe to call from any thread at any time. The
+ * mixers are the relational engine's symbol/identity hashing primitives.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
