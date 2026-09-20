@@ -27,8 +27,25 @@
 #include "time/nanotime.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Mouse
+ * ============================================================================
+ * Mouse buttons, position, and event stream: OS events are packed into a
+ * bounded 16-byte ring (legacy 64-bit wire format plus target window id) and
+ * dispatched to global and per-window listener registries. Button slots
+ * mirror the Key state table layout (16 x 40-byte slots) with windowed-tap
+ * settlement so clicks settle into SINGLE/DOUBLE/TRIPLE once the tap window
+ * closes. Listener registries grow exponentially, arena-backed, per the
+ * Dynamic Scalability & Anti-Hardcoding Law. Lives at R2 as a leaf input
+ * behavior; the R1 window pump pushes events, the game thread dispatches.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
