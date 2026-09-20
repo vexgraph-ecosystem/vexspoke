@@ -1,7 +1,24 @@
 #import <AppKit/AppKit.h>
 #include "io/clipboard.h"
 #include "annotation/platform_exclusive.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Clipboard (macOS bridge)
+ * ============================================================================
+ * Native NSPasteboard bridge supporting UTF-8 text and raw RGBA8 bitmaps:
+ * Clipboard_getText copies into a caller-owned buffer (truncation-safe),
+ * Clipboard_getImage decodes TIFF/PNG pasteboard data into caller-owned
+ * pixel memory with dest-last width/height outputs, and Clipboard_setImage
+ * encodes RGBA8 through NSBitmapImageRep. Zero engine allocation — all
+ * buffers are the caller's. This is the L4 platform seam; Linux/Wayland
+ * builds provide a sibling implementation of the same io/clipboard.h
+ * contract. Lives at R2 as a leaf I/O behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -10,6 +27,26 @@
  * LEVEL: L4 — Self-Management (native macOS pasteboard bridge)
  * ============================================================================
  * Native macOS NSPasteboard bridge supporting UTF-8 text and raw RGBA bitmaps.
+ *
+ * STRUCT FIELDS (Mirroring io/clipboard.h):
+ * ----------------------------------------------------------------------------
+ *   ClipboardImage {
+ *     int32_t width;      // pixel width of the RGBA8 bitmap
+ *     int32_t height;     // pixel height of the RGBA8 bitmap
+ *     size_t byteLength;  // width * height * 4
+ *     uint8_t *pixels;    // RGBA8 packed pixels
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Clipboard_hasText(void)
+ *   - Clipboard_hasImage(void)
+ *   - Clipboard_getText(dest, maxBytes)
+ *   - Clipboard_setText(text)
+ *   - Clipboard_getImage(dest, maxBytes, outWidth, outHeight)
+ *   - Clipboard_setImage(pixels, width, height)
+ *   - Clipboard_clear(void)
  * ============================================================================
  */
 
