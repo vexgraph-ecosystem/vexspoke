@@ -4,7 +4,24 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: LongFloat
+ * ============================================================================
+ * LongFloat primitive (Legacy: primitive/LongFloat.java): a procedural class
+ * over a process-wide BitPool (16-byte elements — an int64 plus a float —
+ * 1024 fixed slots) with a Memory arena fallback for large arrays.
+ * LongFloat_alloc hands out pool slots typed ID_LONG_FLOAT;
+ * LongFloat_allocArray switches to the arena when contiguity or size demands
+ * it, and LongFloat_free routes to whichever owner holds the pointer.
+ * LongFloat_allocWithValues packs the int64 and float halves of one payload.
+ * LongFloat_init/LongFloat_shutdown bracket the pool's lifetime.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
