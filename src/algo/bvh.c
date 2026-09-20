@@ -5,8 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Bvh
+ * ============================================================================
+ * Bounding Volume Hierarchy (BVH) for accelerated 3D ray tracing and spatial
+ * queries. The tree stores AABB nodes over primitive index ranges; rays are
+ * tested against node boxes in front-to-back order so early misses prune
+ * whole subtrees. All state lives in caller-owned structs (BvhAabb, BvhRay,
+ * BvhTree) — zero allocation, zero global state, so the same tree can be
+ * built, queried, and destroyed on any thread without locks. Cold build
+ * paths validate primitive counts; hot intersect paths guard only null
+ * pointers per the Cold-Strict, Hot-Minimal Validation Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
