@@ -8,10 +8,26 @@
 #include <spawn.h>
 #include <sys/wait.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
 
 extern char **environ;
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Download
+ * ============================================================================
+ * Safe download bridge that shells out to the system curl binary via
+ * posix_spawnp (never system()) to fetch packages (Homebrew, assets) to disk
+ * or into a caller-owned DownloadResponse buffer. Options (timeout, redirects,
+ * silent, user agent) are validated cold; the child is reaped with waitpid
+ * and HTTP failures degrade to false with the response exit code recorded.
+ * DownloadResponse owns its data buffer and must be freed with
+ * DownloadResponse_free — the only allocation in the module.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
