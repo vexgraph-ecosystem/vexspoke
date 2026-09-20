@@ -4,7 +4,25 @@
 #include <string.h>
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Dijkstra
+ * ============================================================================
+ * Single-source shortest-path solver over weighted adjacency lists, used for
+ * routing, spatial navigation, and audio node dependency graphs. The graph is
+ * a pair of contiguous off-heap arenas (nodes plus per-node edge arrays) so
+ * relaxation walks cache-friendly memory; edge arrays double on demand and
+ * are reclaimed with the graph. The priority queue is a private min-heap over
+ * a caller-budgeted scratch arena sized 4N+16, so the hot search path performs
+ * zero steady-state allocation. Unreachable goals return 0 with all scratch
+ * freed; the path is reconstructed backward through the predecessor table and
+ * reversed into the caller's dest-last outPath buffer.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -14,6 +32,37 @@
  * ============================================================================
  * Solves single-source shortest paths on adjacency lists using min-priority
  * relaxation. Operates over contiguous off-heap memory.
+ *
+ * STRUCT FIELDS (Mirroring algo/dijkstra.h):
+ * ----------------------------------------------------------------------------
+ *   DijkstraEdge {
+ *     uint32_t target;   // destination node index
+ *     float weight;      // edge cost
+ *   }
+ *   DijkstraNode {
+ *     uint32_t edgeCount;     // live outgoing edges
+ *     uint32_t edgeCapacity;  // allocated edge slots (doubling)
+ *     DijkstraEdge *edges;    // contiguous edge arena
+ *   }
+ *   DijkstraGraph {
+ *     uint32_t nodeCount;  // fixed node count at creation
+ *     DijkstraNode *nodes; // contiguous node arena
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Dijkstra_create(nodeCount)
+ *
+ * Public Core Functions: (.h)
+ *   - Dijkstra_free(graph)
+ *   - Dijkstra_addEdge(graph, from, to, weight)
+ *   - Dijkstra_addBiEdge(graph, a, b, weight)
+ *   - Dijkstra_shortestPath(graph, startNode, goalNode, outPath, maxPathNodes, outTotalDistance)
+ *
+ * Private Core Functions: (.c static)
+ *   - MinQ_push(q, node, dist)
+ *   - MinQ_pop(q, outNode, outDist)
  * ============================================================================
  */
 
