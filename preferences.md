@@ -66,7 +66,7 @@ its ordinal may move as the document evolves.
 | 17 | Standalone Autonomy Law (Target Seam) |
 | 18 | Multi-Repo Atomic Commit Discipline Law (Per Feature, Per Subsystem, Per Repo) |
 | 19 | Identity & Naming Transition Law (Anti → Vexspoke / VexHome) |
-| 20 | Living `;;OVERVIEW` Blueprint Law |
+| 20 | Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law |
 | 21 | Symmetric Getter/Setter Completeness Law (Java-Library Standard) |
 | 22 | Per-Repo Commit Message Scope Law (No Repo Prefix — Scope to Class/Subsystem) |
 | 23 | Teardown Order Law (Destroy Top-Down, Free Last) |
@@ -96,7 +96,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -217,14 +217,19 @@ Never run `git push` on your own. When I explicitly tell you to "push", treat it
 
 ## 8. Two-Semicolon Annotation Style Law
 
-Annotations (src/annotation/*.h) are written with two semicolons on the left
+Annotations (`src/annotation/*.h`) are written with two semicolons on the left
 side only, so they read as explicit markers:
 
 ```c
+;;OVERVIEW
+;;DEFINITION
+;;GETTER
+;;SETTER
 ;;DRAFT
 ;;INCOMPLETE
 ;;PLATFORM_EXCLUSIVE("Windows")
 ;;INTENTION("reason")
+;;SYNC("provenance")
 ```
 
 Two semicolons on the left, nothing on the right — even when the annotation
@@ -603,21 +608,56 @@ The codebase is actively transitioning from the initial `anti` prototype name to
 
 ---
 
-## 20. Living `;;OVERVIEW` Blueprint Law
+## 20. Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law
 
-`;;OVERVIEW` is the documentation & file layout standard. Every `.c` (and `.m` where applicable) must be self-contained so that a developer can understand the class, its memory layout, and all its capabilities from the first 100–150 lines of the implementation file without having to tab back and forth to the `.h` file.
+`;;OVERVIEW` and `;;DEFINITION` are the documentation and structural blueprint standards. Every `.c` (and `.m` where applicable) must be self-contained so that a developer or AI agent can immediately understand the class, its memory layout, and all its capabilities from the first 100–150 lines of the implementation file without having to tab back and forth to the `.h` file.
 
-Constructors are not generic functions—they are arity-overloaded instance initializers (`Class_0()`, `Class_1()`) called via `Class(...)` macros. Functions are therefore strictly partitioned into four categories:
-1. **`constructor`** (Instantiation & lifecycle via `CONSTRUCTOR_DISPATCH`)
-2. **`core functions`** (Computational logic, rendering, layout, and operational algorithms)
-3. **`setters`** (Mutators: `setX(ptr, x)`, `setSize(ptr, w, h)`, `setImage(ptr, img)`)
-4. **`getters`** (Accessors: `getX(ptr)`, `getSize(ptr, &w, &h)`, `getImage(ptr)`)
+### Separation of Roles:
+1. **`;;DEFINITION` — The Architectural Raison d'Être**:
+   Precedes or accompanies the overview. Documents:
+   - **Why this class exists:** What specific problem it solves in its system tier.
+   - **Memory layout & footprint:** Bit-packed headers, alignment, cache-line packing, and zero-allocation invariants.
+   - **Operational mechanics:** Concurrency assumptions, lifecycle states, and relationship to adjacent subsystems (R1–R5).
+   - **Failure modes & bounds:** How invalid inputs or resource exhaustion are handled.
+2. **`;;OVERVIEW` — The Structural Summary & Public/Private Registry**:
+   Serves as the machine-readable and human-scannable diagram of fields, helpers, and functions.
+
+### Public vs. Private Function Registry Standard:
+To eliminate the need to inspect the `.h` file just to know what API is externally visible, the function registry is **strictly partitioned into Public (.h) vs. Private (.c static)** sections:
+- **Public**: Declared in the owning `.h` header file; exported to library consumers.
+- **Private**: Declared `static` within the owning `.c` implementation file; internal file-local helpers.
+
+Both Public and Private categories are subdivided into:
+1. **`Constructors`**: Arity-overloaded instance initializers (`Class_0()`, `Class_1()`) called via `Class(...)` macros.
+2. **`Core Functions`**: Operational algorithms, coordinate transforms, layout, and rendering logic.
+3. **`Setters`**: Mutators (`Class_set*(...)`), annotated with `;;SETTER`.
+4. **`Getters`**: Accessors (`Class_get*(...)`), annotated with `;;GETTER`.
 
 ### Required Header Structure (Single CLASS — No MODULE):
 ```c
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+#include "annotation/getter.h"
+#include "annotation/setter.h"
 #include "subsystem/class.h"
 // ...
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: ClassName
+ * ============================================================================
+ * RAISON D'ÊTRE:
+ *   Why this class exists, what problem it solves, and why no existing class
+ *   subsumes its responsibility.
+ *
+ * MEMORY LAYOUT & LIFECYCLE:
+ *   Bit-packing, alignment, arena allocation strategy, and teardown order.
+ *
+ * OPERATIONAL INVARIANTS:
+ *   Lockless guarantees, bounded waits, and hot-path performance constraints.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -625,7 +665,8 @@ Constructors are not generic functions—they are arity-overloaded instance init
  * CLASS: ClassName (inherits BaseClass -> GrandParentClass)
  * LEVEL: L2 — Behavior (Four System Levels Law: L1 metadata / L2 behavior / L3 module / L4 self-mgmt)
  * ============================================================================
- * Architectural overview of the component, its memory role, and lifecycle.
+ * SUMMARY:
+ *   Brief high-level summary of the class and its primary responsibility.
  *
  * STRUCT FIELDS (Mirroring subsystem/class.h — exactly this file's class):
  * ----------------------------------------------------------------------------
@@ -636,35 +677,48 @@ Constructors are not generic functions—they are arity-overloaded instance init
  * ----------------------------------------------------------------------------
  *   HelperName helper_field1;  // type + name + role per field
  *   HelperName helper_field2;
+ *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
- * Constructors:
+ * Public Constructors: (.h)
  *   - ClassName()                            : ClassName_0()
  *   - ClassName(arg1)                        : ClassName_1(arg1)
  *
- * Core Functions:
+ * Private Constructors: (.c static)
+ *   - (none)
+ *
+ * Public Core Functions: (.h)
  *   - ClassName_process(self, input, dest)   : Primary operational logic
  *
- * Setters:
+ * Private Core Functions: (.c static)
+ *   - helperCompute(val)                     : Internal algorithm helper
+ *
+ * Public Setters: (.h)
  *   - ClassName_setX(self, x)
  *   - ClassName_setSize(self, w, h)
  *
- * Getters:
+ * Private Setters: (.c static)
+ *   - internalSetFlags(self, flags)
+ *
+ * Public Getters: (.h)
  *   - ClassName_getX(const self)
  *   - ClassName_getSize(const self, outW, outH)
+ *
+ * Private Getters: (.c static)
+ *   - (none)
  * ============================================================================
  */
 ```
 
 ### Source Body Organization:
-The implementation body must be grouped under distinct visual comment banners in strict order:
-1. **`// CONSTRUCTORS`**: `Class_0()`, `Class_1(...)`, and lifecycle instantiators.
-2. **`// CORE FUNCTIONS`**: Compute, tick, render handlers, layout algorithms, transformation logic.
-3. **`// SETTERS`**: All state mutators (`Class_set*(...)`).
-4. **`// GETTERS`**: All field inspectors and state accessors (`Class_get*(...)`).
+The implementation body is grouped under distinct visual comment banners in strict order:
+1. **`// CONSTRUCTORS (PUBLIC & PRIVATE)`**: `Class_0()`, `Class_1(...)`, and lifecycle instantiators.
+2. **`// CORE FUNCTIONS (PUBLIC & PRIVATE)`**: Compute, tick, render handlers, layout algorithms, transformation logic.
+3. **`// SETTERS (PUBLIC & PRIVATE)`**: All state mutators (`Class_set*(...)`), annotated with `;;SETTER`.
+4. **`// GETTERS (PUBLIC & PRIVATE)`**: All field inspectors and state accessors (`Class_get*(...)`), annotated with `;;GETTER`.
 
 ### The Living Overview Law (Zero Drift):
-Any modification, refactor, or addition that touches a struct's fields, constructors, or methods **must update the `;;OVERVIEW` header block in the same commit**. An out-of-date overview is a compiler/code defect.
+Any modification, refactor, or addition that touches a struct's fields, constructors, or methods **must update the `;;OVERVIEW` and `;;DEFINITION` header blocks in the same commit**. An out-of-date overview or definition is a compiler/code defect.
 
 `MODULE:` headers are banned except for true procedural entry points
 (`main/*.c`, `tests/*.c`, thin re-export shims) that own zero structs.
