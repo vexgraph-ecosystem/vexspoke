@@ -3,7 +3,23 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: PianoKey
+ * ============================================================================
+ * Musical / MIDI keyboard pitch and event model. Converts MIDI note numbers
+ * (0..127) to standard equal-temperament A440 frequencies, provides note
+ * naming (e.g. C4, A4), and maintains polyphonic velocity and aftertouch
+ * state. PianoState is a plain value struct with fixed 128-entry velocity and
+ * pressure arrays plus pitch bend, mod wheel, and sustain pedal state; callers
+ * own it on the stack or in an input slot. Note math is pure and allocation
+ * free, so it is safe on hot input paths.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -16,6 +32,38 @@
  * Converts MIDI note numbers (0..127) to standard equal temperament A440
  * frequencies, provides note naming (e.g. C4, A4), and maintains polyphonic
  * velocity and aftertouch state.
+ *
+ * STRUCT FIELDS (Mirroring input/piano_key.h):
+ * ----------------------------------------------------------------------------
+ *   PianoKeyEvent {
+ *     uint8_t  note;        // 0..127 (MIDI standard; 60 = Middle C / C4)
+ *     uint8_t  channel;     // 0..15 MIDI channel
+ *     bool     isDown;      // true = Note On, false = Note Off
+ *     float    velocity;    // normalized strike velocity [0.0, 1.0]
+ *     float    pressure;    // polyphonic aftertouch [0.0, 1.0]
+ *     float    pitchBend;   // [-1.0, +1.0]
+ *     uint64_t timestampUs; // microsecond timestamp
+ *   }
+ *   PianoState {
+ *     float    velocities[PIANO_MAX_NOTES]; // 0.0 if not pressed
+ *     float    pressures[PIANO_MAX_NOTES];  // aftertouch per key
+ *     uint32_t activeNotesCount;
+ *     float    pitchBend;                   // current pitch wheel bend [-1.0, 1.0]
+ *     float    modWheel;                    // CC 1 modulation [0.0, 1.0]
+ *     bool     sustainPedal;                // CC 64 damper pedal
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - PianoKey_frequency(note)
+ *   - PianoKey_pitchClass(note)
+ *   - PianoKey_octave(note)
+ *   - PianoKey_noteName(note, dest, maxLen)
+ *   - PianoState_init(state)
+ *   - PianoState_processEvent(state, event)
+ *   - PianoState_isNoteOn(state, note)
+ *   - PianoState_noteVelocity(state, note)
  * ============================================================================
  */
 
