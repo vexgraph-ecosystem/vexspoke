@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Bool
+ * ============================================================================
+ * Bool primitive (Legacy: primitive/Bool.java): a procedural class over a
+ * process-wide BitPool (1-byte elements, 1024 fixed slots) with a Memory
+ * arena fallback for large arrays. Bool_alloc hands out pool slots typed
+ * ID_BOOL; Bool_allocArray switches to the arena when contiguity or size
+ * demands it, and Bool_free routes to whichever owner holds the pointer.
+ * Bool_compareAndSet provides an atomic compare-exchange on the payload.
+ * Bool_init/Bool_shutdown bracket the pool's lifetime.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
