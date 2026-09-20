@@ -6,7 +6,21 @@
 #include "input/touch.h"
 #include "time/nanotime.h"
 #include "io/hot_file.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: System
+ * ============================================================================
+ * Unified native system information, discovery, and display subsystem boot
+ * entry. System_initializeAll is the init-once boot seam that starts the
+ * engine subsystems (NanoTime, Console, Key, Mouse, Touch, HotFile watcher)
+ * in dependency order; the VFS boots later in darling once paths resolve.
+ * Procedural — owns no struct; all state lives in the subsystems it boots.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
