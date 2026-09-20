@@ -3,7 +3,21 @@
 #include "annotation/incomplete.h"
 
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Ui
+ * ============================================================================
+ * UI worker thread (Legacy: UIThread.java). A thin wrapper over the Thread
+ * pool that creates a UI-role worker (TYPE_THREAD_UI_SINGLETON) and forwards
+ * submit/stop/free to the underlying Thread class. Packet drain and lifecycle
+ * are fully live; component ticks (caret blink, scroll inertia) are marked
+ * ;;INCOMPLETE until UI components land. Procedural — owns no struct.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
