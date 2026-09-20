@@ -4,7 +4,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Networking
+ * ============================================================================
+ * Networking worker thread (Legacy: NetworkingThread.java): a supervised
+ * Thread whose job currently drops batches until net/PollRequest lands — the
+ * queue, lifecycle, and core guard are fully live, the payload execution is
+ * the marked INCOMPLETE seam. NetworkingThread_core caches one singleton
+ * worker that NetworkingThread_free refuses to free. Lives at R2 as a leaf
+ * worker-thread behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
