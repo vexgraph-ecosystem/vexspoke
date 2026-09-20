@@ -614,11 +614,9 @@ The codebase is actively transitioning from the initial `anti` prototype name to
 
 ### Separation of Roles:
 1. **`;;DEFINITION` — The Architectural Raison d'Être**:
-   Precedes or accompanies the overview. Documents:
-   - **Why this class exists:** What specific problem it solves in its system tier.
-   - **Memory layout & footprint:** Bit-packed headers, alignment, cache-line packing, and zero-allocation invariants.
-   - **Operational mechanics:** Concurrency assumptions, lifecycle states, and relationship to adjacent subsystems (R1–R5).
-   - **Failure modes & bounds:** How invalid inputs or resource exhaustion are handled.
+   Precedes or accompanies the overview. Written in fluid, paragraphical prose rather than rigid bureaucratic forms. Its depth scales naturally with the actual complexity of the system:
+   - For straightforward data structures or leaf adapters, a focused paragraph explaining its purpose, lifetime, and bounds.
+   - For complex coordinators or supervisors, comprehensive paragraphs explaining architectural necessity, memory layout, operational mechanics, concurrency models, and relationship to adjacent subsystems (R1–R5).
 2. **`;;OVERVIEW` — The Structural Summary & Public/Private Registry**:
    Serves as the machine-readable and human-scannable diagram of fields, helpers, and functions.
 
@@ -647,15 +645,12 @@ Both Public and Private categories are subdivided into:
  * ============================================================================
  * DEFINITION: ClassName
  * ============================================================================
- * RAISON D'ÊTRE:
- *   Why this class exists, what problem it solves, and why no existing class
- *   subsumes its responsibility.
+ * Paragraphical architectural definition: why this class exists, what problem it
+ * solves, and why no existing class subsumes its responsibility.
  *
- * MEMORY LAYOUT & LIFECYCLE:
- *   Bit-packing, alignment, arena allocation strategy, and teardown order.
- *
- * OPERATIONAL INVARIANTS:
- *   Lockless guarantees, bounded waits, and hot-path performance constraints.
+ * Explains memory layout, alignment, cache-line packing, lifetime, and operational
+ * invariants (e.g. lockless guarantees, bounded waits, cold vs hot paths), scaling
+ * naturally in length with the complexity of the subsystem.
  * ============================================================================
  */
 
