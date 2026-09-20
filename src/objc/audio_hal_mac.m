@@ -5,8 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: AudioHal_mac
+ * ============================================================================
+ * macOS native CoreAudio HAL output unit bridge: creates a default-output
+ * AudioUnit with float PCM stream format and a render callback that feeds
+ * real-time DSP straight into hardware output at minimal buffer latency. The
+ * AudioHal struct is heap-allocated (malloc/free) because it must outlive
+ * the caller's stack and is owned by the audio subsystem; destroy stops the
+ * unit, uninitializes and disposes the AudioComponentInstance, then frees.
+ * The render callback runs on the audio thread and must never block or
+ * allocate — it calls the registered AudioHalRenderCallback or zero-fills.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
