@@ -1,7 +1,20 @@
 #include "oop/field.h"
 
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Field
+ * ============================================================================
+ * Field descriptor record — one column in a Class, used for spotlight search
+ * and stream-offset resolution. No logic yet: size resolve and alignment
+ * helpers live in class.c. Kept as a separate translation unit so Class and
+ * Field each own a 1:1 file pair per the Single Class Per File Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
