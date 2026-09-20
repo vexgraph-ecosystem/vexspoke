@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Choice
+ * ============================================================================
+ * Immutable deterministic choice / branch dispatcher: a fixed array of
+ * ChoiceSlot records (object pointer payload plus per-option callback) in a
+ * flexible-array struct, arena-allocated with the WRAP2_CHOICE type tag.
+ * Choice_3 builds a single choice from parallel pointer/callback arrays;
+ * Choice_2 builds an array of choices. trigger() invokes the indexed slot's
+ * callback with its object payload and caller userdata; length/getObject
+ * expose the option table read-only.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
