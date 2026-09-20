@@ -8,7 +8,24 @@
 #include "oop/type.h"
 #include "struct/array.h"
 #include "struct/map.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Thread
+ * ============================================================================
+ * The worker-thread engine (Legacy: the six *Thread.java classes): a
+ * supervised pthread wrapper with an atomic state flag, a RingBuffer task
+ * queue, and an optional idle-tick job. Thread_new allocates from the Memory
+ * arena and registers the handle in a central Map; Thread_run spawns the
+ * platform thread, Thread_stop flips state and joins, Thread_free tears down
+ * queue, registry entry, and block. Core handles are immune to stop/free
+ * unless the system-shutdown path forces them. Lives at R2 as a leaf
+ * threading behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
