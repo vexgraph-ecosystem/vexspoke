@@ -3,8 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: TreeSit
+ * ============================================================================
+ * Relational AST tree-sitter graph structure: a flat, dynamically-grown node
+ * array where each node carries parent/sibling/first-child links plus a
+ * byte/row-col span, enabling pre-order, post-order, and span-based queries
+ * without pointer chasing. Exists because language grammars (R3) and editors
+ * (R4/R5) need a stable, allocation-friendly syntax tree that hot-reloadable
+ * modules can build and walk. Memory: the node array doubles exponentially
+ * (the Dynamic Scalability & Anti-Hardcoding Law); the root is a signed index
+ * (-1 when empty). Lifetime: the TreeSitTree_init/TreeSitTree_destroy pair;
+ * symbol names are borrowed, never owned.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
