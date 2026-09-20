@@ -6,7 +6,26 @@
 #include "oop/type.h"
 #include "input/key.h"
 #include "input/mouse.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: KeyMap
+ * ============================================================================
+ * Input binding registry: maps composable int64_t combo IDs to function
+ * pointers. A combo packs gesture kind, modifier nibbles, and a key/mouse
+ * code into 14 hex digits, so bindings are exact-match lookups over a flat
+ * arena-backed array that doubles on growth. Pure behavior — zero UI, zero
+ * GPU, zero steady-state allocation. Multi-tap resolution is settle-based
+ * (pending windows never fire; the most specific settled KMODE binding fires
+ * exactly once and consumes the tap counters), rhythm mode resolves every
+ * press-release instantly, and LONG_PRESS fires once per hold via a one-shot
+ * driver latch. Modifier mismatches expire stale offered taps so a declined
+ * gesture never re-matches later.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
