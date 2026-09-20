@@ -3,7 +3,22 @@
 #include <string.h>
 
 #include "io/file.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Filewriter
+ * ============================================================================
+ * The FileWriter class, ported from io/FileWriter.java. Buffered binary file
+ * writer: fopen with a full-buffer staging buffer, optional parent-directory
+ * creation via File_mkdirs, and flush/close lifecycle. bytes_written tracks
+ * the flushed byte count for progress reporting. The FILE handle and open
+ * flag live on the caller-owned FileWriter struct; close nulls the handle so
+ * double-close is a no-op.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
