@@ -1,7 +1,53 @@
 #include "io/clipboard.h"
 #include <string.h>
 
+#include "annotation/definition.h"
+#include "annotation/overview.h"
+
 #if !defined(__APPLE__)
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Clipboard (platform-exclusive stub)
+ * ============================================================================
+ * Non-Apple fallback for the system clipboard bridge: a procedural Clipboard
+ * API backed by a single static 4096-byte char buffer (s_stubText). Text
+ * copy/paste round-trips in-process through that buffer with truncation at
+ * the 4095-byte bound; image operations always return false because there is
+ * no OS pasteboard to exchange pixels with. Zero allocation, zero threads,
+ * zero steady-state cost — the stub exists so R4/R5 callers compile and run
+ * on Linux/Windows while the macOS NSPasteboard implementation carries the
+ * real bridge. The whole file is compiled out under __APPLE__.
+ * ============================================================================
+ */
+
+;;OVERVIEW
+/**
+ * ============================================================================
+ * MODULE: Clipboard_stub (io/clipboard_stub.c)
+ * LEVEL: L4 — Platform Abstraction (Clipboard Fallback)
+ * ============================================================================
+ * Platform-exclusive stub for the system clipboard bridge on non-Apple
+ * systems without NSPasteboard. Procedural Clipboard API backed by a static
+ * char buffer; image operations are unsupported and always return false.
+ *
+ * STRUCT FIELDS: none — procedural (static char s_stubText[4096] backing store)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Getters:
+ *   - Clipboard_hasText(void)                    : true when text is stored
+ *   - Clipboard_hasImage(void)                   : always false (no pasteboard)
+ *   - Clipboard_getText(dest, maxBytes)          : copy stored text, bytes written
+ *   - Clipboard_getImage(dest, maxBytes, outWidth, outHeight) : always false
+ *
+ * Setters:
+ *   - Clipboard_setText(text)                    : store text (truncated at 4095)
+ *   - Clipboard_setImage(pixels, width, height)  : always false
+ *   - Clipboard_clear(void)                      : empty the text store
+ * ============================================================================
+ */
 
 static char s_stubText[4096] = {0};
 
