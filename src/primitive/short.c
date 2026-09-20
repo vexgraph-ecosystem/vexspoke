@@ -4,7 +4,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Short
+ * ============================================================================
+ * Short primitive (Legacy: primitive/Short.java). Singleton 2-byte payloads
+ * come from a fixed 1024-slot BitPool; arrays fall back to the Memory arena
+ * because the pool is not sized for large contiguous blocks. Short_free routes
+ * to the owning allocator via BitPool_contains, and Short_compareAndSet
+ * provides an atomic CAS on the payload.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
