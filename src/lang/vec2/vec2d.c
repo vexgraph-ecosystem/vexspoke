@@ -5,13 +5,67 @@
 #include "math/strict_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec2d
+ * ============================================================================
+ * 2D double-precision spatial vector: a 16-byte union exposing
+ * horizontal/vertical, x/y, and right/up aliases over the same two doubles.
+ * Exists because spatial math (layout, physics, camera) needs double
+ * precision for large-world coordinates while keeping a single canonical
+ * storage layout. Memory: arena-allocated via Memory_alloc(ID_VEC2,
+ * VEC2D_BYTES), freed via Vec2d_free. Lifetime: Memory arena; dest-last
+ * arithmetic (add/sub/mul) writes into caller-provided dest.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
  * ============================================================================
  * CLASS: Vec2d (lang/vec2/vec2d.c — defined in lang/vec2/vec2d.h)
  * LEVEL: L2 — Behavior (2D double precision spatial vector)
+ * ============================================================================
+ *
+ * STRUCT FIELDS (Mirroring lang/vec2/vec2d.h):
+ * ----------------------------------------------------------------------------
+ *   Vec2d {
+ *     union {
+ *       struct { double horizontal; double vertical; };
+ *       struct { double x; double y; };
+ *       struct { double right; double up; };
+ *       double data[2];
+ *     };
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec2d_0()
+ *   - Vec2d_2(horizontal, vertical)
+ *
+ * Public Core Functions: (.h)
+ *   - Vec2d_free(v)
+ *   - Vec2d_add(a, b, dest)
+ *   - Vec2d_sub(a, b, dest)
+ *   - Vec2d_mul(a, scalar, dest)
+ *   - Vec2d_dot(a, b)
+ *   - Vec2d_length(v)
+ *
+ * Public Setters: (.h)
+ *   - Vec2d_setRight(v, val)
+ *   - Vec2d_setLeft(v, val)
+ *   - Vec2d_setUp(v, val)
+ *   - Vec2d_setDown(v, val)
+ *
+ * Public Getters: (.h)
+ *   - Vec2d_getRight(v)
+ *   - Vec2d_getLeft(v)
+ *   - Vec2d_getUp(v)
+ *   - Vec2d_getDown(v)
  * ============================================================================
  */
 
