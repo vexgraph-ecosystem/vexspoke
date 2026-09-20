@@ -4,7 +4,23 @@
 #include <string.h>
 
 #include "io/file.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Logparser
+ * ============================================================================
+ * Read-only parser for the engine's binary log format: a 7-byte magic header
+ * plus version and fixed LOGPARSER_RECORD_BYTES record size, followed by
+ * fixed-size records of big-endian kind/timestamp/value fields. It streams
+ * records through a caller-supplied LogRecordFn callback, counts records,
+ * and formats one record into a caller buffer as "<ms> <name> <v0..v4>".
+ * The parser owns no state beyond a stack header/record buffer and never
+ * allocates on the parse path.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
