@@ -6,7 +6,24 @@
 #include <time.h>
 
 #include "io/file.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: VexHome
+ * ============================================================================
+ * Owns the per-user engine home directory layout on disk (was AntiHome,
+ * renamed on the vexspoke/darling split). Resolves the root per-platform —
+ * $VEX_HOME test seam first, then macOS Application Support, Windows
+ * LOCALAPPDATA, XDG data home, and finally $HOME/vex — and derives the
+ * projects/logs/fonts/placeholder/cache subpaths into static FILE_PATH_MAX
+ * buffers. VexHome_ensure creates the tree idempotently; VexHome_cacheEnsure
+ * writes a never-clobbered dictionary.ini index. Legacy ~/vex and ~/anti are
+ * never migrated or deleted. Lives at R2 as a leaf I/O behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
