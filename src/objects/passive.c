@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Passive
+ * ============================================================================
+ * Lazy-evaluated/computed object wrapper: a memoized cachedValue plus
+ * getter/setter callbacks and opaque userdata, so a value can be computed on
+ * first access and written back through the setter. Exists because the
+ * relational object model needs computed properties that behave like plain
+ * fields. Memory: arena-allocated via Memory_alloc with the PASSIVE type id;
+ * Passive_2 builds arrays of count copies. Lifetime: Memory arena;
+ * Passive_free returns the block.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
