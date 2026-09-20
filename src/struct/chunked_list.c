@@ -4,10 +4,28 @@
 #include <string.h>
 
 #include "atomic/spin.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: ChunkedList
+ * ============================================================================
+ * Never-moved chunked list: rows live in stable chunk blocks so a row address
+ * handed out once stays valid until free — the sibling struct/List grows one
+ * contiguous buffer and therefore moves every element on growth. The chunk
+ * directory is copy-on-write (old generations stay mapped and valid for
+ * racing readers), chunk slots are atomic pointers published only after rows
+ * are zeroed, and the gate serializes claim-plus-growth-plus-commit with a
+ * bounded 100ms try-lock per the Bounded Wait Law. rowsPerChunk is the
+ * largest power of two fitting the byte budget so lookup is shift/mask, no
+ * divide. Lives at R2 as a leaf container behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
