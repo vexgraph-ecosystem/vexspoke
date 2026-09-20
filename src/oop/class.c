@@ -5,7 +5,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Class
+ * ============================================================================
+ * Dynamic class schema engine (Legacy: oop/Fields): registers custom struct
+ * layouts in a fixed MAX_FIELDS (65000) schema table, resolving each field's
+ * size, alignment, unified offset, and dual-stream (hot primitive / secondary
+ * struct) offsets. Fields_create and Class_createNamed define schemas from
+ * size/class arrays (the named variant stores 31-char field names for
+ * spotlight); Fields_resolveSize maps primitive ids to byte sizes and flags
+ * structs. Lives at R2 as the L1 metadata registry other classes consume.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
