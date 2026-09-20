@@ -2,10 +2,27 @@
 
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
 #include "oop/class.h"
 #include "relational/variable.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Equals
+ * ============================================================================
+ * Relational equality: the C answer to Java `.equals()`. Identity first,
+ * then Memory headers (type + length must match), then the Class schema
+ * field-by-field so padding bytes never vote. Types with no registered
+ * schema fall back to payload memcmp; foreign pointers prove identity only.
+ * The walk is bounded by EQUALS_MAX_DEPTH so runtime-registered schemas can
+ * never drive unbounded recursion; every field offset and span is checked
+ * against the payload length before touching memory, keeping the cold path
+ * crash-free on hostile or corrupt schemas.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
