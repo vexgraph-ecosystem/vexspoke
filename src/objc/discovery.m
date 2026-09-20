@@ -13,7 +13,22 @@
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Discovery
+ * ============================================================================
+ * Native hardware, display, and GPU probe (Legacy: system/SystemDiscovery.java).
+ * Bootstraps exactly once under an atomic flag, then writes sysctl hardware
+ * facts, IOKit battery state, the Metal device, and CoreGraphics display
+ * modes into the HardwareInfo / DisplayInfo / GraphicsInfo singletons.
+ * Procedural: no own struct — the only state is the static atomic
+ * s_bootstrapped flag; refresh clears it and re-runs the probe.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -22,6 +37,9 @@
  * LEVEL: L4 — Self-Management (native hardware discovery probe)
  * ============================================================================
  * native hardware, display, and GPU probe (Legacy: system/SystemDiscovery.java)
+ *
+ * STRUCT FIELDS: none — procedural (operates on HardwareInfo/DisplayInfo/
+ * GraphicsInfo singletons; only state is the static atomic s_bootstrapped flag)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
