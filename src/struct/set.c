@@ -6,7 +6,23 @@
 #include "oop/type.h"
 #include "util/arrays.h"
 #include "util/hash.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Set
+ * ============================================================================
+ * Hash set over a flat open-addressing slot table, ported from struct/Set.java.
+ * Each 24-byte slot holds key, hash, and state (empty/occupied/deleted);
+ * reference-class elements (strings, lists) are hashed and compared through
+ * their Memory payloads while scalars use Murmur3 mixing. The table rehashes
+ * into a doubled arena buffer past the 0.75 load factor, so capacity grows
+ * with no artificial ceiling. The Collection base record is embedded at
+ * offset zero, shared with Deque.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
