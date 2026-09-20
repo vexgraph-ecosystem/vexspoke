@@ -4,7 +4,22 @@
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "util/random.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Probable
+ * ============================================================================
+ * Weighted-choice object: a payload pointer plus weight/total state used by
+ * Random_sample for weighted selection. Probable_3 builds a single weighted
+ * entry; Probable_2 fills an array from a template (or zeros it) for bulk
+ * weighted tables. All storage is arena-allocated with TYPE_PROBABLE /
+ * TYPE_PROBABLE_ARRAY identity; getters return safe defaults on null per the
+ * Symmetric Getter/Setter Completeness Law.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
