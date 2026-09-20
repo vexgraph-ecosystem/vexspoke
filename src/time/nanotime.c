@@ -8,7 +8,22 @@
 #include "time/nanotime.h"
 
 #include <time.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Nanotime
+ * ============================================================================
+ * The monotonic clock (Legacy: time/NanoTime.java). CLOCK_MONOTONIC_RAW is
+ * the raw hardware counter, unslewed by NTP — the closest thing to
+ * System.nanoTime(). The epoch is captured once by NanoTime_init; every
+ * consumer derives "time since engine start" from the same anchor so
+ * timestamps from different threads stay comparable. NanoTimer is a
+ * caller-owned tickable timer accumulating scaled delta and total time.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
