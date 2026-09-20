@@ -6,7 +6,23 @@
 
 #include <stdio.h>
 #include <strings.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Url
+ * ============================================================================
+ * URI synthesis and authentication-header plumbing (Legacy:
+ * net/TransportProtocol.java): default ports, URL building, base64 encoding,
+ * and Basic/Bearer auth header construction. Exists because R3 api-haven
+ * connectors need deterministic, truncation-safe URL and header writers.
+ * Memory: pure byte plumbing into caller buffers — every writer reserves room
+ * for the NUL and fails clean (-1) instead of truncating (the
+ * Truncation-Never-Silent clause). Lifetime: stateless; no allocation.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
