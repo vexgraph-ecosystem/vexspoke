@@ -2,7 +2,24 @@
 
 #include <math.h>
 #include <string.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Turntable
+ * ============================================================================
+ * DJ turntable and jog wheel physics model: vinyl scratch platter state,
+ * motor inertia, pitch fader, cue points, hot cues, and crossfader curves.
+ * TurntableState is a caller-owned struct advanced by processEvent (discrete
+ * hardware input) and tick (continuous motor simulation with smooth
+ * acceleration and deceleration friction). The model is deterministic and
+ * allocation-free — playheadSeconds integrates angular velocity so scratch
+ * deltas and motor motion compose on the same timeline. Crossfader curves
+ * are pure functions writing dest-last volume outputs.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -12,6 +29,28 @@
  * ============================================================================
  * Models vinyl scratch physics, platter angular momentum, pitch adjustment,
  * cue triggers, and crossfader curves for DJ performance software.
+ *
+ * STRUCT FIELDS (Mirroring input/turntable.h):
+ * ----------------------------------------------------------------------------
+ *   TurntableState {
+ *     uint8_t deckIndex;                      // 0 = Deck A, 1 = Deck B, etc.
+ *     bool platterTouched;                    // in scratch mode when touched
+ *     bool isPlaying;                         // motor active
+ *     TurntableRpm targetRpm;                 // 33 or 45 RPM target
+ *     float currentAngularVelocityRadPerSec;  // platter angular velocity
+ *     float pitchFader;                       // current tempo slider
+ *     float playheadSeconds;                  // track position
+ *     float cuePositionSeconds;               // saved cue point
+ *     float hotCues[8];                       // saved hot cue positions (-1 = unset)
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - TurntableState_init(state, deckIndex)
+ *   - TurntableState_processEvent(state, event)
+ *   - TurntableState_tick(state, deltaSeconds)
+ *   - Turntable_calculateCrossfade(position, curve, outLeft, outRight)
  * ============================================================================
  */
 
