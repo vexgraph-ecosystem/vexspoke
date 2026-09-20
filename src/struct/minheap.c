@@ -4,7 +4,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: MinHeap
+ * ============================================================================
+ * Binary min-heap ported from struct/MinHeap.java: 1-based item/priority
+ * arrays with sift-up on push and sift-down on pop, so the strictly lowest
+ * priority always rises to the root. Both arrays are arena-allocated at
+ * capacity + 1 slots; MinHeap_free releases them before the heap struct
+ * (detach before free). Lives at R2 as a leaf container behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
