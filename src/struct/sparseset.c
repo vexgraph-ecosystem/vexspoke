@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Sparseset
+ * ============================================================================
+ * Sparse set (the classic dense/sparse pair): dense[i] holds entity ids in
+ * insertion order, sparse[entity] maps id to dense index (-1 absent), and an
+ * optional stride-strided data buffer carries per-entity components. add
+ * returns the component slot (or a non-nullptr presence sentinel when stride
+ * is 0); remove is swap-remove, moving the last dense entry into the hole in
+ * O(1). All three arenas are allocated at construction and freed together —
+ * no steady-state allocation on the hot add/remove/contains path.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
