@@ -2,7 +2,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec3LongDouble
+ * ============================================================================
+ * Cosmic-scale 3D vector: each axis is an int64 sector plus a double local
+ * offset, so solar-system and galaxy-scale coordinates keep sub-millimeter
+ * precision without loss of significance. Vec3LongDouble_rebalance carries
+ * local overflow into the sector using a caller-supplied sector size. The
+ * struct is arena-allocated (ID_VEC3) and freed by Vec3LongDouble_free.
+ * Lives at R2 as a leaf math primitive for the R5 spatial engines.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -11,6 +26,37 @@
  * LEVEL: L2 — Behavior (cosmic scale int64 sector + double local 3D vector)
  * ============================================================================
  * Unbounded spatial coordinate representation for solar-system and galaxy scale.
+ *
+ * STRUCT FIELDS (Mirroring lang/vec3/vec3_long_double.h):
+ * ----------------------------------------------------------------------------
+ *   CoordLongDouble {
+ *     int64_t sector;  // coarse sector index (int64, unbounded)
+ *     double local;    // fine offset within the sector
+ *   }
+ *   Vec3LongDouble {
+ *     CoordLongDouble horizontal;  // right (+) / left (-) axis
+ *     CoordLongDouble vertical;    // up (+) / down (-) axis
+ *     CoordLongDouble depth;       // front (+) / back (-) axis
+ *     uint64_t frame;              // CoordFrame tag (COORD_FRAME_DEFAULT)
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec3LongDouble_0(void)
+ *   - Vec3LongDouble_create(sH, lH, sV, lV, sD, lD, frame)
+ * Public Core Functions: (.h)
+ *   - Vec3LongDouble_free(v)
+ *   - Vec3LongDouble_rebalance(v, sectorSize)
+ * Public Getters: (.h)
+ *   - Vec3LongDouble_getRightLocal(v)
+ *   - Vec3LongDouble_getLeftLocal(v)
+ *   - Vec3LongDouble_getUpLocal(v)
+ *   - Vec3LongDouble_getDownLocal(v)
+ *   - Vec3LongDouble_getFrontLocal(v)
+ *   - Vec3LongDouble_getBackLocal(v)
+ * Private Core Functions: (.c static)
+ *   - rebalance_axis_d(axis, sectorSize)
  * ============================================================================
  */
 
