@@ -1,8 +1,26 @@
 #include "lang/rect/rectangle.h"
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Rectangle
+ * ============================================================================
+ * Axis-aligned rectangle in native hardware pixel space, per the Pixel
+ * Coordinate Contract: the graphics API, layout buffers, and hit-testing all
+ * speak native pixels, and -1..1 NDC exists only inside vertex shaders. Four
+ * floats (x, y, width, height) with a Y-down top-left origin. Geometry
+ * transforms (translate/inflate/inset) and set operations
+ * (intersection/merge) are dest-last; predicates (isEmpty, containsPoint,
+ * containsRect, intersects, equals) treat touching edges as contained.
+ * Instances are Memory-arena allocated with the ID_RECT type and freed via
+ * Rectangle_free.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
