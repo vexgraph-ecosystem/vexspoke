@@ -2,8 +2,24 @@
 
 #include <stdlib.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: AudioHal (stub)
+ * ============================================================================
+ * Fallback implementation of the AudioHal contract for platforms without
+ * CoreAudio: every create/start/stop call fails closed (returns false) and
+ * every getter returns a safe zero default, so audio-dependent subsystems
+ * degrade gracefully instead of crashing. The opaque AudioHal struct carries
+ * a single is_running flag that is never set true here. This is the L4
+ * platform-abstraction seam: the real CoreAudio HAL replaces this file on
+ * Apple platforms, and both must satisfy the same audio/audio_hal.h contract.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -12,6 +28,34 @@
  * LEVEL: L4 — Platform Abstraction (Audio HAL Fallback)
  * ============================================================================
  * Fallback stub for Audio HAL on non-Apple systems without CoreAudio.
+ *
+ * STRUCT FIELDS (Mirroring audio/audio_hal.h + local AudioHal):
+ * ----------------------------------------------------------------------------
+ *   AudioHalConfig {
+ *     double sample_rate;             // e.g. 44100.0, 48000.0, 96000.0
+ *     uint32_t channels;              // 1 = mono, 2 = stereo
+ *     uint32_t buffer_frames;         // e.g. 128, 256, 512
+ *     AudioHalRenderCallback callback;// Real-time pull render callback
+ *     void *user_data;
+ *   }
+ *   AudioHal {                        // opaque; defined locally in this .c
+ *     bool is_running;                // never set true by the stub
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - AudioHalConfig_default(void)
+ *   - AudioHal_create(config, hal_out)
+ *   - AudioHal_start(hal)
+ *   - AudioHal_stop(hal)
+ *   - AudioHal_destroy(hal)
+ * Public Getters: (.h)
+ *   - AudioHal_is_running(hal)
+ *   - AudioHal_get_sample_rate(hal)
+ *   - AudioHal_get_channels(hal)
+ *   - AudioHal_get_buffer_frames(hal)
+ *   - AudioHal_get_latency_ms(hal)
  * ============================================================================
  */
 
