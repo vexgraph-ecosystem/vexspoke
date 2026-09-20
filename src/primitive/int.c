@@ -4,7 +4,20 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Int
+ * ============================================================================
+ * Int primitive (Legacy: primitive/Int.java): 32-bit int payloads backed by a
+ * fixed 1024-slot BitPool for singletons and the Memory arena for arrays.
+ * Provides alloc/free, get/set, compare-and-set, type/length introspection,
+ * and alloc-with-value convenience. Lives at R2 as a leaf primitive behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
