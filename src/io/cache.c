@@ -9,11 +9,27 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
 #include "io/vexhome.h"
 #include "io/file.h"
 #include "security/crypto.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Cache
+ * ============================================================================
+ * Persistent on-disk key-value cache confined to the VexHome cache directory:
+ * keys are SHA-256 hashed into <dir>/<hash>.bin payload files plus .meta side
+ * files carrying cached-at time, TTL, and content size. Writes go through a
+ * pid-suffixed temp file and atomic rename so a crash never leaves a torn
+ * payload; reads validate TTL and unlink expired entries on touch. The Cache
+ * struct is a fixed 512+64 byte dir/subsystem descriptor, malloc'd at open
+ * and freed at close — every lookup/put path is cold and allocation-light.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
