@@ -3,7 +3,23 @@
 #include "lang/fastmath.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Mat4
+ * ============================================================================
+ * 64-byte column-major 4x4 matrix class, ported from lang/Mat4.java. All
+ * transforms (translation, scale, rotation, perspective, orthographic,
+ * lookAt) write dest-last into caller-provided matrices; the single float
+ * array m[16] keeps the struct trivially copyable and SIMD-friendly.
+ * Mat4_0 allocates through the Memory arena with the TYPE_MAT4_SINGLETON
+ * identity; every other function operates on caller-owned storage with zero
+ * allocation. Getters/setters index column-major (m[col * 4 + row]).
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
