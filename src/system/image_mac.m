@@ -3,7 +3,21 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <ImageIO/ImageIO.h>
 #include <stdlib.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Image_mac
+ * ============================================================================
+ * Native image-decode OS shim. Decodes a PNG or JPG from memory into a raw
+ * RGBA8 pixel buffer using CoreGraphics and ImageIO, auto-detecting the
+ * format from the source. Returns a malloc'd byte array the caller must
+ * free(); width and height are written dest-last into outW/outH. Procedural —
+ * no own state, no struct.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -12,6 +26,9 @@
  * LEVEL: L4 — Self-Management (native image-decode OS shim)
  * ============================================================================
  * detect format (PNG, JPEG, etc)
+ *
+ * STRUCT FIELDS: none — procedural (operates on caller-owned encoded image
+ * bytes; returns a malloc'd RGBA8 buffer the caller frees)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
