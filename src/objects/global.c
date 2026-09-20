@@ -5,7 +5,21 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Global
+ * ============================================================================
+ * Atomic global pointer/variable object wrapper: a single
+ * atomic_uint_least64_t payload with acquire/release load/store and a strong
+ * compare-and-set, so cross-thread shared state updates without locks. The
+ * struct is arena-allocated (ID_GLOBAL singleton or TYPE_GLOBAL_ARRAY) and
+ * freed by Global_free. Lives at R2 as a leaf object behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
