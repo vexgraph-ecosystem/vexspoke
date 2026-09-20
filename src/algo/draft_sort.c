@@ -2,7 +2,25 @@
 
 #include <stdlib.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: DraftSort
+ * ============================================================================
+ * Scaffolded sorting and spatial-indexing algorithms for darkbase table
+ * ordering and relational spatial partitioning. Procedural: every function
+ * operates on caller-owned buffers and owns no state, so there is no struct,
+ * no allocation, and no teardown. DraftSort_partitionInt32 is a three-way
+ * partition for quickselect on 32-bit keys; DraftSort_quicksortUint64 sorts
+ * 64-bit row IDs in place; DraftSort_morton3D interleaves three 21-bit
+ * coordinates into a 63-bit Z-order curve so spatially nearby voxels share
+ * cache lines. Bounds: count elements for the array passes, 21 bits per axis
+ * for the Morton interleave.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -11,6 +29,20 @@
  * LEVEL: L2 — Behavior (draft sorting and spatial Morton curve indexing)
  * ============================================================================
  * Scaffolded algorithms for darkbase table sorting and 3D spatial indexing.
+ *
+ * STRUCT FIELDS: none — procedural (operates on caller-owned int32/uint64
+ * arrays and 21-bit XYZ Morton interleave)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - DraftSort_partitionInt32(array, count, pivot) : three-way partition
+ *   - DraftSort_quicksortUint64(array, count)       : in-place 64-bit sort
+ *   - DraftSort_morton3D(x, y, z)                   : 63-bit Z-order code
+ *
+ * Private Core Functions: (.c static)
+ *   - compare_u64(a, b)  : qsort comparator for uint64
+ *   - split_by_3(a)      : 21-bit bit-spread for Morton interleave
  * ============================================================================
  */
 
