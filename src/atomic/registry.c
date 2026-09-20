@@ -14,7 +14,24 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Registry
+ * ============================================================================
+ * Process-wide thread identity and role table, the C stand-in for the JVM's
+ * Thread.threadId(). 256 atomic slots are keyed by OS thread id (pthread_self)
+ * with linear probing and CAS on empty slots, so any thread can register
+ * itself once and read its dense index O(1) forever after. Roles ride beside
+ * the identity table as one int per index, written once by the owning thread
+ * and read by anyone through plain atomics. The table is fixed-size by design
+ * (a process has a bounded live thread count) and never allocates; slot
+ * indices never invalidate, so callers may cache them across calls.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
