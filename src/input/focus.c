@@ -7,7 +7,22 @@
 #include "input/focus.h"
 
 #include <stdatomic.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Focus
+ * ============================================================================
+ * The single spotlight: one focused window id per machine, stored in one
+ * atomic word so any thread can read it lock-free while Thread 0 writes it
+ * after reading [NSApp keyWindow] during the event pump. This module is the
+ * firewall between the game thread and AppKit — no AppKit calls may happen
+ * here. FOCUS_BROADCAST (0) means no window has focus. Lives at R2 as a leaf
+ * input behavior consumed by the R1 window pump.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
