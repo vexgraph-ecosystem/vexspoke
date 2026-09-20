@@ -72,7 +72,22 @@
  */
 
 #include "security/touchid.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Touchid
+ * ============================================================================
+ * Portable zero-cost stub for the TouchID seam on non-Apple platforms: the
+ * live LAContext bridge lives in touchid_cocoa.m, and this file fails closed
+ * so no biometric path ever silently succeeds off macOS. authenticate()
+ * returns a consumed token (magic zeroed), verify() returns false unless the
+ * ALLOW_INSECURE_STUB build flag is set, and discard() is a by-value no-op —
+ * the single-use guarantee is enforced by verify consuming the token.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
