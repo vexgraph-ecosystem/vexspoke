@@ -5,7 +5,23 @@
 #include <time.h>
 
 #include "io/vexhome.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Log
+ * ============================================================================
+ * MPSC event ring + writer daemon, ported from io/Log.java. Producers append
+ * fixed-size records into a lock-free head/tail slot arena; a single writer
+ * thread drains slots to a FileWriter sink in big-endian format behind a
+ * magic header. The ring is carved once at init (zero steady-state
+ * allocation), and the active flag makes append a no-op when the sink is
+ * down. Counters (appended/dropped/written) are atomic where producers touch
+ * them; the writer thread owns written/flush_point exclusively.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
