@@ -5,7 +5,22 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Stack
+ * ============================================================================
+ * LIFO stack ported from struct/Stack.java: embeds the Collection mirror as
+ * its first member (a Stack* is a Collection*) and grows its single data
+ * buffer by DEFAULT_CAPACITY (1024) slots when full, copying live entries
+ * into the new arena block. Push/pop/peek/slot ride Collection_readSlot /
+ * Collection_writeSlot; capacity floors at 1024. Lives at R2 as a leaf
+ * container behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
