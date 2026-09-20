@@ -1,4 +1,5 @@
 #include "annotation/intention.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "system/app_detect.h"
 #include "system/process_probe.h"
@@ -7,6 +8,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: AppDetect
+ * ============================================================================
+ * Local application detection for the engine: "is opencode installed?" via
+ * PATH resolution, /Applications bundle scans, and live process liveness via
+ * ProcessProbe, over a hand-curated L1 registry of known developer tools
+ * (coding CLIs + agent harnesses). No exec, no subprocess, no allocation —
+ * pure getenv/access/libproc probes into caller-owned scratch. The singleton
+ * AppDetect handle is a zero-init marker; all data lives in the static const
+ * AppSlot rows from src/system/data/apps.inc.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
