@@ -5,7 +5,23 @@
 #include <string.h>
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: KdTree
+ * ============================================================================
+ * Spatial acceleration structure for 3D point clouds: recursively partitions
+ * points by alternating X/Y/Z split planes so nearest-neighbor and radius
+ * queries run in O(log N) expected time instead of a linear scan. The tree is
+ * built once from a caller-owned point array (arena-allocated nodes, balanced
+ * via quickselect on the median), then queried read-only; KdTree_free walks
+ * the arena nodes and releases the tree struct. Lives at R2 as a pure leaf
+ * math/geometry primitive with zero dependencies above it.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -15,6 +31,40 @@
  * ============================================================================
  * Recursively partitions 3D space by alternating split axes (X, Y, Z)
  * enabling O(log N) nearest-neighbor and spherical radius queries.
+ *
+ * STRUCT FIELDS (Mirroring algo/kd_tree.h):
+ * ----------------------------------------------------------------------------
+ *   KdPoint {
+ *     float coord[3];    // [0] = x/horizontal, [1] = y/vertical, [2] = z/depth
+ *     uint64_t payload;  // caller payload carried by the point
+ *   }
+ *   KdNode {
+ *     KdPoint point;         // split point stored at this node
+ *     uint8_t axis;          // 0 = X, 1 = Y, 2 = Z split axis
+ *     struct KdNode *left;   // subtree on the near side of the split plane
+ *     struct KdNode *right;  // subtree on the far side of the split plane
+ *   }
+ *   KdTree {
+ *     KdNode *root;  // root of the balanced tree (nullptr when empty)
+ *     size_t count;  // number of points indexed
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - KdTree_build(points, count)
+ *   - KdTree_free(tree)
+ *   - KdTree_nearest(tree, queryCoord, outNearest, outDistSq)
+ *   - KdTree_queryRadius(tree, queryCoord, radius, outPayloads, maxCount)
+ * Private Core Functions: (.c static)
+ *   - swapPoints(a, b)
+ *   - partitionAxis(points, left, right, axis)
+ *   - quickSelectAxis(points, left, right, k, axis)
+ *   - KdTree_buildRecursive(points, left, right, depth)
+ *   - KdNode_freeRecursive(node)
+ *   - distSq(a, b)
+ *   - nearestRecursive(node, query, bestPoint, bestDistSq)
+ *   - radiusRecursive(node, query, radiusSq, outPayloads, maxCount, count)
  * ============================================================================
  */
 
