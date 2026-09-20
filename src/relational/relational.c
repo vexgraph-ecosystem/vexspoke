@@ -5,8 +5,26 @@
 
 #include "nio/mem.h"
 #include "primitive/string.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Relational
+ * ============================================================================
+ * Spotlight relational facade over Variable (Legacy:
+ * relational/RelationalEngine.java). Three block kinds compose the engine:
+ * arena blocks (16B header read backwards), pool slots (32B name table,
+ * immutable, shared by pointer), and variable rows (16B bindings per scope).
+ * Identity is stated once per layer and never duplicated; queries filter
+ * rows by name (O(log n) pool search) or by class (O(n) cold sweeps).
+ * Cold mutations print loud to stderr on rejection; lookups stay silent so
+ * speculative probing never logs. Teardown composes bottom-up: rows free per
+ * scope, pool strings die with their arena, arenas die last.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
