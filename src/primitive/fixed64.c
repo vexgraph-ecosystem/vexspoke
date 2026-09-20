@@ -4,7 +4,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Fixed64
+ * ============================================================================
+ * Fixed64 primitive over a global 8-byte-slot BitPool (1024 slots) with
+ * Memory-arena fallback for arrays: alloc/free route through BitPool when the
+ * pointer is pool-owned, otherwise through Memory. get/set are plain int64
+ * loads/stores; compareAndSet is a seq-cst __atomic_compare_exchange_n so
+ * the primitive doubles as a lock-free counter. type/length dispatch through
+ * the owning allocator so callers never pierce the pool/arena split.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
