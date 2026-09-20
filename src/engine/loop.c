@@ -8,7 +8,23 @@
 #include "engine/loop.h"
 
 #include <time.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Loop
+ * ============================================================================
+ * EngineLoop port: a fixed-timestep loop that calls the tick function once
+ * per frame_ms of accumulated wall-clock time. An accumulator keeps the step
+ * constant regardless of jitter, and catch-up is clamped to four steps per
+ * frame so a stall can never spiral into a death loop — the backlog is
+ * dropped instead. The running flag is atomic (release store on stop,
+ * acquire load per iteration) so Loop_stop from another thread ends the loop
+ * promptly. tick must never be nullptr and frame_ms must be positive.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
