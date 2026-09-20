@@ -4,7 +4,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Local
+ * ============================================================================
+ * Thread-local variable slot table object wrapper. Values live in an
+ * arena-backed table indexed by thread id; the table starts at 8 slots and
+ * doubles on demand (the Dynamic Scalability & Anti-Hardcoding Law), so the
+ * thread-id space is never capped. Reads outside the live table return 0;
+ * writes grow the table first. Local_2 deep-copies each element's table so
+ * array instances own independent slot storage.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
