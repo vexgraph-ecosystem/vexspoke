@@ -6,7 +6,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: File
+ * ============================================================================
+ * stdio-backed file handle ported from io/File.java: opens paths under a
+ * mode-flag contract (read/write/append/create/truncate), tracks size and
+ * cursor position, and exposes symmetric getters for every state field. The
+ * File struct is arena-allocated through Memory_alloc(TYPE_FILE_SINGLETON)
+ * and freed by File_close, which also closes the OS handle first (detach
+ * before free). Lives at R2 as a leaf I/O behavior consumed by VexHome and
+ * the R3/R4 layers above.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
