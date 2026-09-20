@@ -7,7 +7,22 @@
 #include "primitive/string.h"
 #include "struct/array.h"
 #include "struct/map.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Commandregistry
+ * ============================================================================
+ * The CommandRegistry class, ported from cli/CommandRegistry.java. Maps
+ * command names to CommandFn targets through a static Map registry and
+ * dispatches Command objects to their registered handler by name. The
+ * registry_map lives for the process lifetime (lazily created on first
+ * register/execute) and is torn down by CommandRegistry_free, which also
+ * frees every name block it owns.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
