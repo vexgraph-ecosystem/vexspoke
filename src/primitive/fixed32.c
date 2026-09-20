@@ -4,7 +4,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Fixed32
+ * ============================================================================
+ * Fixed32 primitive, ported from primitive/Fixed32.java. A 4-byte int32
+ * payload served from a 1024-slot BitPool for singletons and from the Memory
+ * arena for arrays; Fixed32_free routes to whichever pool owns the pointer.
+ * compareAndSet is a lock-free __atomic_compare_exchange on the payload, so
+ * the primitive doubles as a small atomic counter. Getters return safe
+ * defaults on null.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
