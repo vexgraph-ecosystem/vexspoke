@@ -6,7 +6,23 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: List
+ * ============================================================================
+ * The List container over the Collection base: a flat, stride-strided data
+ * buffer with activeCount/capacity/elementClass metadata, so element access
+ * is a single base-plus-stride hop. The buffer starts at DEFAULT_CAPACITY
+ * (1024) slots and grows in 1024-slot chunks on demand, arena-backed; add
+ * writes through Collection_writeSlot, remove memmoves the tail down, and
+ * compare is a byte-wise memcmp over the active region. All accessors are
+ * null-guarded and index-bounded.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
