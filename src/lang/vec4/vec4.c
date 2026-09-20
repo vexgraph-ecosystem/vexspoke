@@ -5,7 +5,23 @@
 #include "math/strict_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Vec4
+ * ============================================================================
+ * 16-byte SIMD 4D / homogeneous vector with horizontal, vertical, depth, and
+ * w components, preserved as an alignas(16) union of named views (x/y/z/w,
+ * right/up/front, r/g/b/a, raw data[4]). Arena-allocated via Memory_alloc
+ * with the ID_VEC4 identity; all math is dest-last and allocation-free.
+ * Directional getters/setters (Right/Left/Up/Down/Front/Back) mirror the
+ * axis with sign flips while leaving w untouched; frame-relative accessors
+ * remap axes through CoordFrame. Normalize and lerp are strict-math based.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -14,6 +30,51 @@
  * LEVEL: L2 — Behavior (16-byte SIMD 4D vector)
  * ============================================================================
  * 4D vector with horizontal, vertical, depth, and w components.
+ *
+ * STRUCT FIELDS (Mirroring lang/vec4/vec4.h):
+ * ----------------------------------------------------------------------------
+ *   Vec4 {
+ *     alignas(16) union {
+ *       struct { float horizontal; float vertical; float depth; float w; };
+ *       struct { float x; float y; float z; float _w; };
+ *       struct { float right; float up; float front; float _w2; };
+ *       struct { float r; float g; float b; float a; };
+ *       float data[4];
+ *     };
+ *   }
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - Vec4_0(void)
+ *   - Vec4_4(horizontal, vertical, depth, w)
+ *
+ * Public Core Functions: (.h)
+ *   - Vec4_free(v)
+ *   - Vec4_set(v, horizontal, vertical, depth, w)
+ *   - Vec4_copy(src, dest)
+ *   - Vec4_add(a, b, dest)
+ *   - Vec4_sub(a, b, dest)
+ *   - Vec4_mul(a, scalar, dest)
+ *   - Vec4_div(a, scalar, dest)
+ *   - Vec4_dot(a, b)
+ *   - Vec4_lengthSquared(v)
+ *   - Vec4_length(v)
+ *   - Vec4_normalize(src, dest)
+ *   - Vec4_lerp(a, b, t, dest)
+ *
+ * Public Setters: (.h)
+ *   - Vec4_setRight(v, val) / Vec4_setLeft(v, val)
+ *   - Vec4_setUp(v, val) / Vec4_setDown(v, val)
+ *   - Vec4_setFront(v, val) / Vec4_setBack(v, val)
+ *   - Vec4_setX(v, x) / Vec4_setY(v, y) / Vec4_setZ(v, z) / Vec4_setW(v, w)
+ *
+ * Public Getters: (.h)
+ *   - Vec4_getRight(v) / Vec4_getLeft(v)
+ *   - Vec4_getUp(v) / Vec4_getDown(v)
+ *   - Vec4_getFront(v) / Vec4_getBack(v)
+ *   - Vec4_getX(v) / Vec4_getY(v) / Vec4_getZ(v) / Vec4_getW(v)
+ *   - Vec4_getXInFrame(v, frame) / Vec4_getYInFrame(v, frame) / Vec4_getZInFrame(v, frame)
  * ============================================================================
  */
 
