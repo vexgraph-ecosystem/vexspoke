@@ -3,7 +3,23 @@
 #include "annotation/incomplete.h"
 
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Draw
+ * ============================================================================
+ * The rendering worker pool: a fixed 8-slot RoleSlot table, each slot
+ * binding a DRAW_ROLE_* tag to a supervised Thread worker. invokeRole lazily
+ * spawns the first free slot for a role (core roles get a core-affine
+ * thread); submitTo routes a task to the role's worker; stopAll/freeAll tear
+ * the pool down in order. The renderer backend is still INCOMPLETE — role
+ * dispatch receives tasks but has no renderer to record into yet; queue
+ * plumbing and role routing are fully live.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
