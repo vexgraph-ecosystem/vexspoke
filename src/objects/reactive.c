@@ -4,7 +4,23 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Reactive
+ * ============================================================================
+ * Event-driven Reactive object wrapper: a uint64 payload plus three optional
+ * callbacks — onSet fires on every write, onChanged fires only when the value
+ * actually changes (old vs new), and onGet fires on read. The userdata
+ * pointer is shared across all three callbacks. Reads and writes are plain
+ * (non-atomic) by design: the wrapper targets single-threaded event-driven
+ * UI state, not cross-thread signaling. Instances are Memory-arena allocated
+ * with the WRAP_REACTIVE type id.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
