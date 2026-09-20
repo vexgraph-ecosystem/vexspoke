@@ -1,5 +1,18 @@
 #include "primitive/pack.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Pack
+ * ============================================================================
+ * Bit-packing utilities (Legacy: primitive/Pack.java): pairs of bytes, shorts,
+ * and ints packed into single wider words and unpacked back out. Stateless —
+ * the header ships inline helpers and this .c carries no state and no
+ * functions of its own. Lives at R2 as a leaf primitive behavior.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
