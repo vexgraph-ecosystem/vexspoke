@@ -7,8 +7,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Tls_apple
+ * ============================================================================
+ * Apple-native TLS transport backend using Network.framework and system
+ * trust roots: wraps nw_connection_t in an AppleTlsContext (connection,
+ * dispatch queue, ready/failed flags) behind the opaque TlsConn handle.
+ * Exists because the engine needs TLS without vendoring OpenSSL —
+ * Network.framework provides system-managed trust and ALPN. Memory: context
+ * is malloc'd per connection, freed in Tls_close; callbacks hop onto the
+ * caller's queue. Lifetime: the Tls_connect/Tls_close pair; bounded by the
+ * Bounded Wait Law via nw_connection state callbacks.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
