@@ -1,6 +1,21 @@
 #include "math/math.h"
 
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Math
+ * ============================================================================
+ * Unified math facade dispatching every operation to one of two engines per
+ * the dual precision doctrine: no prefix means strictly IEEE 754 precision via
+ * StrictMath, while the "fast_" prefix means relaxed polynomial/bitwise
+ * approximations via FastMath. Pure procedural — no state, no allocation, no
+ * struct; every function is a thin named dispatch so callers never include
+ * the engine headers directly.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
@@ -11,6 +26,27 @@
  * Dispatches math operations according to the dual precision doctrine:
  *   - No fast prefix: strictly IEEE 754 precision via StrictMath.
  *   - "fast_" prefix: relaxed polynomial / bitwise approximations via FastMath.
+ *
+ * STRUCT FIELDS: none — procedural (operates on scalar float/double operands;
+ * no state)
+ *
+ * FUNCTION REGISTRY:
+ * ----------------------------------------------------------------------------
+ * Public Core Functions: (.h)
+ *   - Math_sin(x) / Math_cos(x) / Math_tan(x)
+ *   - Math_asin(x) / Math_acos(x) / Math_atan(x) / Math_atan2(y, x)
+ *   - Math_sqrt(x) / Math_invSqrt(x) / Math_pow(base, exp)
+ *   - Math_exp(x) / Math_log(x) / Math_abs(x)
+ *   - Math_floor(x) / Math_ceil(x) / Math_round(x)
+ *   - Math_clamp(val, min, max) / Math_lerp(a, b, t)
+ *   - Math_toRadians(deg) / Math_toDegrees(rad)
+ *   - Math_sinD(x) / Math_cosD(x) / Math_sqrtD(x) / Math_atan2D(y, x)
+ *   - Math_fast_sin(x) / Math_fast_cos(x) / Math_fast_tan(x)
+ *   - Math_fast_atan(x) / Math_fast_atan2(y, x)
+ *   - Math_fast_invSqrt(x) / Math_fast_inv(x)
+ *   - Math_fast_abs(x) / Math_fast_round(x)
+ *   - Math_fast_clamp(val, min, max) / Math_fast_lerp(a, b, t)
+ *   - Math_fast_approxEqual(a, b, epsilon)
  * ============================================================================
  */
 
