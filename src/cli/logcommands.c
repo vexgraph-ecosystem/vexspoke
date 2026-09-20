@@ -4,7 +4,22 @@
 
 #include "io/file.h"
 #include "io/logparser.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Logcommands
+ * ============================================================================
+ * CLI surface over the LogParser record stream, ported from
+ * cli/LogCommands.java. LogCommands_stat prints record/byte counts for a log
+ * file; LogCommands_cat streams records through a bounded Cat accumulator
+ * (base timestamp, shown/total counters, limit) so arbitrarily large logs
+ * print with constant memory and a "(N more)" tail. The Cat slot record is
+ * file-local and behaviorless — all parsing behavior hangs off LogParser.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
