@@ -1,9 +1,23 @@
 #include "thread/scripting.h"
 
 #include "annotation/incomplete.h"
+#include "annotation/definition.h"
 
 #include "oop/type.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Scripting
+ * ============================================================================
+ * The scripting worker (Legacy: ScriptingThread.java). Script executor port:
+ * tasks are dequeued and dropped until the scripting surface lands, while the
+ * queue and lifecycle are fully live. ScriptingThread_invoke creates a
+ * scripting-role Thread whose job currently discards tasks; submit/stop/free
+ * delegate straight to the Thread class.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
