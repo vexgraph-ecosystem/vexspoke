@@ -5,7 +5,22 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Display_monitor
+ * ============================================================================
+ * Single display monitor representation: id, name, current/native pixel
+ * resolutions, logical point size, refresh rate, HDR flag, and DPI scale —
+ * the fields the system probe fills and the window/compositor layers read.
+ * The struct is arena-allocated zeroed with dpi defaulting to 1.0, and every
+ * field has a symmetric getter/setter pair per the Symmetric Getter/Setter
+ * Completeness Law; getters return safe defaults on null.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
