@@ -26,8 +26,26 @@
 #include "time/nanotime.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Key
+ * ============================================================================
+ * Keyboard state table plus event stream: a static 512 x 40-byte KeySlot
+ * arena (zero runtime allocation) holds press/release timestamps, tap
+ * settlement state, and the one-shot long-press latch, while a bounded MPMC
+ * ring carries packed 16-byte InputEvents from the producer (Thread 0) to
+ * Key_dispatchEvents on the game thread. Listener registries — one global
+ * segment plus per-window rows keyed by opaque OS window id — grow
+ * exponentially, arena-backed, per the Dynamic Scalability & Anti-Hardcoding
+ * Law. Tap sequences settle once now passes pendingUntil; a modifier change
+ * between presses breaks the sequence.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
