@@ -16,8 +16,26 @@
 #include "time/nanotime.h"
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Touch
+ * ============================================================================
+ * Trackpad touch state + event stream (Legacy: input/Touch.java): ten fixed
+ * 32-byte touch slots (press/release/hold/taps/action) plus 32 bytes of
+ * geometry (x/y/pressure) per contact, with a listener registry keyed by
+ * opaque OS window id. Exists because the backend must resolve OS touch
+ * identities into stable slots before dispatch, and dispatch must fan out to
+ * listeners on the game thread without allocation. Memory: slot arrays are
+ * fixed-size; listener registries are arena-backed and double exponentially
+ * (the Dynamic Scalability & Anti-Hardcoding Law). Lifetime:
+ * Touch_init/Touch_shutdown; window rows attach/detach per window lifecycle.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
