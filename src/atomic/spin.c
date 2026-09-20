@@ -17,7 +17,25 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include "annotation/definition.h"
 #include "annotation/overview.h"
+
+;;DEFINITION
+/**
+ * ============================================================================
+ * DEFINITION: Spin
+ * ============================================================================
+ * SpinLock port (thread/SpinLock.java) on C23 atomics. The whole lock is one
+ * word: 0 means free, any nonzero value is owner-encoded
+ * ((threadId & 0x3FFFFFFF) << 1 | 1), so a lock embeds directly in a
+ * RingBuffer header or any struct without a separate allocation. Acquire
+ * uses a CAS with acquire ordering and release stores on unlock so
+ * critical-section writes are visible to the next owner on ARM's relaxed
+ * hardware. Unlock fails closed: only the owning thread may release.
+ * tryLockTimeout bounds spinning to a caller deadline; isLocked reads the
+ * word without taking the lock.
+ * ============================================================================
+ */
 
 ;;OVERVIEW
 /**
