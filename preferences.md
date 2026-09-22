@@ -82,6 +82,8 @@ its ordinal may move as the document evolves.
 | 33 | Dynamic Scalability & Anti-Hardcoding Law (No Artificial Limits) |
 | 34 | No Section Sign Law |
 | 35 | Per-Repo Preferences Extension Law |
+| 36 | Arity and Constructive Convenience Law |
+| 37 | toString Law (Every Object Has a String) |
 
 ---
 
@@ -96,7 +98,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -1122,3 +1124,53 @@ Monolithic constitutions force developers and AI agents working on isolated subs
    referencing the canonical edition of the universal constitution.
 5. **Zero Drift Same-Cycle Regeneration:** Whenever the universal `preferences.md` is updated, all affected per-repo mirror files must be regenerated and committed in the same development cycle.
 6. **Law Binding Matrix:** Each per-repo preferences file maintains an explicit Law Binding Matrix table categorizing all binding laws by their architectural tiers.
+
+---
+
+## 36. Arity and Constructive Convenience Law
+
+### Definition:
+Every class across the ecosystem ships a **uniform, arity-based convenience surface**, so an object is instantiated, extended, zeroed, and named with canonical constants — never with ad-hoc literals or per-class bespoke spellings. It binds **every framework**, because every part speaks arity.
+
+1. **Arity constructors — every single time.** Every public class provides `Class_0()`, `Class_1(a)`, `Class_2(a, b)`, … (the Vec4 chooser idiom) plus a `Class(...)` dispatch macro that selects by argument count. Construction is always `Class(...)` — never a bespoke `make_*` / `new_*` / `create_*`.
+2. **`Class_add(...)`.** Every additive or collection class provides `Class_add(...)` — the class's natural additive/append verb (list add, vector add, set union, string append, …).
+3. **`Class_zero()`.** Every class provides `Class_zero()` (or a `ZERO` constant) — the additive identity / empty element.
+4. **Canonical named constants.** Numeric magnitudes and extremes are named once, canonically: `ZERO`, `ONE`, `ONE_MILLION`, `ONE_BILLION`, `ONE_TRILLION`, `FLOAT_POS_INF`, `FLOAT_NEG_INF`, `DOUBLE_POS_INF`, `DOUBLE_NEG_INF`, `INT_MAX_VALUE`, `INT_MIN_VALUE`, `TYPE_MAX_VALUE`, `TYPE_MIN_VALUE`, and many more — so a call site writes `-ONE` and reads -1, never a bare `-1` literal.
+
+### The Why:
+**Tesler's Law (the Law of Conservation of Complexity):** *"Every application has an inherent amount of complexity that cannot be removed or hidden. Instead, it must be dealt with, either in product development or in user interaction."* — Larry Tesler.
+
+The complexity of *"how do I instantiate this / extend it / zero it / name its extremes"* cannot be deleted — it has to live somewhere. This law pays that complexity **once**, in the library (product development), and hands every developer a uniform, arity-based, constructive surface (the user-interaction side) — so a call site never invents a spelling, and the convenience sits with the developer because the library already absorbed the cost. It is a **universal** law: every framework ships the same arity surface, so the whole ecosystem reads as one language.
+
+### The Rule:
+1. **Every public class ships `Class_0()`, `Class_1()`, … and the `Class(...)` arity chooser.** No class is constructible only through a bespoke factory name.
+2. **Every additive/collection class ships `Class_add(...)`.**
+3. **Every class ships `Class_zero()` (or `ZERO`).**
+4. **Canonical numeric constants live in one header.** No bare `-1`, `1000000`, or `INFINITY` literals at a call site — the name is the contract.
+5. **Uniform across repos.** Same names, same shapes everywhere — the convenience surface is identical in every framework (the Per-Repo Preferences Extension Law restates it, never forks it).
+
+---
+
+## 37. toString Law (Every Object Has a String)
+
+### Definition:
+Every class across the ecosystem ships **two bounded string projections**:
+
+1. **`Class_toString(self, dest, cap, outTruncated)`** — the **VALUE** string: a concise, class-specific summary of the object's state.
+2. **`Class_toStringStruct(self, dest, cap, outTruncated)`** — the **STRUCTURE** string: a by-name dump of the object's own fields (**ONE layer only** — a nested object field renders via that object's `toString`, never by recursing into its `toStringStruct`).
+
+Both are bounded (dest-last + a truncation flag) and cold-path only.
+
+### The Why:
+Every object has a string, and without a uniform contract each subsystem invents its own ad-hoc printing — un-greppable, un-cappable, and unusable by an agent. One uniform pair makes state legible everywhere (a debugger's `po`, a log line, an agent's context). And the struct dump **mirrors the `;;OVERVIEW` STRUCT FIELDS** block, so the two enforce each other: a field added without updating the dump is a defect, exactly like a stale overview.
+
+### The Rule:
+1. **Every public class ships both.** No class is string-blind.
+2. **Fixed signature:** `(const Class *self, char *dest, size_t cap, bool *outTruncated)` — dest-last (the Dest-Last Law), bounded, truncation flagged (the Cold-Strict, Hot-Minimal Validation Law).
+3. **Null-safe:** a null `self` writes `"nullptr"`, never crashes.
+4. **Cold-path only:** never called on a frame — it formats.
+5. **`toStringStruct` mirrors the `;;OVERVIEW` STRUCT FIELDS** — same fields, same declaration order.
+6. **ONE LAYER, no recursion.** A struct dump prints only this class's fields; a nested object field renders via its `toString`. Depth is bounded by design (no recursion guard needed); a class that wants a deeper view calls the child's `toStringStruct` itself.
+7. **Escape:** string fields are emitted quoted and escaped (`\n`, `\t`, `\"`, `\\`).
+8. **Buffer only:** the bounded form is the law; there is no heap `toStringAlloc`.
+9. **The formatter fuses here:** the Label formatter's `{object}` placeholder calls `toString`.
