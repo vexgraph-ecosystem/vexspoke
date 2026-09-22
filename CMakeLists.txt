@@ -76,6 +76,7 @@ add_library(vexspoke STATIC
     src/lang/rect/rectangle.c
     src/lang/mat4.c
     src/lang/fastmath.c
+    src/lang/str.c
     src/search/calc.c
     src/search/find.c
     src/search/spotlight.c
