@@ -432,6 +432,7 @@ first.
 
 1. **R2 `vexspoke` Behavior**:
    - Owns: `Variable`, `BitPool`, `Memory`/`MemoryArena`, `RingBuffer`/`SpinLock`, `Type`/`Class`, math, `http`/`json`, `VexHome`/`File`/`Log`, audio, base Vulkan context, **system capability probes (`AppDetect`, `CaptureTool`, `ProcessProbe`)**.
+   - `Reactive` (the per-variable event emitter) carries an **atomic** payload + dirty flag, so `Reactive_set` is safe from ANY thread; notification is **owner-affine** — `Reactive_set` never fires observers, the owner (Thread 0 pump/paint) calls `Reactive_drain`, which coalesces the pending writes into one `onSet`/`onChanged` batch on the owner's thread. This keeps the atomicity in the value (no lock, no unbounded wait — the Bounded Wait Law) while keeping every observer on the owner's thread (the Present-On-Demand Law applied to data); the observer lists themselves stay owner-affine.
 
 2. **R3 Drivers — graphvex | api-haven | language | darkbase**:
    - `graphvex`: `spv/` blobs, `Buffer` family, `Font`/`FontBake`, `SdfGpu`, `Texture`, `Raster`, `WgpuBackend`.

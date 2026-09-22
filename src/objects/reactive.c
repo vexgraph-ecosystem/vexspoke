@@ -1,5 +1,6 @@
 #include "objects/reactive.h"
 
+#include <stdatomic.h>
 #include <string.h>
 
 #include "nio/mem.h"
@@ -12,17 +13,27 @@
  * ============================================================================
  * DEFINITION: Reactive
  * ============================================================================
- * The per-variable event emitter: a uint64 payload plus THREE observer lists —
- * onSet (every write), onChanged (a real value change, old vs new), onRemove
- * (fired on Reactive_free so every observer unbinds before the memory goes, the
- * Teardown Order Law). Observers are added and removed (never "set"), so N
- * functions bind one reactive, each with its own userdata, and each callback
- * receives the reactive as its first argument.
+ * The per-variable event emitter: an ATOMIC uint64 payload plus THREE observer
+ * lists — onSet (every drained write batch), onChanged (a real value move, old
+ * vs new), onRemove (fired on Reactive_free so every observer unbinds before the
+ * memory goes, the Teardown Order Law). Observers are added and removed (never
+ * "set"), so N functions bind one reactive, each with its own userdata, and each
+ * callback receives the reactive as its first argument.
  *
- * Reads and writes are plain (non-atomic): single-threaded event-driven UI
- * state. The lists are arena-backed and double on demand (the Dynamic
- * Scalability & Anti-Hardcoding Law); a removed observer leaves a reusable
- * tombstone so a fire is never invalidated by a mid-fire removal.
+ * Memory consistency and notification are deliberately split. The payload and
+ * the dirty flag are atomic, so Reactive_set is safe from ANY thread; but a
+ * write NEVER fires observers — it only marks the dirty flag. The owner (Thread
+ * 0, the pump / paint pass) calls Reactive_drain, which coalesces every write
+ * since the last drain into ONE batch (last value wins) and fires onSet /
+ * onChanged on the owner's thread. Notification is therefore owner-affine: a
+ * background writer just moves the value, and no observer ever runs on a foreign
+ * thread. This is the Present-On-Demand Law applied to data, and it keeps the
+ * UI off foreign threads (the Window Compositing Layer Order Law's Thread-0
+ * paint model) without a lock — drain never blocks (the Bounded Wait Law).
+ *
+ * The lists are arena-backed and double on demand (the Dynamic Scalability &
+ * Anti-Hardcoding Law); a removed observer leaves a reusable tombstone so a fire
+ * is never invalidated by a mid-fire removal.
  * ============================================================================
  */
 
@@ -33,19 +44,22 @@
  * LEVEL: L2 — Behavior (per-variable event emitter)
  * ============================================================================
  * SUMMARY:
- *   uint64 payload + three observer lists (onSet/onChanged/onRemove). add/remove
- *   observers; set fires onSet (all) then onChanged (all, on a real move); free
- *   fires onRemove (all) then releases.
+ *   Atomic uint64 payload + atomic dirty flag + three observer lists
+ *   (onSet/onChanged/onRemove). set (any thread) stores + marks dirty and never
+ *   fires; drain (owner thread) coalesces the pending writes and fires onSet
+ *   (once) then onChanged (on a real move); free fires onRemove then releases.
  *
  * STRUCT FIELDS (local to this file):
  * ----------------------------------------------------------------------------
  *   Reactive {
- *     uint64_t value;            // current payload
- *     ObserverList onSet;        // fires on write
- *     ObserverList onChanged;    // fires when the value changes
- *     ObserverList onRemove;     // fires on free (teardown)
+ *     atomic_uint_least64_t value; // atomic payload (any thread read/write)
+ *     _Atomic bool dirty;          // a write awaits the owner's drain
+ *     uint64_t observed;           // owner-affine: the last drained value
+ *     ObserverList onSet;          // fires on a drained write batch
+ *     ObserverList onChanged;      // fires when the drained value moved
+ *     ObserverList onRemove;       // fires on free (teardown)
  *   }
- *   Observer     { void *cb; void *userdata; }          // SLOT RECORD
+ *   Observer     { void *cb; void *userdata; }           // SLOT RECORD
  *   ObserverList { Observer *items; size_t count, cap; } // SLOT RECORD
  *
  * PRIVATE HELPERS:
@@ -58,12 +72,14 @@
  *   - Reactive_1(initialValue) / Reactive_2(init, count) / Reactive_free(reactive)
  *
  * Public Core Functions: (.h)
- *   - Reactive_get(reactive) / Reactive_set(reactive, value)
+ *   - Reactive_get(reactive)                : atomic acquire load (any thread)
+ *   - Reactive_set(reactive, value)         : atomic store + dirty (any thread)
+ *   - Reactive_drain(reactive)              : owner-thread coalesced fire
  *   - Reactive_addOnSet/OnChanged/OnRemove(reactive, cb, userdata)
  *   - Reactive_removeOnSet/OnChanged/OnRemove(reactive, cb, userdata)
  *
  * Public Getters: (.h)
- *   - Reactive_observerCount(reactive)
+ *   - Reactive_observerCount(reactive) / Reactive_isDirty(reactive)
  * ============================================================================
  */
 
@@ -81,7 +97,9 @@ typedef struct ObserverList {
 } ObserverList;
 
 struct Reactive {
-    uint64_t value;
+    atomic_uint_least64_t value;   // atomic payload
+    _Atomic bool dirty;            // a write awaits the owner's drain
+    uint64_t observed;             // owner-affine: last drained value
     ObserverList onSet;
     ObserverList onChanged;
     ObserverList onRemove;
@@ -143,8 +161,12 @@ Reactive *Reactive_1(uint64_t initialValue) {
     Reactive *reactive = (Reactive*) Memory_alloc(type, sizeof(Reactive));
     if (!reactive)
         return nullptr;
-    memset(reactive, 0, sizeof(Reactive));
-    (*reactive).value = initialValue;
+    atomic_init(&(*reactive).value, initialValue);
+    atomic_init(&(*reactive).dirty, false);
+    (*reactive).observed = initialValue;
+    (*reactive).onSet.items = nullptr; (*reactive).onSet.count = 0; (*reactive).onSet.cap = 0;
+    (*reactive).onChanged.items = nullptr; (*reactive).onChanged.count = 0; (*reactive).onChanged.cap = 0;
+    (*reactive).onRemove.items = nullptr; (*reactive).onRemove.count = 0; (*reactive).onRemove.cap = 0;
     return reactive;
 }
 
@@ -154,8 +176,15 @@ Reactive *Reactive_2(const Reactive *init, size_t count) {
     Reactive *p = (Reactive*) Memory_alloc(TYPE_REACTIVE_ARRAY, sizeof(Reactive) * count);
     if (!p)
         return nullptr;
+    // Atomic members are not copyable by struct assignment; load the seed once
+    // and atomic_init each element explicitly.
+    uint64_t seed = (init != nullptr)
+        ? atomic_load_explicit((atomic_uint_least64_t*) &(*init).value, memory_order_acquire)
+        : 0;
     for (size_t i = 0; i < count; i++) {
-        p[i] = init ? *init : (Reactive){0};
+        atomic_init(&p[i].value, seed);
+        atomic_init(&p[i].dirty, false);
+        p[i].observed = seed;
         p[i].onSet.items = nullptr; p[i].onSet.count = 0; p[i].onSet.cap = 0;
         p[i].onChanged.items = nullptr; p[i].onChanged.count = 0; p[i].onChanged.cap = 0;
         p[i].onRemove.items = nullptr; p[i].onRemove.count = 0; p[i].onRemove.cap = 0;
@@ -184,28 +213,44 @@ void Reactive_free(Reactive *reactive) {
 uint64_t Reactive_get(Reactive *reactive) {
     if (!reactive)
         return 0;
-    return (*reactive).value;
+    return atomic_load_explicit(&(*reactive).value, memory_order_acquire);
 }
 
 void Reactive_set(Reactive *reactive, uint64_t value) {
     if (!reactive)
         return;
-    uint64_t oldValue = (*reactive).value;
-    (*reactive).value = value;
-    // onSet fires on EVERY write (copy each observer — a callback may mutate the list).
+    // Any thread: move the value, mark dirty, fire nothing. The owner's drain
+    // is the sole notification point, so no observer ever runs on this thread.
+    atomic_store_explicit(&(*reactive).value, value, memory_order_release);
+    atomic_store_explicit(&(*reactive).dirty, true, memory_order_release);
+}
+
+bool Reactive_drain(Reactive *reactive) {
+    if (!reactive)
+        return false;
+    // Consume the dirty flag first: the acquire exchange pairs with the writer's
+    // release store, so the value load below observes the written value.
+    if (!atomic_exchange_explicit(&(*reactive).dirty, false, memory_order_acq_rel))
+        return false;                        // nothing written since the last drain
+    uint64_t value = atomic_load_explicit(&(*reactive).value, memory_order_acquire);
+    uint64_t observed = (*reactive).observed;
+    // onSet fires once for the whole batch (coalesced: last value wins).
     for (size_t i = 0; i < (*reactive).onSet.count; i++) {
         Observer o = (*reactive).onSet.items[i];
         if (o.cb != nullptr)
             ((ReactiveSetFn) o.cb)(reactive, value, o.userdata);
     }
-    // onChanged fires only on a real move.
-    if (oldValue != value) {
+    // onChanged fires only on a real move; latch observed before firing so a
+    // re-entrant drain from a callback is a no-op.
+    if (value != observed) {
+        (*reactive).observed = value;
         for (size_t i = 0; i < (*reactive).onChanged.count; i++) {
             Observer o = (*reactive).onChanged.items[i];
             if (o.cb != nullptr)
-                ((ReactiveChangedFn) o.cb)(reactive, oldValue, value, o.userdata);
+                ((ReactiveChangedFn) o.cb)(reactive, observed, value, o.userdata);
         }
     }
+    return true;
 }
 
 bool Reactive_addOnSet(Reactive *reactive, ReactiveSetFn cb, void *userdata) {
@@ -243,4 +288,10 @@ size_t Reactive_observerCount(const Reactive *reactive) {
     for (size_t i = 0; i < (*reactive).onRemove.count; i++)
         if ((*reactive).onRemove.items[i].cb != nullptr) n++;
     return n;
+}
+
+bool Reactive_isDirty(const Reactive *reactive) {
+    if (reactive == nullptr)
+        return false;
+    return atomic_load_explicit((_Atomic bool*) &(*reactive).dirty, memory_order_acquire);
 }
