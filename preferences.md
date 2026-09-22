@@ -1094,15 +1094,15 @@ Hardcoded iteration limits and static capacity assumptions turn code into throwa
 ## 34. No Section Sign Law
 
 ### Definition:
-The section sign (§, U+00A7) — the "double-S" — is forbidden everywhere: source comments, `;;OVERVIEW` blocks, docs, commit messages, wiki rows, and this document. Section references are always written as plain ASCII words: "see section 32", "the KeyMap section", "sections 41–48" — never "§32", "§KeyMap", or "§41–§48".
+The section sign (U+00A7) — the "double-S" — is forbidden everywhere: source comments, `;;OVERVIEW` blocks, docs, commit messages, wiki rows, and this document. Section references are always written as plain ASCII words: "see section 32", "the KeyMap section", "sections 41–48" — never the glyph-prefixed forms.
 
 ### The Why:
 The glyph renders as an ugly double-S that reads as a typo in monospace, breaks `grep` for section references, and mangles in fonts, terminal pipelines, and localized tooling. The word "section" costs nothing and survives every tool, font, and copy-paste intact. A codebase that already bans arrow sugar for machine-readability has no business smuggling invisible punctuation into comments.
 
 ### The Rule:
-1. **Never write §.** New code, new docs, new commits: the character is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
-2. **Migration on touch.** Existing occurrences migrate when their file is next modified: any commit that touches a file containing § must scrub those occurrences in the same commit. A § surviving a touch is a defect (the Living Preferences Law zero-drift rule applies to this migration too).
-3. **Canonical artifacts migrate with this law.** The occurrences present in `preferences.md` and the canonical docs at the time this law lands are scrubbed in this same commit; the umbrella-local legacy markers (`// §N` test-section comments, `_docs/code.txt` notes) migrate file-by-file as each is next touched.
+1. **Never write the glyph.** New code, new docs, new commits: the character (U+00A7) is a defect on arrival, same as `->` under the No Arrow Sugar Law. Write "section" (or drop the marker) instead.
+2. **Migration completed workspace-wide.** Every occurrence in the workspace was scrubbed in the same cycle as this update — source comments, test-section markers, `_docs/` and `_bugs/` notes, and this document. A reintroduced glyph is a defect on arrival (the Living Preferences Law zero-drift rule applies to this migration too).
+3. **Canonical artifacts.** The occurrences present in `preferences.md` and the canonical docs at the time this law landed were scrubbed with it; the umbrella-local legacy markers now read as plain words (`// section N` test-section comments).
 
 ---
 
