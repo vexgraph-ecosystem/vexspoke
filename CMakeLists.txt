@@ -249,6 +249,16 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/system_test.c" AND NOT TARGET system_test)
     target_link_libraries(system_test PRIVATE vexspoke)
 endif()
 
+# Reactive per-variable event emitter: fan-out, onSet/onChanged, mid-fire remove,
+# onRemove teardown notify.
+if(EXISTS "${VEXSPOKE_TEST_DIR}/reactive_test.c" AND NOT TARGET reactive_test)
+    add_executable(reactive_test
+        ${VEXSPOKE_TEST_DIR}/reactive_test.c
+    )
+    target_compile_options(reactive_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(reactive_test PRIVATE vexspoke)
+endif()
+
 # App + capture registry / live-probe targets (AppDetect, CaptureTool)
 if(EXISTS "${VEXSPOKE_TEST_DIR}/app_detect_test.c" AND NOT TARGET app_detect_test)
     add_executable(app_detect_test
