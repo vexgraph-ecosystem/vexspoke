@@ -84,6 +84,7 @@ its ordinal may move as the document evolves.
 | 35 | Per-Repo Preferences Extension Law |
 | 36 | Arity and Constructive Convenience Law |
 | 37 | toString Law (Every Object Has a String) |
+| 38 | Authorial Intent Law |
 
 ---
 
@@ -98,7 +99,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the Authorial Intent Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -1175,3 +1176,27 @@ Every object has a string, and without a uniform contract each subsystem invents
 7. **Escape:** string fields are emitted quoted and escaped (`\n`, `\t`, `\"`, `\\`).
 8. **Buffer only:** the bounded form is the law; there is no heap `toStringAlloc`.
 9. **The formatter fuses here:** the Label formatter's `{object}` placeholder calls `toString`.
+
+---
+
+## 38. Authorial Intent Law
+
+### Definition:
+Deliberate author decisions — magic sentinels, sugar macros, naming choices that look surprising on first read (`SIZE_AUTO` as the FourCC `åuto`, `VEX_*` sugar, and their kin) — are documented at their definition site as intentional acts of the author, vex. The stamp is a plain comment, never a `;;` annotation macro:
+
+```c
+// INTENTIONAL(vex): SIZE_AUTO is the FourCC "åuto" (0xE575746F) by design —
+// negative on every platform so any negative dimension reads as AUTO.
+```
+
+`;;INTENTION("reason")` keeps its existing meaning under the Conflict Triage Law: why a waiver or managed exception exists. `// INTENTIONAL(vex): ...` means something narrower: this strangeness is not a bug, not AI drift, not a placeholder — the author chose it and wants it preserved.
+
+### The Why:
+An AI pair-programmer writes most of the boilerplate in this ecosystem, so a future reader (human or agent) cannot tell a deliberate aesthetic from an accident. Without a provenance stamp, the next passer-by "fixes" the magic: normalizes the FourCC to a round number, renames the sugar to something bland, refactors away the joke that was actually a contract. The stamp draws a line around the author's deliberate weirdness and says: this survived review, it is load-bearing taste, leave it alone unless vex says otherwise.
+
+### The Rule:
+1. **Plain comment, fixed shape.** The stamp is exactly `// INTENTIONAL(vex):` followed by prose. No `;;AUTHOR`, no `;;DELIBERATE`, no new header in `src/annotation/` — the Two-Semicolon Annotation Style Law is untouched. The shape is greppable: `INTENTIONAL(vex):`.
+2. **Definition site, not call sites.** One stamp where the decision is defined (the macro, the sentinel, the canonical name). Call sites stay clean — they just use it.
+3. **What + why, one breath.** Each stamp states what the decision is and why it is that way (platform behavior, readability, contract). A stamp with no reason is a defect — restate or remove.
+4. **Not a waiver.** Authorial intent never overrides Tier 1. A deliberate decision that risks a crash, leak, deadlock, or unbounded wait still goes through the Conflict Triage Law with its `;;INTENTION` + safety proof. `INTENTIONAL` documents taste; `INTENTION` justifies exceptions.
+5. **Retrofit as noticed.** Existing deliberate decisions (`SIZE_AUTO`, `VEX_*` sugar) gain their stamps when touched or noticed, same cycle — no separate migration blob. New deliberate decisions ship their stamp in the same commit as the decision itself, per the Living Preferences Law.
