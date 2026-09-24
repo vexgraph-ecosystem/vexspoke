@@ -29,6 +29,7 @@
  * ----------------------------------------------------------------------------
  * Getters:
  *   - Hash_fnv1a64(data, length)
+ *   - Hash_pointer(p)
  *   - Hash_murmur3Mix64(k)
  *   - Hash_murmur3Mix32(k)
  * ============================================================================
@@ -50,6 +51,10 @@ uint64_t Hash_fnv1a64(const uint8_t *data, size_t length) {
         data++;
     }
     return hash;
+}
+
+uint64_t Hash_pointer(const void *p) {
+    return Hash_murmur3Mix64((uint64_t) (uintptr_t) p);
 }
 
 uint64_t Hash_murmur3Mix64(uint64_t k) {

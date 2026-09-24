@@ -14,6 +14,12 @@
 // FNV-1a 64-bit over a byte block. Returns 0 on a nullptr/empty block.
 uint64_t Hash_fnv1a64(const uint8_t *data, size_t length);
 
+// Pointer-identity hash: mixes the 8-byte address itself, never the pointee.
+// Stable for a run (addresses are process-local); the whole-pointer hash of the
+// Relational Engine's two-hash design — symbol names use the avalanched FNV/
+// Murmur path instead.
+uint64_t Hash_pointer(const void *p);
+
 // MurmurHash3 64-bit finalizer mix for a single 64-bit value.
 uint64_t Hash_murmur3Mix64(uint64_t k);
 
