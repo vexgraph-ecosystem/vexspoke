@@ -85,6 +85,7 @@ its ordinal may move as the document evolves.
 | 36 | Arity and Constructive Convenience Law |
 | 37 | toString Law (Every Object Has a String) |
 | 38 | Authorial Intent Law |
+| 39 | No Hardcoding Law (Name It, Grow It, Vary It) |
 
 ---
 
@@ -99,7 +100,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the Authorial Intent Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the Authorial Intent Law, the No Hardcoding Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -1200,3 +1201,24 @@ An AI pair-programmer writes most of the boilerplate in this ecosystem, so a fut
 3. **What + why, one breath.** Each stamp states what the decision is and why it is that way (platform behavior, readability, contract). A stamp with no reason is a defect — restate or remove.
 4. **Not a waiver.** Authorial intent never overrides Tier 1. A deliberate decision that risks a crash, leak, deadlock, or unbounded wait still goes through the Conflict Triage Law with its `;;INTENTION` + safety proof. `INTENTIONAL` documents taste; `INTENTION` justifies exceptions.
 5. **Retrofit as noticed.** Existing deliberate decisions (`SIZE_AUTO`, `VEX_*` sugar) gain their stamps when touched or noticed, same cycle — no separate migration blob. New deliberate decisions ship their stamp in the same commit as the decision itself, per the Living Preferences Law.
+
+---
+
+## 39. No Hardcoding Law (Name It, Grow It, Vary It)
+
+### Definition:
+The no-hardcode principle is universal — it governs **every value, collection, and changing state**, not any one domain. Three reflexes, always:
+
+1. **Hardcoded value → a labeled constant.** A bare literal at a use site (`1200`, `0.15f`, `1.0 / 60.0`, `24.0f`) is a defect on arrival. The meaning gets a NAME, once, where the class owns it (`SCROLL_BAR_IDLE_MS_DEFAULT`), and the site reads the name.
+2. **Growing thing → a chunked/growable container.** Anything that can grow (children, slots, layers, samples, tokens) uses a chunked list or doubling array — never a fixed array with a baked ceiling.
+3. **Varying thing → a current variable.** Anything that changes at runtime (frame rate, cadence, current size, current phase, current offset) lives in a variable updated from its source of truth — never baked into a literal. Cadence comes from the display (display link / vsync / caller clock); motion is a pure function of elapsed time, never of frame count.
+
+### The Why:
+A magic literal is a decision with no name: nobody can find it, no one can change it in one place, and its meaning dies with the line. A baked ceiling is a prototype wearing a system's clothes. A baked changing value is a lie that is true on exactly one machine — a `1.0 / 60.0` timer crawls at 30Hz and judders at 120Hz ProMotion; a hardcoded `640x400` shatters on a real display. Naming values, growing collections, and holding changing state in variables is what separates an engine from a script. This is the value-level half of the no-hardcode principle; the Dynamic Scalability & Anti-Hardcoding Law is its capacity/limit half.
+
+### The Rule:
+1. **No bare literals at use sites.** Every non-obvious constant gets a labeled name (a `#define` / canonical constant) defined once at its owner. `ZERO`/`ONE` style canonical constants (the Arity and Constructive Convenience Law) are used for numeric extremes; per-class defaults live in the class header (`SCROLL_BAR_THUMB_MIN_DEFAULT`). A bare `-1`, `60`, or `0.15f` whose meaning is not self-evident is a defect on arrival, same weight as `->`.
+2. **Grow with a chunked/growable structure.** Never a fixed array sized to a guessed maximum; use the chunked list / doubling array (the Data-Oriented Storage Law) so the same code serves 1 and 10,000.
+3. **Vary with a current variable.** A value that changes at runtime is held in a variable refreshed from its source of truth — `currentFrameMs`, `currentPhase`, `currentOffset` — never a literal. Frame cadence comes from the display link / vsync / explicit caller clock, never a hardcoded interval.
+4. **Motion is f(elapsed), never f(frames).** Offsets, phases, and easing take an explicit millisecond clock (dest-last where applicable); the same elapsed yields the same pose on 30Hz, 60Hz, 120Hz, and headless scripted clocks.
+5. **Headless stays deterministic.** Scripted proofs pass explicit `nowMs` keyframes and named magnitudes, so they never depend on wall time, display hardware, or a hidden `60`.
