@@ -86,6 +86,7 @@ its ordinal may move as the document evolves.
 | 37 | toString Law (Every Object Has a String) |
 | 38 | Authorial Intent Law |
 | 39 | No Hardcoding Law (Name It, Grow It, Vary It) |
+| 40 | WHAT Law |
 
 ---
 
@@ -100,7 +101,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the Authorial Intent Law, the No Hardcoding Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Dest-Last Law, the Two-Layer Access Cap Law, the Living `;;OVERVIEW` & `;;DEFINITION` Blueprint Law (constructor dispatch macros), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the Identity & Naming Transition Law, the Symmetric Getter/Setter Completeness Law, the Arity and Constructive Convenience Law, the toString Law, the Authorial Intent Law, the No Hardcoding Law, the WHAT Law, the AI-First Architecture Manifesto Law, the Living Preferences Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Living Feature Readiness Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -234,6 +235,9 @@ side only, so they read as explicit markers:
 ;;PLATFORM_EXCLUSIVE("Windows")
 ;;INTENTION("reason")
 ;;SYNC("provenance")
+;;INHERITS("Base")
+;;REACTIVE("objectName")
+;;WHAT("uint64_t")
 ```
 
 Two semicolons on the left, nothing on the right — even when the annotation
@@ -1222,3 +1226,44 @@ A magic literal is a decision with no name: nobody can find it, no one can chang
 3. **Vary with a current variable.** A value that changes at runtime is held in a variable refreshed from its source of truth — `currentFrameMs`, `currentPhase`, `currentOffset` — never a literal. Frame cadence comes from the display link / vsync / explicit caller clock, never a hardcoded interval.
 4. **Motion is f(elapsed), never f(frames).** Offsets, phases, and easing take an explicit millisecond clock (dest-last where applicable); the same elapsed yields the same pose on 30Hz, 60Hz, 120Hz, and headless scripted clocks.
 5. **Headless stays deterministic.** Scripted proofs pass explicit `nowMs` keyframes and named magnitudes, so they never depend on wall time, display hardware, or a hidden `60`.
+
+---
+
+## 40. WHAT Law
+
+### Definition:
+A `void*` is a promise with no receipt. The WHAT Law is the receipt: every
+`void*` whose pointee type is not self-evident from its own name carries a
+`;;WHAT("<type>")` annotation on the line above its declaration, naming exactly
+what it points at. The type text is a string literal in C form —
+`;;WHAT("uint64_t")`, `;;WHAT("Reactive")`, `;;WHAT("Field")` — so the pointee
+is stated once, in place, and never inferred.
+
+### The Why:
+The relational engine runs on `void*` — everything is a pointer, and the same 8
+bytes may hold a scalar, a struct, a reactive, or a table. An unnamed pointee is
+the single largest source of guessing for the reader: the human author six
+months later and the AI agent holding the file in context both re-derive a type
+the code already knew when it was written. The runtime already carries a 16-byte
+self-describing header (the Self-Describing Memory Block Law); the WHAT Law is
+its **compile-time twin**, stating the intended pointee at the declaration site
+so intent is legible before a single byte is allocated. It is to declarations
+what the `toString` Law's struct dump is to live objects — a self-describing
+contract that keeps the file honest.
+
+### The Rule:
+1. **Every non-obvious `void*` declares its pointee.** A `void*` whose type is
+   not evident from its name (`health`, `payload`, `handle`) carries
+   `;;WHAT("<type>")` on the line above. A `void*` already named for its type
+   (`messageBytes`, `vertexData`) need not.
+2. **Line-above form only.** The marker is a `_Static_assert` (the
+   Two-Semicolon Annotation Style Law) and therefore an annotation line:
+   `;;WHAT("uint64_t")` above `void* x;`. There is no inline
+   `void* WHAT("...") x;` — an annotation is not a declarator.
+3. **The text names the C type.** `uint64_t`, `Field`, `Reactive`,
+   `Reactive<uint64_t>`, `char*` — the same spelling a cast would use.
+4. **Agrees with the runtime header.** A documented `;;WHAT("T")` and the
+   block's `Memory_type()` should agree; a mismatch is a defect (the
+   Self-Describing Memory Block Law's zero-secondary-storage rule).
+5. **Tier 2, zero cost.** The law binds the contract, not the hot path — the
+   marker is `_Static_assert(1, ...)` and compiles to nothing.
