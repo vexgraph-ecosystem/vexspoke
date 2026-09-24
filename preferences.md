@@ -87,6 +87,7 @@ its ordinal may move as the document evolves.
 | 38 | Authorial Intent Law |
 | 39 | No Hardcoding Law (Name It, Grow It, Vary It) |
 | 40 | WHAT Law |
+| 41 | Cold-Only Reflection Law |
 
 ---
 
@@ -96,7 +97,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Laws*: the Single Class Per File Law, the Cohesive Commits Law & the Multi-Repo Atomic Commit Discipline Law, the Build & Naming Conventions Law (Apple Silicon native), the Teardown Order Law, the Bounded Wait Law, the Four System Levels Law (L1–L4, distinct from R1–R5 Supervisor Order), the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Dynamic Scalability & Anti-Hardcoding Law.
+   - *Laws*: the Single Class Per File Law, the Cohesive Commits Law & the Multi-Repo Atomic Commit Discipline Law, the Build & Naming Conventions Law (Apple Silicon native), the Teardown Order Law, the Bounded Wait Law, the Cold-Only Reflection Law, the Four System Levels Law (L1–L4, distinct from R1–R5 Supervisor Order), the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Dynamic Scalability & Anti-Hardcoding Law.
    - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
@@ -611,6 +612,7 @@ Upstream-first ordering applies to file-pair commits; each repo-local commit is 
 
 The codebase is actively transitioning from the initial `anti` prototype name to the permanent **`vex`** family identity:
 - Engine core: `anti` → `vexspoke` (the central spoke of the graph).
+- Engine runtime facility: the R2 substrate's naming and resolution facility — the interned name pool, the name ⇒ value registry, the hashed symbol maps, and the reflective path walk — is canonically the **Relational Engine**: a proper noun, capitalized, written with the definite article ("the Relational Engine"). It is never written as a generic "a relational engine". The name is owned here; no database, ECS, or DOD framework carries it, and none of them answer the question it answers ("find the thing called X, right now, from anywhere").
 - Engine home directory: `AntiHome` → `VexHome`. Canonical per-platform root (created by `VexHome_ensure()`; `VexHome_cache(subsystem)` builds `<root>/cache/<subsystem>/` with `dictionary.ini` via `VexHome_cacheEnsure`): macOS `~/Library/Application Support/vexgraph`; Linux `$XDG_DATA_HOME/vexgraph` (≈ `~/.local/share/vexgraph`); Windows `%LOCALAPPDATA%\vexgraph`; fallback `$HOME/vex` when the canonical base is unavailable. `$VEX_HOME`, when set and non-empty, overrides all of the above (test seam). Never delete or migrate legacy `~/anti` or `~/vex` automatically.
 - Preprocessor definitions: prefer `VEX_*` alongside backwards-compatible `ANTI_*` defines (e.g., `ANTI_SPV_DIR` / `VEX_SPV_DIR`).
 - Executable names: `vexspoke_demo` (formerly `anti`) is the headless demo harness inside `vexspoke`, while `vk_test` and full applications live in `vexgraph`.
@@ -1267,3 +1269,45 @@ contract that keeps the file honest.
    Self-Describing Memory Block Law's zero-secondary-storage rule).
 5. **Tier 2, zero cost.** The law binds the contract, not the hot path — the
    marker is `_Static_assert(1, ...)` and compiles to nothing.
+
+---
+
+## 41. Cold-Only Reflection Law
+
+### Definition:
+The Relational Engine's reflective walk — resolving a name to a value, or
+following a dotted path (`character.position.x`) node to node — is a **cold
+rendezvous**. It runs when a human or a tool asks "where is this thing, right
+now?": a search box, a debugger, a script binding, a save/load walk, a hot-swap
+rebind, telemetry. It must **never** run on a per-frame or otherwise hot path. A
+hot path that resolves by name, chases the node graph, or re-walks the shelf is
+a defect — the same weight as a lock or an allocation on the frame path.
+
+### The Why:
+The walk is pointer-chasing by design (it is a graph), and pointer-chasing is
+the one thing a hot loop must not do: every hop risks a cache miss, and the
+node graph is deliberately node-shaped rather than flat. The engine already
+draws this line — hot iteration stays data-oriented and flat (sweeping the
+`ChunkedList`), and cold rendezvous comes to the Relational Engine. Reflection
+is the cold side. Mixing them costs frames: a name lookup per entity per frame
+turns a cache-friendly sweep into thousands of pointer hops, and the cost scales
+with the scene, not with the work. Keeping the walk cold keeps the hot path
+flat, predictable, and bounded.
+
+### The Rule:
+1. **Reflection is cold-only.** Name resolution, dotted-path resolution, and any
+   node-graph walk run on cold paths (frame-invariant work: setup, search,
+   debug, script, save/load, hot-swap, teardown). Never per frame, never per
+   entity per tick.
+2. **The marker is explicit.** A module that hosts a cold resolver carries
+   `;;INTENTION("cold path search is a node walk by design; hot iteration stays
+   DOD")` at the walk site, so a future reader sees a chase and reads *why*
+   rather than "fixing" it into a hot loop.
+3. **Hot paths stay flat.** Hot per-frame iteration and per-frame field access
+   use flat, data-oriented storage (the Data-Oriented Storage Law) and hoisted
+   locals (the Two-Layer Access Cap Law) — never a reflective walk.
+4. **A hot reflective call is the defect, not the chase.** If a resolver shows
+   up on a frame path, the call site is wrong, never the resolver's design.
+5. **Resolve once, hold the pointer.** A hot consumer that needs a value
+   repeatedly resolves the name (or path) once, on the cold path, and holds the
+   resulting pointer — it never re-resolves per frame.
