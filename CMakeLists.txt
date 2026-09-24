@@ -136,6 +136,7 @@ add_library(vexspoke STATIC
     src/objects/reactive.c
     src/relational/variable.c
     src/relational/variable_pool.c
+    src/relational/variable_slot.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -368,6 +369,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_pool_test.c" AND NOT TARGET variable_po
         ${VEXSPOKE_TEST_DIR}/variable_pool_test.c
     )
     target_link_libraries(variable_pool_test PRIVATE vexspoke)
+endif()
+
+# Name box (32-byte variable slot) reflection atom test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_slot_test.c" AND NOT TARGET variable_slot_test)
+    add_executable(variable_slot_test
+        ${VEXSPOKE_TEST_DIR}/variable_slot_test.c
+    )
+    target_compile_options(variable_slot_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(variable_slot_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)

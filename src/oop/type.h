@@ -224,6 +224,11 @@
 
 #define TYPE_EXCEPTION_SINGLETON    (PROJ_VEXSPOKE | FORM_SINGLETON | ID_EXCEPTION)
 
+// --- REFLECTION CLASSES (the 32-byte name box atom) ---
+#define ID_VARIABLE_SLOT 0x008Cu
+
+#define TYPE_VARIABLE_SLOT          (PROJ_VEXSPOKE | FORM_STRUCT_SINGLETON | ID_VARIABLE_SLOT)
+
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
 // Every project ships its own *-type.h registry and numbers its classes
 // from 1: darling classes live in darling/c23/darling-type.h, graphvex in
