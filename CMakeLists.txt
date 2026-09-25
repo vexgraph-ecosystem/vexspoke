@@ -138,6 +138,7 @@ add_library(vexspoke STATIC
     src/relational/variable_pool.c
     src/relational/variable_slot.c
     src/relational/variable_hash_map.c
+    src/relational/variable_mini_map.c
     src/relational/cell.c
     src/relational/shelf.c
     src/algo/segment_index.c
@@ -418,6 +419,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/segment_index_test.c" AND NOT TARGET segment_ind
     )
     target_compile_options(segment_index_test PRIVATE -Wall -Wextra -Werror)
     target_link_libraries(segment_index_test PRIVATE vexspoke)
+endif()
+
+# Scoped name => pointer mini map test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_mini_map_test.c" AND NOT TARGET variable_mini_map_test)
+    add_executable(variable_mini_map_test
+        ${VEXSPOKE_TEST_DIR}/variable_mini_map_test.c
+    )
+    target_compile_options(variable_mini_map_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(variable_mini_map_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)

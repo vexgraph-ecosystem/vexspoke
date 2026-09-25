@@ -93,28 +93,12 @@
  * ============================================================================
  */
 
-// First folded char -> bucket 0..38 (26 letters, 10 digits, _, $, -). -1 when
-// the char is outside the charset (never happens for a folded name).
-static int bucketOf(char c) {
-    if (c >= 'a' && c <= 'z')
-        return c - 'a';
-    if (c >= '0' && c <= '9')
-        return 26 + (c - '0');
-    if (c == '_')
-        return 36;
-    if (c == '$')
-        return 37;
-    if (c == '-')
-        return 38;
-    return -1;
-}
-
 // Fold a name and compute its two-level index. outFolded must hold
 // VARIABLE_SLOT_NAME_BYTES. False on an invalid name.
 static bool locate(const char *name, uint32_t *outBucket, uint32_t *outSlot, char *outFolded) {
     if (!VariableSlot_foldName(name, outFolded))
         return false;
-    int bucket = bucketOf(outFolded[0]);
+    int bucket = VariableSlot_bucketOf(outFolded[0]);
     if (bucket < 0)
         return false;
     const char *tail = outFolded + 1;

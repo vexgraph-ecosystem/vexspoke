@@ -52,6 +52,11 @@ bool VariableSlot_init(VariableSlot *self, const char *name, uintptr_t pointer);
 // search reuse it. False on null/empty/overlong/illegal.
 bool VariableSlot_foldName(const char *name, char *out);
 
+// First-character bucket 0..38 for a folded name character (a-z -> 0..25,
+// 0-9 -> 26..35, '_' -> 36, '$' -> 37, '-' -> 38); -1 for any other byte. The
+// atom owns the charset, so the hash maps share one bucket mapping.
+int VariableSlot_bucketOf(char c);
+
 // Arena-allocated conveniences (the Arity and Constructive Convenience Law).
 VariableSlot *VariableSlot_0(void);
 VariableSlot *VariableSlot_1(const char *name);

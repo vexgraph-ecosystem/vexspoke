@@ -7,6 +7,7 @@
 
 #include "c23/constructor.h"
 #include "relational/variable_hash_map.h"
+#include "relational/variable_mini_map.h"
 #include "struct/chunked_list.h"
 
 // algo/segment_index.h — positional segment index for dotted-name search.
@@ -92,6 +93,8 @@ uint32_t SegmentIndex_add(SegmentIndex *index, const char *name, uintptr_t paylo
 // (Re)build the whole index from every live map entry, payload = the VariableSlot*.
 // Returns the entry count.
 size_t SegmentIndex_buildFrom(SegmentIndex *index, VariableHashMap *map);
+// (Re)build from a scoped mini map (field/method search), payload = the VariableSlot*.
+size_t SegmentIndex_buildFromMini(SegmentIndex *index, VariableMiniMap *map);
 // Ranked search (dest-last + truncation flag). Returns the total match count;
 // at most cap are written, best first.
 size_t SegmentIndex_query(const SegmentIndex *index, const char *query, SegmentMatch *out, size_t cap, bool *outTruncated);

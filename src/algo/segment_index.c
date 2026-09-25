@@ -405,6 +405,15 @@ size_t SegmentIndex_buildFrom(SegmentIndex *index, VariableHashMap *map) {
     return SegmentIndex_count(index);
 }
 
+size_t SegmentIndex_buildFromMini(SegmentIndex *index, VariableMiniMap *map) {
+    if (!index || !map)
+        return 0u;
+    SegmentIndex_clear(index);
+    BuildCtx ctx = { index };
+    VariableMiniMap_forEach(map, buildFn, &ctx);
+    return SegmentIndex_count(index);
+}
+
 size_t SegmentIndex_query(const SegmentIndex *index, const char *query, SegmentMatch *out, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;

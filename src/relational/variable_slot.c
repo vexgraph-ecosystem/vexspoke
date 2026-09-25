@@ -69,6 +69,7 @@
  *
  * Public Core Functions: (.h)
  *   - VariableSlot_foldName(name, out)         : fold + validate the charset
+ *   - VariableSlot_bucketOf(c)                 : first-char bucket 0..38
  *
  * Private Core Functions: (.c static)
  *   - storeName(self, folded)                  : zero-pad copy into the slot
@@ -126,6 +127,20 @@ bool VariableSlot_foldName(const char *name, char *out) {
         out[len++] = (char) ((u >= 'A' && u <= 'Z') ? (u + 32) : u);
         segLen++;
     }
+}
+
+int VariableSlot_bucketOf(char c) {
+    if (c >= 'a' && c <= 'z')
+        return c - 'a';
+    if (c >= '0' && c <= '9')
+        return 26 + (c - '0');
+    if (c == '_')
+        return 36;
+    if (c == '$')
+        return 37;
+    if (c == '-')
+        return 38;
+    return -1;
 }
 
 // Store a validated folded name into the slot, zero-padding the tail so the
