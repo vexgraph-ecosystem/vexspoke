@@ -140,7 +140,7 @@ add_library(vexspoke STATIC
     src/relational/variable_hash_map.c
     src/relational/cell.c
     src/relational/shelf.c
-    src/relational/reflect.c
+    src/algo/segment_index.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -412,12 +412,12 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/shelf_test.c" AND NOT TARGET shelf_test)
 endif()
 
 # Cold path resolver test
-if(EXISTS "${VEXSPOKE_TEST_DIR}/reflect_test.c" AND NOT TARGET reflect_test)
-    add_executable(reflect_test
-        ${VEXSPOKE_TEST_DIR}/reflect_test.c
+if(EXISTS "${VEXSPOKE_TEST_DIR}/segment_index_test.c" AND NOT TARGET segment_index_test)
+    add_executable(segment_index_test
+        ${VEXSPOKE_TEST_DIR}/segment_index_test.c
     )
-    target_compile_options(reflect_test PRIVATE -Wall -Wextra -Werror)
-    target_link_libraries(reflect_test PRIVATE vexspoke)
+    target_compile_options(segment_index_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(segment_index_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)
