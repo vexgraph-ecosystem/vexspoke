@@ -93,6 +93,7 @@
  *   digitOf(self, index, depth)       // shift/mask digit at a depth
  *   leafAtRow(self, index)            // lock-free leaf resolve by row index
  *   rowAt(self, index)                // lock-free stable row resolve
+ *   leafLinkOffset(self)              // 8-byte-aligned tail-link offset in a leaf
  *   nodeAlloc(self, depth)            // allocate + zero one node or leaf
  *   dirGrow(self)                     // COW root doubling (gate held, cold)
  *   ensureRootSlotLocked(self, slot)  // grow the root until slot fits (gate held)
@@ -118,6 +119,8 @@
  *   - ChunkedList_packInto(self, dest, destCap, outRows, outTruncated)
  *   - ChunkedList_slot(self, index)
  *   - ChunkedList_getChunk(self, chunkIndex)
+ *   - ChunkedList_nextChunk(self, chunk)
+ *   - ChunkedList_forEachChunk(self, fn, userdata)
  *
  * Setters:
  *   - ChunkedList_setChunkBytes(self, chunkBytes)
@@ -232,12 +235,20 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
     return leaf + (size_t)(index & (*self).rowMask) * stride;
 }
 
+// Byte offset of a leaf's tail link: the row bytes rounded UP to 8 bytes so the
+// link is naturally aligned. The link is written once (when the next leaf is
+// created) and read with acquire/release.
+static size_t leafLinkOffset(const ChunkedList *self) {
+    size_t rowsBytes = (size_t)(*self).rowsPerChunk * (size_t)(*self).collection.stride;
+    return (rowsBytes + (size_t)(VEX_CHUNKED_LINK_BYTES - 1u)) & ~(size_t)(VEX_CHUNKED_LINK_BYTES - 1u);
+}
+
 // Allocate + zero one node at `depth`: an internal pointer array, or a leaf of
-// rows at the deepest depth.
+// rows at the deepest depth (plus the tail link).
 static uint8_t *nodeAlloc(const ChunkedList *self, uint32_t depth) {
     uint32_t radix = (*self).radices[depth];
     if (depth == (*self).levels - 1u) {
-        size_t bytes = (size_t)radix * (size_t)(*self).collection.stride;
+        size_t bytes = leafLinkOffset(self) + (size_t)VEX_CHUNKED_LINK_BYTES;
         uint64_t chunkType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*self).collection.elementClass);
         uint8_t *leaf = (uint8_t*) Memory_alloc(chunkType, bytes);
         if (leaf)
@@ -308,12 +319,14 @@ static bool chunkAddLocked(ChunkedList *self) {
         return false;
 
     _Atomic(uint8_t*) *slot = &(*dir).slots[d0];
+    uint8_t *newLeaf = nullptr;
     for (uint32_t depth = 1u; depth < levels; depth++) {
         if (depth == levels - 1u) {
             uint8_t *leaf = nodeAlloc(self, depth);
             if (!leaf)
                 return false;
             atomic_store_explicit(slot, leaf, memory_order_release);
+            newLeaf = leaf;
             break;
         }
         uint8_t *node = atomic_load_explicit(slot, memory_order_acquire);
@@ -326,6 +339,16 @@ static bool chunkAddLocked(ChunkedList *self) {
         _Atomic(uint8_t*) *children = (_Atomic(uint8_t*) *) node;
         uint32_t digit = digitOf(self, index, depth);
         slot = &children[digit];
+    }
+
+    // Extend the chunk -> chunk chain: the previous leaf's tail link points at
+    // the new leaf (published release, after the new leaf is fully zeroed).
+    if (newLeaf && leafIndex > 0u) {
+        uint8_t *prev = leafAtRow(self, (leafIndex - 1u) << (*self).rowShift);
+        if (prev) {
+            _Atomic(void*) *link = (_Atomic(void*) *) (prev + leafLinkOffset(self));
+            atomic_store_explicit(link, newLeaf, memory_order_release);
+        }
     }
 
     atomic_store(&(*self).chunkCount, leafIndex + 1u);
@@ -631,6 +654,25 @@ uint8_t *ChunkedList_getChunk(const ChunkedList *self, uint32_t chunkIndex) {
     if (chunkIndex > (UINT32_MAX >> (*self).rowShift))
         return nullptr;
     return leafAtRow(self, chunkIndex << (*self).rowShift);
+}
+
+uint8_t *ChunkedList_nextChunk(const ChunkedList *self, const uint8_t *chunk) {
+    if (!self || !chunk)
+        return nullptr;
+    const _Atomic(void*) *link = (const _Atomic(void*) *) (chunk + leafLinkOffset(self));
+    return (uint8_t*) atomic_load_explicit(link, memory_order_acquire);
+}
+
+void ChunkedList_forEachChunk(const ChunkedList *self, ChunkedListChunkFn fn, void *userdata) {
+    if (!self || !fn)
+        return;
+    uint8_t *chunk = ChunkedList_getChunk(self, 0u);
+    uint32_t index = 0u;
+    while (chunk != nullptr) {
+        fn(chunk, index, userdata);
+        chunk = ChunkedList_nextChunk(self, chunk);
+        index++;
+    }
 }
 
 // SETTERS

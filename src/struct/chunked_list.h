@@ -61,7 +61,9 @@
 //     null ("not there yet") or a fully initialized node, never a torn one.
 //   - LEAVES hold rows and are published the same way; the committed count is
 //     stored only after the row's leaf is published, so index < committed
-//     implies the row is resolvable.
+//     implies the row is resolvable. Each leaf also reserves an 8-byte tail
+//     link to the next leaf, so a sequential sweep follows the chain instead of
+//     recomputing the page walk per chunk (see nextChunk).
 //   - chunkBytes is a BYTE budget for the byte-budget form, a page-sized leaf
 //     by default (128 bytes sized one chunk to one Apple Silicon cache line; a
 //     radix-form leaf sizes to one page). A row at or above the leaf budget gets
@@ -91,6 +93,11 @@
 // Default internal fan-out for the radix form (512 pointers = one page; used
 // when a *_LAYER_DEFAULT sentinel fills the internal levels).
 #define VEX_CHUNKED_INTERNAL_RADIX_DEFAULT 512u
+
+// Tail link reserved at the end of every leaf (8-byte aligned): the chunk ->
+// chunk chain a sequential sweep follows without recomputing the page walk.
+// Kept OUT of the row bytes (chunkBytes/getChunkBytes exclude it).
+#define VEX_CHUNKED_LINK_BYTES 8u
 
 // Radix-form shape sentinels. Passed where a fan-out would go, they select a
 // preset shape (see ChunkedList_paged). Negative on purpose.
@@ -167,6 +174,15 @@ bool ChunkedList_packInto(const ChunkedList *self, uint8_t *dest, size_t destCap
 uint8_t *ChunkedList_slot(const ChunkedList *self, uint32_t index);
 // Leaf base address, lock-free: null when the leaf is not published.
 uint8_t *ChunkedList_getChunk(const ChunkedList *self, uint32_t chunkIndex);
+// Next leaf in the chain, lock-free: null at the tail (or on a null/foreign
+// leaf). Every leaf carries an 8-byte tail link, so a sequential sweep follows
+// the chain (one pointer load per leaf) instead of recomputing the page walk
+// per chunk — the indexable unrolled list.
+uint8_t *ChunkedList_nextChunk(const ChunkedList *self, const uint8_t *chunk);
+// Walk every published leaf in chain order. Lock-free; safe concurrently with
+// writers (visits a prefix of the published leaves).
+typedef void (*ChunkedListChunkFn)(uint8_t *chunk, uint32_t chunkIndex, void *userdata);
+void ChunkedList_forEachChunk(const ChunkedList *self, ChunkedListChunkFn fn, void *userdata);
 
 // Setters
 // Byte budget for the leaf. Setup-time only: never concurrently with any other
