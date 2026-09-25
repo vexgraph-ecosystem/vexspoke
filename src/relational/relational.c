@@ -14,7 +14,7 @@
  * ============================================================================
  * DEFINITION: Relational
  * ============================================================================
- * Spotlight relational facade over Variable (Legacy:
+ * Spotlight relational facade over SymbolTable (Legacy:
  * relational/RelationalEngine.java). Three block kinds compose the engine:
  * arena blocks (16B header read backwards), pool slots (32B name table,
  * immutable, shared by pointer), and variable rows (16B bindings per scope).
@@ -32,7 +32,7 @@
  * MODULE: Relational (relational/relational.c)
  * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
- * spotlight relational facade over Variable (Legacy: relational/RelationalEngine.java).
+ * spotlight relational facade over SymbolTable (Legacy: relational/RelationalEngine.java).
  *
  * How the relational engine works with memory blocks — three block kinds,
  * three sizes, three jobs. Identity is stated once per layer and never
@@ -75,9 +75,9 @@
  * storage (Rule 36: OO ergonomics over data-oriented memory, never inside
  * the variable table).
  *
- * STRUCT FIELDS: none — procedural (operates on Variable scope tables (global/local))
+ * STRUCT FIELDS: none — procedural (operates on SymbolTable scope tables (global/local))
  *
- * STRUCT FIELDS: none — procedural (operates on Variable scope tables (global/local))
+ * STRUCT FIELDS: none — procedural (operates on SymbolTable scope tables (global/local))
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -143,120 +143,120 @@ static bool prefixCaseInsensitive(const char *haystack, const char *needle) {
 
 // exact
 
-int32_t Relational_getId(Variable *scope, const char *name) {
+int32_t Relational_getId(SymbolTable *scope, const char *name) {
     if (!scope || !name)
         return -1;
-    return Variable_getId(scope, name);
+    return SymbolTable_getId(scope, name);
 }
 
-int Relational_getName(Variable *scope, int32_t varId, char *out, size_t outCap) {
+int Relational_getName(SymbolTable *scope, int32_t varId, char *out, size_t outCap) {
     if (!scope || !out)
         return -1;
-    return Variable_getName(scope, varId, out, outCap);
+    return SymbolTable_getName(scope, varId, out, outCap);
 }
 
-bool Relational_setName(Variable *scope, const char *oldName, const char *newName) {
+bool Relational_setName(SymbolTable *scope, const char *oldName, const char *newName) {
     if (!scope || !oldName || !newName)
         return false;
-    return Variable_rename(scope, oldName, newName);
+    return SymbolTable_rename(scope, oldName, newName);
 }
 
 // value — store as-is, pointer is the value
 
-void *Relational_getValue(Variable *scope, const char *name) {
+void *Relational_getValue(SymbolTable *scope, const char *name) {
     if (!scope || !name)
         return nullptr;
-    int32_t varId = Variable_getId(scope, name);
+    int32_t varId = SymbolTable_getId(scope, name);
     if (varId < 0)
         return nullptr;
-    return (void*) Variable_getPointer(scope, varId);
+    return (void*) SymbolTable_getPointer(scope, varId);
 }
 
-void *Relational_getValueById(Variable *scope, int32_t varId) {
-    if (!scope || varId < 0 || (size_t) varId >= Variable_getActiveCount(scope))
+void *Relational_getValueById(SymbolTable *scope, int32_t varId) {
+    if (!scope || varId < 0 || (size_t) varId >= SymbolTable_getActiveCount(scope))
         return nullptr;
-    return (void*) Variable_getPointer(scope, varId);
+    return (void*) SymbolTable_getPointer(scope, varId);
 }
 
-bool Relational_setValue(Variable *scope, const char *name, uint32_t classId, void *ptr) {
+bool Relational_setValue(SymbolTable *scope, const char *name, uint32_t classId, void *ptr) {
     if (!scope || !name)
         return false;
     // Create-or-fail constructor: rebind existing names explicitly so a
     // typo never silently resurrects a stale entry. Class pins at creation.
-    int32_t varId = Variable_getId(scope, name);
+    int32_t varId = SymbolTable_getId(scope, name);
     if (varId >= 0) {
-        Variable_setPointer(scope, varId, (uintptr_t) ptr);
+        SymbolTable_setPointer(scope, varId, (uintptr_t) ptr);
         return true;
     }
-    return Variable_instant(scope, name, classId, (uintptr_t) ptr) >= 0;
+    return SymbolTable_instant(scope, name, classId, (uintptr_t) ptr) >= 0;
 }
 
-bool Relational_setValueById(Variable *scope, int32_t varId, void *ptr) {
-    if (!scope || varId < 0 || (size_t) varId >= Variable_getActiveCount(scope))
+bool Relational_setValueById(SymbolTable *scope, int32_t varId, void *ptr) {
+    if (!scope || varId < 0 || (size_t) varId >= SymbolTable_getActiveCount(scope))
         return false;
-    Variable_setPointer(scope, varId, (uintptr_t) ptr);
+    SymbolTable_setPointer(scope, varId, (uintptr_t) ptr);
     return true;
 }
 
 // string sugar — allocates, frees old block
 
-const char *Relational_getString(Variable *scope, const char *name) {
+const char *Relational_getString(SymbolTable *scope, const char *name) {
     void *ptr = Relational_getValue(scope, name);
     if (!ptr)
         return nullptr;
     return string_get((const uint8_t*) ptr);
 }
 
-void Relational_setString(Variable *scope, const char *name, const char *value) {
+void Relational_setString(SymbolTable *scope, const char *name, const char *value) {
     if (!scope || !name || !value)
         return;
     uint8_t *newPtr = string_allocate(value);
     if (!newPtr)
         return;
-    int32_t varId = Variable_getId(scope, name);
+    int32_t varId = SymbolTable_getId(scope, name);
     if (varId >= 0) {
-        void *oldPtr = (void*) Variable_getPointer(scope, varId);
-        Variable_setPointer(scope, varId, (uintptr_t) newPtr);
+        void *oldPtr = (void*) SymbolTable_getPointer(scope, varId);
+        SymbolTable_setPointer(scope, varId, (uintptr_t) newPtr);
         if (oldPtr)
             string_free((uint8_t*) oldPtr);
         return;
     }
-    int32_t assigned = Variable_instant(scope, name, string_classId(), (uintptr_t) newPtr);
+    int32_t assigned = SymbolTable_instant(scope, name, string_classId(), (uintptr_t) newPtr);
     if (assigned < 0)
         string_free(newPtr);
 }
 
 // function pointers — same as value, typed helper
 
-void *Relational_getFunction(Variable *scope, const char *name) {
+void *Relational_getFunction(SymbolTable *scope, const char *name) {
     return Relational_getValue(scope, name);
 }
 
-bool Relational_setFunction(Variable *scope, const char *name, void *fn) {
+bool Relational_setFunction(SymbolTable *scope, const char *name, void *fn) {
     if (!scope || !name || !fn)
         return false;
     // classId 0 = raw function pointer; caller may pass ID_FUNCTION if defined
-    int32_t varId = Variable_getId(scope, name);
+    int32_t varId = SymbolTable_getId(scope, name);
     if (varId >= 0) {
-        Variable_setPointer(scope, varId, (uintptr_t) fn);
+        SymbolTable_setPointer(scope, varId, (uintptr_t) fn);
         return true;
     }
-    return Variable_instant(scope, name, 0, (uintptr_t) fn) >= 0;
+    return SymbolTable_instant(scope, name, 0, (uintptr_t) fn) >= 0;
 }
 
 // spotlight — linear scan, ranked exact > prefix > substring
 
-static size_t searchOne(Variable *scope, const char *query, int32_t *outIds, size_t cap, size_t filled) {
+static size_t searchOne(SymbolTable *scope, const char *query, int32_t *outIds, size_t cap, size_t filled) {
     if (!scope || !query || !outIds)
         return filled;
-    size_t active = Variable_getActiveCount(scope);
+    size_t active = SymbolTable_getActiveCount(scope);
     // pass 1: exact
     for (size_t i = 0; i < active; i++) {
         if (filled >= cap)
             break;
         int32_t varId = (int32_t) i;
         char nameBuf[33];
-        int len = Variable_getName(scope, varId, nameBuf, sizeof(nameBuf));
+        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
         if (len < 0)
             continue;
         if (equalsCaseInsensitive(nameBuf, query)) {
@@ -279,7 +279,7 @@ static size_t searchOne(Variable *scope, const char *query, int32_t *outIds, siz
             break;
         int32_t varId = (int32_t) i;
         char nameBuf[33];
-        int len = Variable_getName(scope, varId, nameBuf, sizeof(nameBuf));
+        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
         if (len < 0)
             continue;
         if (!prefixCaseInsensitive(nameBuf, query))
@@ -303,7 +303,7 @@ static size_t searchOne(Variable *scope, const char *query, int32_t *outIds, siz
             break;
         int32_t varId = (int32_t) i;
         char nameBuf[33];
-        int len = Variable_getName(scope, varId, nameBuf, sizeof(nameBuf));
+        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
         if (len < 0)
             continue;
         if (!containsCaseInsensitive(nameBuf, query))
@@ -326,7 +326,7 @@ static size_t searchOne(Variable *scope, const char *query, int32_t *outIds, siz
     return filled;
 }
 
-size_t Relational_search(Variable *scope, const char *query, int32_t *outIds, size_t cap) {
+size_t Relational_search(SymbolTable *scope, const char *query, int32_t *outIds, size_t cap) {
     if (!scope || !query || !outIds || cap == 0)
         return 0;
     size_t filled = 0;
@@ -334,7 +334,7 @@ size_t Relational_search(Variable *scope, const char *query, int32_t *outIds, si
     return filled;
 }
 
-size_t Relational_searchAll(Variable *global, Variable *local, const char *query, int32_t *outIds, size_t cap) {
+size_t Relational_searchAll(SymbolTable *global, SymbolTable *local, const char *query, int32_t *outIds, size_t cap) {
     if (!query || !outIds || cap == 0)
         return 0;
     size_t filled = 0;

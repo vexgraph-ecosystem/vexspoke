@@ -29,10 +29,7 @@ add_library(vexspoke STATIC
     src/c23/equals.c
     src/c23/free.c
     src/oop/type.c
-    src/oop/class.c
-    src/oop/field.c
     src/oop/stride.c
-    src/oop/struct.c
     src/cli/command.c
     src/cli/commandparser.c
     src/cli/commandregistry.c
@@ -134,7 +131,7 @@ add_library(vexspoke STATIC
     src/objects/probable.c
     src/objects/probable_objects.c
     src/objects/reactive.c
-    src/relational/variable.c
+    src/relational/symbol_table.c
     src/relational/variable_pool.c
     src/relational/variable_slot.c
     src/relational/variable_hash_map.c

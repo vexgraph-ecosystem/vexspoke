@@ -1,6 +1,5 @@
 #include "oop/stride.h"
 
-#include "oop/struct.h"
 #include "oop/type.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
@@ -11,8 +10,7 @@
  * DEFINITION: Stride
  * ============================================================================
  * Class byte-width metadata utility (Legacy: oop/Stride.java): answers the
- * stride of any class id — runtime-defined custom structs consult the Struct
- * registry first, then a static switch over the built-in class registry.
+ * stride of any class id by a static switch over the built-in class registry.
  * Exists because containers (Queue, Collection, arrays) must compute element
  * strides from class ids without per-instance metadata. Memory: zero state,
  * zero allocation; pure lookup. Lifetime: stateless.
@@ -27,7 +25,7 @@
  * ============================================================================
  * the Stride utility, ported from oop/Stride.java.
  *
- * STRUCT FIELDS: none — procedural (operates on Class/Struct stride registry (no instance state))
+ * STRUCT FIELDS: none — procedural (operates on the class stride registry (no instance state))
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -41,14 +39,6 @@
 
 size_t Stride_get(uint32_t class_id) {
     uint64_t id = (uint64_t)class_id & MASK_CLASS;
-
-    // Runtime-defined custom structs first: the Struct registry is the source
-    // of truth for their stride.
-    if (id >= ID_CUSTOM_STRUCT) {
-        size_t custom = Struct_stride(id);
-        if (custom != 0)
-            return custom;
-    }
 
     switch (id) {
         case ID_BYTE:       return 1;

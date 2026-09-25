@@ -153,10 +153,6 @@
 #define ID_LOCAL      0x0074u
 #define ID_GLOBAL     0x0075u
 
-// Base ID for runtime-defined custom structs (Legacy CUSTOM_STRUCT).
-// Custom structs are CUSTOM_STRUCT + n; the Struct registry owns the stride.
-#define ID_CUSTOM_STRUCT	0x4000u
-
 // --- BUFFER FAMILY (Legacy 0x4A / 0x50..0x63) ---
 #define ID_BUFFER                  0x004Au
 #define ID_ACCUMULUATION_BUFFER    0x0050u

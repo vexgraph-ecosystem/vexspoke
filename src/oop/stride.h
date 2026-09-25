@@ -8,8 +8,7 @@
 //
 // Maps a class id to the byte width of one slot of that class. Collections ask
 // Stride_get(element_class) when they allocate so they know how many bytes each
-// element occupies. Custom structs (ID_CUSTOM_STRUCT + n) are answered by the
-// Struct registry, which owns their layout.
+// element occupies. Unknown ids answer 8 (pointer-sized).
 
 // Byte width of one element of the given class. Returns 8 for anything it does
 // not know (pointer-sized default, matching legacy).

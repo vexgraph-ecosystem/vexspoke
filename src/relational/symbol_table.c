@@ -1,10 +1,10 @@
-// relational/variable.c — Variable registry port (Legacy: variable/Variable.java).
+// relational/variable.c — SymbolTable registry port (Legacy: variable/SymbolTable.java).
 //
 // Rows reference shared pool slots by index (never inline names); lookup
 // goes pool-first, then one sparse hop (slot -> var id). Typed queries
 // filter rows by classId — one structure, no segregated lists.
 
-#include "relational/variable.h"
+#include "relational/symbol_table.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +17,9 @@
 ;;DEFINITION
 /**
  * ============================================================================
- * DEFINITION: Variable
+ * DEFINITION: SymbolTable
  * ============================================================================
- * The relational symbol registry: dense VariableRow records (varId == index,
+ * The relational symbol registry: dense SymbolRow records (varId == index,
  * append-only) reference shared StringPool slots by index — never inline
  * names — and a sparse bySlot hop maps pool slot back to varId. Names are
  * validated cold (ASCII alnum/underscore/dot, folded lowercase, max
@@ -33,49 +33,49 @@
 ;;OVERVIEW
 /**
  * ============================================================================
- * CLASS: Variable (relational/variable.c)
+ * CLASS: SymbolTable (relational/variable.c)
  * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
- * the relational symbol registry (Legacy: variable/Variable.java).
+ * the relational symbol registry (Legacy: variable/SymbolTable.java).
  *
- * STRUCT FIELDS (Mirroring relational/variable.h):
+ * STRUCT FIELDS (Mirroring relational/symbol_table.h):
  * ----------------------------------------------------------------------------
- *   Variable {
+ *   SymbolTable {
  *     bool active; // runtime-active flag
- *     VariableRow *rows; // dense rows, varId == index (append-only)
+ *     SymbolRow *rows; // dense rows, varId == index (append-only)
  *     uint32_t count; // live rows
  *     uint32_t capacity; // allocated rows
  *     int32_t *bySlot; // pool slot -> varId, -1 empty (sparse, grown)
  *     uint32_t bySlotCap; // bySlot slots allocated
  *   }
  *
- * SLOT RECORD (owned by Variable, behaviorless):
+ * SLOT RECORD (owned by SymbolTable, behaviorless):
  * ----------------------------------------------------------------------------
- *   VariableRow slot; // int32_t + pool slot index (name lives in pool)
- *   VariableRow classId; // uint32_t + value class, pinned at creation
- *   VariableRow pointer; // uintptr_t + the value
+ *   SymbolRow slot; // int32_t + pool slot index (name lives in pool)
+ *   SymbolRow classId; // uint32_t + value class, pinned at creation
+ *   SymbolRow pointer; // uintptr_t + the value
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Variable_init(v)
- *   - Variable_shutdown(v)
+ *   - SymbolTable_init(v)
+ *   - SymbolTable_shutdown(v)
  *
  * Core Functions:
- *   - Variable_instant(v, name, classId, targetPointer)
- *   - Variable_rename(v, oldName, newName)
- *   - Variable_findByClass(v, classId, outIds, cap)
- *   - Variable_compareAndSetPointer(v, varId, expected, newPointer)
+ *   - SymbolTable_instant(v, name, classId, targetPointer)
+ *   - SymbolTable_rename(v, oldName, newName)
+ *   - SymbolTable_findByClass(v, classId, outIds, cap)
+ *   - SymbolTable_compareAndSetPointer(v, varId, expected, newPointer)
  *
  * Setters:
- *   - Variable_setPointer(v, varId, targetPointer)
+ *   - SymbolTable_setPointer(v, varId, targetPointer)
  *
  * Getters:
- *   - Variable_getId(v, name)
- *   - Variable_getPointer(v, varId)
- *   - Variable_getClassId(v, varId)
- *   - Variable_getName(v, varId, out, outCap)
- *   - Variable_getActiveCount(v)
+ *   - SymbolTable_getId(v, name)
+ *   - SymbolTable_getPointer(v, varId)
+ *   - SymbolTable_getClassId(v, varId)
+ *   - SymbolTable_getName(v, varId, out, outCap)
+ *   - SymbolTable_getActiveCount(v)
  * ============================================================================
  */
 
@@ -100,23 +100,23 @@ static bool clean_name(const char *name, char *lowered) {
     return true;
 }
 
-static VariableRow *row_at(Variable *v, int32_t varId) {
+static SymbolRow *row_at(SymbolTable *v, int32_t varId) {
     if (!v || !(*v).active || !(*v).rows || varId < 0 || (uint32_t) varId >= (*v).count)
         return nullptr;
-    VariableRow *rows = (*v).rows;
+    SymbolRow *rows = (*v).rows;
     return &rows[varId];
 }
 
 // Pool slot -> var id through the sparse hop. -1 when unmapped (a pool slot
 // may exist globally without belonging to this scope).
-static int32_t slot_var(Variable *v, int32_t slot) {
+static int32_t slot_var(SymbolTable *v, int32_t slot) {
     if (slot < 0 || (uint32_t) slot >= (*v).bySlotCap)
         return -1;
     int32_t *bySlot = (*v).bySlot;
     return bySlot[slot];
 }
 
-static bool ensure_byslot(Variable *v, uint32_t need) {
+static bool ensure_byslot(SymbolTable *v, uint32_t need) {
     if (need < (*v).bySlotCap)
         return true;
     uint32_t cap = (*v).bySlotCap ? (*v).bySlotCap * 2 : 64;
@@ -139,7 +139,7 @@ static bool ensure_byslot(Variable *v, uint32_t need) {
     return true;
 }
 
-bool Variable_init(Variable *v) {
+bool SymbolTable_init(SymbolTable *v) {
     if (!v)
         return false;
     memset(v, 0, sizeof(*v));
@@ -148,15 +148,15 @@ bool Variable_init(Variable *v) {
         return false;
     if (!StringPool_init(arena))
         return false;
-    (*v).rows = (VariableRow*) malloc(VARIABLE_DEFAULT_CAPACITY * sizeof(VariableRow));
+    (*v).rows = (SymbolRow*) malloc(SYMBOL_TABLE_DEFAULT_CAPACITY * sizeof(SymbolRow));
     if (!(*v).rows)
         return false;
-    (*v).capacity = VARIABLE_DEFAULT_CAPACITY;
+    (*v).capacity = SYMBOL_TABLE_DEFAULT_CAPACITY;
     (*v).active = true;
     return true;
 }
 
-void Variable_shutdown(Variable *v) {
+void SymbolTable_shutdown(SymbolTable *v) {
     if (!v || !(*v).active)
         return;
     free((*v).rows);
@@ -169,7 +169,7 @@ void Variable_shutdown(Variable *v) {
     (*v).active = false;
 }
 
-int32_t Variable_instant(Variable *v, const char *name, uint32_t classId, uintptr_t targetPointer) {
+int32_t SymbolTable_instant(SymbolTable *v, const char *name, uint32_t classId, uintptr_t targetPointer) {
     if (!v || !(*v).active) {
         fprintf(stderr, "[variable] instant: inactive registry\n");
         return -1;
@@ -203,8 +203,8 @@ int32_t Variable_instant(Variable *v, const char *name, uint32_t classId, uintpt
         return -1;
     }
     if ((*v).count >= (*v).capacity) {
-        size_t newCap = (size_t)(*v).capacity + VARIABLE_DEFAULT_CAPACITY;
-        VariableRow *next = (VariableRow*) realloc((*v).rows, newCap * sizeof(VariableRow));
+        size_t newCap = (size_t)(*v).capacity + SYMBOL_TABLE_DEFAULT_CAPACITY;
+        SymbolRow *next = (SymbolRow*) realloc((*v).rows, newCap * sizeof(SymbolRow));
         if (!next) {
             fprintf(stderr, "[variable] instant: out of memory ('%s')\n", lowered);
             return -1;
@@ -213,7 +213,7 @@ int32_t Variable_instant(Variable *v, const char *name, uint32_t classId, uintpt
         (*v).capacity = (uint32_t) newCap;
     }
     uint32_t id = (*v).count;
-    VariableRow *rows = (*v).rows;
+    SymbolRow *rows = (*v).rows;
     rows[id].slot = slot;
     rows[id].classId = classId;
     rows[id].pointer = targetPointer;
@@ -223,7 +223,7 @@ int32_t Variable_instant(Variable *v, const char *name, uint32_t classId, uintpt
     return (int32_t) id;
 }
 
-int32_t Variable_getId(Variable *v, const char *name) {
+int32_t SymbolTable_getId(SymbolTable *v, const char *name) {
     if (!v || !(*v).active || !name)
         return -1;
     char lowered[24];
@@ -235,7 +235,7 @@ int32_t Variable_getId(Variable *v, const char *name) {
     return slot_var(v, slot);
 }
 
-bool Variable_rename(Variable *v, const char *oldName, const char *newName) {
+bool SymbolTable_rename(SymbolTable *v, const char *oldName, const char *newName) {
     if (!v || !(*v).active) {
         fprintf(stderr, "[variable] rename: inactive registry\n");
         return false;
@@ -270,7 +270,7 @@ bool Variable_rename(Variable *v, const char *oldName, const char *newName) {
         fprintf(stderr, "[variable] rename: intern failed ('%s')\n", newLower);
         return false;
     }
-    VariableRow *rows = (*v).rows;
+    SymbolRow *rows = (*v).rows;
     int32_t *bySlot = (*v).bySlot;
     int32_t oldSlotIdx = rows[id].slot;
     rows[id].slot = newSlot;
@@ -280,11 +280,11 @@ bool Variable_rename(Variable *v, const char *oldName, const char *newName) {
     return true;
 }
 
-size_t Variable_findByClass(Variable *v, uint32_t classId, int32_t *outIds, size_t cap) {
+size_t SymbolTable_findByClass(SymbolTable *v, uint32_t classId, int32_t *outIds, size_t cap) {
     if (!v || !(*v).active)
         return 0;
     size_t total = 0;
-    VariableRow *rows = (*v).rows;
+    SymbolRow *rows = (*v).rows;
     for (uint32_t i = 0; i < (*v).count; i++) {
         if (rows[i].classId == classId) {
             if (outIds && total < cap)
@@ -295,20 +295,20 @@ size_t Variable_findByClass(Variable *v, uint32_t classId, int32_t *outIds, size
     return total;
 }
 
-uintptr_t Variable_getPointer(Variable *v, int32_t varId) {
-    VariableRow *row = row_at(v, varId);
+uintptr_t SymbolTable_getPointer(SymbolTable *v, int32_t varId) {
+    SymbolRow *row = row_at(v, varId);
     return row ? (*row).pointer : 0;
 }
 
-void Variable_setPointer(Variable *v, int32_t varId, uintptr_t targetPointer) {
-    VariableRow *row = row_at(v, varId);
+void SymbolTable_setPointer(SymbolTable *v, int32_t varId, uintptr_t targetPointer) {
+    SymbolRow *row = row_at(v, varId);
     if (!row)
         return;
     (*row).pointer = targetPointer;
 }
 
-bool Variable_compareAndSetPointer(Variable *v, int32_t varId, uintptr_t expected, uintptr_t newPointer) {
-    VariableRow *row = row_at(v, varId);
+bool SymbolTable_compareAndSetPointer(SymbolTable *v, int32_t varId, uintptr_t expected, uintptr_t newPointer) {
+    SymbolRow *row = row_at(v, varId);
     if (!row)
         return false;
     if ((*row).pointer != expected)
@@ -317,13 +317,13 @@ bool Variable_compareAndSetPointer(Variable *v, int32_t varId, uintptr_t expecte
     return true;
 }
 
-uint32_t Variable_getClassId(Variable *v, int32_t varId) {
-    VariableRow *row = row_at(v, varId);
+uint32_t SymbolTable_getClassId(SymbolTable *v, int32_t varId) {
+    SymbolRow *row = row_at(v, varId);
     return row ? (*row).classId : 0;
 }
 
-int Variable_getName(Variable *v, int32_t varId, char *out, size_t outCap) {
-    VariableRow *row = row_at(v, varId);
+int SymbolTable_getName(SymbolTable *v, int32_t varId, char *out, size_t outCap) {
+    SymbolRow *row = row_at(v, varId);
     if (!row || !out)
         return -1;
     const char *name = StringPool_name((uint32_t) (*row).slot);
@@ -336,7 +336,7 @@ int Variable_getName(Variable *v, int32_t varId, char *out, size_t outCap) {
     return (int)len;
 }
 
-size_t Variable_getActiveCount(Variable *v) {
+size_t SymbolTable_getActiveCount(SymbolTable *v) {
     if (!v || !(*v).active)
         return 0;
     return (*v).count;
