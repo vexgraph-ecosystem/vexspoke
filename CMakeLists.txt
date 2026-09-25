@@ -348,6 +348,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/chunked_list_test.c" AND NOT TARGET chunked_list
     target_link_libraries(chunked_list_test PRIVATE vexspoke)
 endif()
 
+# Chunked list radix/paged form test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/chunked_paged_test.c" AND NOT TARGET chunked_paged_test)
+    add_executable(chunked_paged_test
+        ${VEXSPOKE_TEST_DIR}/chunked_paged_test.c
+    )
+    target_compile_options(chunked_paged_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(chunked_paged_test PRIVATE vexspoke)
+endif()
+
 # Dynamic Lifetime Verifier Debug-only test
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND EXISTS "${VEXSPOKE_TEST_DIR}/transient_lifetime_test.c" AND NOT TARGET transient_lifetime_test)
     add_executable(transient_lifetime_test
