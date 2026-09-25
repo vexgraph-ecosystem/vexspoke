@@ -139,11 +139,11 @@ add_library(vexspoke STATIC
     src/relational/cell.c
     src/relational/shelf.c
     src/algo/segment_index.c
-    src/reflection/reflect_class.c
-    src/reflection/reflect_field.c
-    src/reflection/reflect_variable.c
-    src/reflection/reflect_method.c
-    src/reflection/reflect_generic.c
+    src/reflection/class.c
+    src/reflection/struct.c
+    src/reflection/field.c
+    src/reflection/variable.c
+    src/reflection/method.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c

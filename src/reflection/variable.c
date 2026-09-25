@@ -1,6 +1,6 @@
-// reflection/reflect_variable.c — the Variable reflection record.
+// reflection/variable.c — the Variable metadata record (base of the hierarchy).
 
-#include "reflection/reflect_variable.h"
+#include "reflection/variable.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -13,62 +13,50 @@
 ;;DEFINITION
 /**
  * ============================================================================
- * DEFINITION: ReflectVariable
+ * DEFINITION: Variable
  * ============================================================================
- * The Variable kind of reflection: a 40-byte record holding a folded name, a
- * reader (void* (*)(void*)), and a target (the value / owner). The kind is the
- * header typeId (TYPE_REFLECT_VARIABLE). Records are stored segregated by kind
- * (one homogeneous array per kind) per the BitPool Slot Segregation Law.
+ * The base reflection kind: a 40-byte record holding a folded name (the atom's
+ * grammar), a reader, and a target. A Field embeds one. The kind is the header
+ * typeId (TYPE_REFLECT_VARIABLE). Records of a kind are stored segregated (one
+ * homogeneous array per kind) per the BitPool Slot Segregation Law.
  *
- * Lifetime: arena-allocated (TYPE_REFLECT_VARIABLE) or embedded. Cold path only
- * (the Cold-Only Reflection Law); every getter is null-safe.
+ * Lifetime: arena-allocated (TYPE_REFLECT_VARIABLE) or embedded (a Field embeds
+ * one with no header). Cold path only (the Cold-Only Reflection Law); getters
+ * are null-safe.
  * ============================================================================
  */
 
 ;;OVERVIEW
 /**
  * ============================================================================
- * CLASS: ReflectVariable (reflection/reflect_variable.c)
+ * CLASS: Variable (reflection/variable.c)
  * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
- * the Variable reflection record (name + reader + target).
+ * the Variable metadata record (name + reader + target).
  *
- * STRUCT FIELDS (Mirroring reflection/reflect_variable.h):
+ * STRUCT FIELDS (Mirroring reflection/variable.h):
  * ----------------------------------------------------------------------------
- *   ReflectVariable {
- *     char name[24];              // folded name (atom grammar)
- *     ReflectVariableReadFn read; // the reader
- *     void *target;               // the value / owner
+ *   Variable {
+ *     char name[24];      // folded name (atom grammar)
+ *     VariableReadFn read; // the reader
+ *     void *target;       // the value / owner
  *   }
  *
  * PRIVATE HELPERS (kept file-local, pure logic, no behavior of their own): none.
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
- * Public Constructors: (.h)
- *   - ReflectVariable_0() .. _3(name, read, target)
- *   - ReflectVariable_init(self, name, read, target)
- *   - ReflectVariable_free(self)
- *
- * Public Core Functions: (.h)
- *   - ReflectVariable_kind(self)
- *   - ReflectVariable_check(self, typeId)
- *   - ReflectVariable_read(self, arg)
- *
- * Public Setters: (.h)
- *   - ReflectVariable_setName / _setRead / _setTarget
- *
- * Public Getters: (.h)
- *   - ReflectVariable_getName / _getRead / _getTarget
- *
- * Public String Projections: (.h)
- *   - ReflectVariable_toString / _toStringStruct
+ * Public Constructors: (.h) Variable_0() .. _3(name, read, target), _init, _free
+ * Public Core Functions: (.h) Variable_kind, _check, _read
+ * Public Setters: (.h) Variable_setName / _setRead / _setTarget
+ * Public Getters: (.h) Variable_getName / _getRead / _getTarget
+ * Public String Projections: (.h) Variable_toString / _toStringStruct
  * ============================================================================
  */
 
 // CONSTRUCTORS
 
-bool ReflectVariable_init(ReflectVariable *self, const char *name, ReflectVariableReadFn read, void *target) {
+bool Variable_init(Variable *self, const char *name, VariableReadFn read, void *target) {
     if (self == nullptr)
         return false;
     char folded[REFLECT_VARIABLE_NAME_BYTES];
@@ -81,57 +69,57 @@ bool ReflectVariable_init(ReflectVariable *self, const char *name, ReflectVariab
     return true;
 }
 
-static ReflectVariable *instant(void) {
-    ReflectVariable *self = (ReflectVariable*) Memory_alloc(TYPE_REFLECT_VARIABLE, sizeof(ReflectVariable));
+static Variable *instant(void) {
+    Variable *self = (Variable*) Memory_alloc(TYPE_REFLECT_VARIABLE, sizeof(Variable));
     if (self == nullptr)
         return nullptr;
     memset(self, 0, sizeof(*self));
     return self;
 }
 
-ReflectVariable *ReflectVariable_0(void) {
+Variable *Variable_0(void) {
     return instant();
 }
 
-ReflectVariable *ReflectVariable_1(const char *name) {
-    return ReflectVariable_3(name, nullptr, nullptr);
+Variable *Variable_1(const char *name) {
+    return Variable_3(name, nullptr, nullptr);
 }
 
-ReflectVariable *ReflectVariable_2(const char *name, ReflectVariableReadFn read) {
-    return ReflectVariable_3(name, read, nullptr);
+Variable *Variable_2(const char *name, VariableReadFn read) {
+    return Variable_3(name, read, nullptr);
 }
 
-ReflectVariable *ReflectVariable_3(const char *name, ReflectVariableReadFn read, void *target) {
-    ReflectVariable *self = instant();
+Variable *Variable_3(const char *name, VariableReadFn read, void *target) {
+    Variable *self = instant();
     if (self == nullptr)
         return nullptr;
-    if (!ReflectVariable_init(self, name, read, target)) {
+    if (!Variable_init(self, name, read, target)) {
         Memory_free(self);
         return nullptr;
     }
     return self;
 }
 
-void ReflectVariable_free(ReflectVariable *self) {
+void Variable_free(Variable *self) {
     if (self != nullptr)
         Memory_free(self);
 }
 
 // CORE FUNCTIONS
 
-uint64_t ReflectVariable_kind(const ReflectVariable *self) {
+uint64_t Variable_kind(const Variable *self) {
     if (self == nullptr)
         return 0u;
     return Memory_type((void*) self);
 }
 
-bool ReflectVariable_check(const ReflectVariable *self, uint64_t typeId) {
+bool Variable_check(const Variable *self, uint64_t typeId) {
     if (self == nullptr)
         return false;
     return Memory_type((void*) self) == typeId;
 }
 
-void *ReflectVariable_read(ReflectVariable *self, void *arg) {
+void *Variable_read(Variable *self, void *arg) {
     if (self == nullptr || (*self).read == nullptr)
         return nullptr;
     return (*self).read(arg);
@@ -139,7 +127,7 @@ void *ReflectVariable_read(ReflectVariable *self, void *arg) {
 
 // SETTERS
 
-bool ReflectVariable_setName(ReflectVariable *self, const char *name) {
+bool Variable_setName(Variable *self, const char *name) {
     if (self == nullptr)
         return false;
     char folded[REFLECT_VARIABLE_NAME_BYTES];
@@ -150,13 +138,13 @@ bool ReflectVariable_setName(ReflectVariable *self, const char *name) {
     return true;
 }
 
-void ReflectVariable_setRead(ReflectVariable *self, ReflectVariableReadFn read) {
+void Variable_setRead(Variable *self, VariableReadFn read) {
     if (self == nullptr)
         return;
     (*self).read = read;
 }
 
-void ReflectVariable_setTarget(ReflectVariable *self, void *target) {
+void Variable_setTarget(Variable *self, void *target) {
     if (self == nullptr)
         return;
     (*self).target = target;
@@ -164,7 +152,7 @@ void ReflectVariable_setTarget(ReflectVariable *self, void *target) {
 
 // GETTERS
 
-int ReflectVariable_getName(const ReflectVariable *self, char *out, size_t outCap) {
+int Variable_getName(const Variable *self, char *out, size_t outCap) {
     if (self == nullptr || out == nullptr || outCap == 0u)
         return -1;
     const char *src = (*self).name;
@@ -175,13 +163,13 @@ int ReflectVariable_getName(const ReflectVariable *self, char *out, size_t outCa
     return (int) len;
 }
 
-ReflectVariableReadFn ReflectVariable_getRead(const ReflectVariable *self) {
+VariableReadFn Variable_getRead(const Variable *self) {
     if (self == nullptr)
         return nullptr;
     return (*self).read;
 }
 
-void *ReflectVariable_getTarget(const ReflectVariable *self) {
+void *Variable_getTarget(const Variable *self) {
     if (self == nullptr)
         return nullptr;
     return (*self).target;
@@ -189,7 +177,7 @@ void *ReflectVariable_getTarget(const ReflectVariable *self) {
 
 // STRING PROJECTIONS (the toString Law)
 
-void ReflectVariable_toString(const ReflectVariable *self, char *dest, size_t cap, bool *outTruncated) {
+void Variable_toString(const Variable *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;
     if (dest == nullptr || cap == 0u)
@@ -198,15 +186,14 @@ void ReflectVariable_toString(const ReflectVariable *self, char *dest, size_t ca
         snprintf(dest, cap, "nullptr");
         return;
     }
-    int written = snprintf(dest, cap, "ReflectVariable(%s)",
-                           (*self).name[0] == '\0' ? "?" : (*self).name);
+    int written = snprintf(dest, cap, "Variable(%s)", (*self).name[0] == '\0' ? "?" : (*self).name);
     if (written < 0 || (size_t) written >= cap) {
         if (outTruncated)
             *outTruncated = true;
     }
 }
 
-void ReflectVariable_toStringStruct(const ReflectVariable *self, char *dest, size_t cap, bool *outTruncated) {
+void Variable_toStringStruct(const Variable *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;
     if (dest == nullptr || cap == 0u)
@@ -215,7 +202,7 @@ void ReflectVariable_toStringStruct(const ReflectVariable *self, char *dest, siz
         snprintf(dest, cap, "nullptr");
         return;
     }
-    int written = snprintf(dest, cap, "ReflectVariable { name=\"%s\", read=0x%llx, target=0x%llx }",
+    int written = snprintf(dest, cap, "Variable { name=\"%s\", read=0x%llx, target=0x%llx }",
                            (*self).name,
                            (unsigned long long) (uintptr_t) (*self).read,
                            (unsigned long long) (uintptr_t) (*self).target);
