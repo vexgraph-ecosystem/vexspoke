@@ -67,8 +67,10 @@
  *   - VariableSlot_init(self, name, pointer)   : inline init (validate + fold)
  *   - VariableSlot_free(self)                  : release an arena slot
  *
+ * Public Core Functions: (.h)
+ *   - VariableSlot_foldName(name, out)         : fold + validate the charset
+ *
  * Private Core Functions: (.c static)
- *   - foldName(name, out)                      : fold + validate the charset
  *   - storeName(self, folded)                  : zero-pad copy into the slot
  *
  * Public Setters: (.h)
@@ -92,7 +94,7 @@
 // byte — including the dot, which is the path splitter and never a name
 // character. Writes NUL-terminated folded bytes into out, which must hold at
 // least VARIABLE_SLOT_NAME_BYTES.
-static bool foldName(const char *name, char *out) {
+bool VariableSlot_foldName(const char *name, char *out) {
     if (name == nullptr || name[0] == '\0')
         return false;
     size_t len = strlen(name);
@@ -124,7 +126,7 @@ bool VariableSlot_init(VariableSlot *self, const char *name, uintptr_t pointer) 
     if (self == nullptr)
         return false;
     char folded[VARIABLE_SLOT_NAME_BYTES];
-    if (!foldName(name, folded))
+    if (!VariableSlot_foldName(name, folded))
         return false;
     storeName(self, folded);
     (*self).pointer = pointer;
@@ -165,7 +167,7 @@ bool VariableSlot_setName(VariableSlot *self, const char *name) {
     if (self == nullptr)
         return false;
     char folded[VARIABLE_SLOT_NAME_BYTES];
-    if (!foldName(name, folded))
+    if (!VariableSlot_foldName(name, folded))
         return false;
     storeName(self, folded);
     return true;
@@ -206,7 +208,7 @@ bool VariableSlot_nameEquals(const VariableSlot *self, const char *name) {
     if (self == nullptr)
         return false;
     char folded[VARIABLE_SLOT_NAME_BYTES];
-    if (!foldName(name, folded))
+    if (!VariableSlot_foldName(name, folded))
         return false;
     return strcmp((*self).name, folded) == 0;
 }

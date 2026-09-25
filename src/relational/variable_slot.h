@@ -43,6 +43,13 @@ _Static_assert(sizeof(VariableSlot) == VARIABLE_SLOT_SIZE, "VariableSlot must st
 // failure). This is the cold validation seam for the name charset.
 bool VariableSlot_init(VariableSlot *self, const char *name, uintptr_t pointer);
 
+// Validate + fold a name into the slot charset (lowercase [a-z0-9_$-], 1..23;
+// the dot is the path splitter and is rejected). Writes NUL-terminated folded
+// bytes into out, which must hold at least VARIABLE_SLOT_NAME_BYTES. The atom
+// owns its name policy; the relational hash map reuses it. False on
+// null/empty/overlong/illegal.
+bool VariableSlot_foldName(const char *name, char *out);
+
 // Arena-allocated conveniences (the Arity and Constructive Convenience Law).
 VariableSlot *VariableSlot_0(void);
 VariableSlot *VariableSlot_1(const char *name);
