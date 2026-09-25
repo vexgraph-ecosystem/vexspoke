@@ -142,6 +142,11 @@ add_library(vexspoke STATIC
     src/relational/cell.c
     src/relational/shelf.c
     src/algo/segment_index.c
+    src/reflection/reflect_class.c
+    src/reflection/reflect_field.c
+    src/reflection/reflect_variable.c
+    src/reflection/reflect_method.c
+    src/reflection/reflect_generic.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -428,6 +433,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_mini_map_test.c" AND NOT TARGET variabl
     )
     target_compile_options(variable_mini_map_test PRIVATE -Wall -Wextra -Werror)
     target_link_libraries(variable_mini_map_test PRIVATE vexspoke)
+endif()
+
+# Reflection kinds test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/reflection_test.c" AND NOT TARGET reflection_test)
+    add_executable(reflection_test
+        ${VEXSPOKE_TEST_DIR}/reflection_test.c
+    )
+    target_compile_options(reflection_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(reflection_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)
