@@ -138,6 +138,8 @@ add_library(vexspoke STATIC
     src/relational/variable_pool.c
     src/relational/variable_slot.c
     src/relational/variable_hash_map.c
+    src/relational/cell.c
+    src/relational/shelf.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -397,6 +399,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_hash_map_test.c" AND NOT TARGET variabl
     )
     target_compile_options(variable_hash_map_test PRIVATE -Wall -Wextra -Werror)
     target_link_libraries(variable_hash_map_test PRIVATE vexspoke)
+endif()
+
+# Identity cell + global shelf test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/shelf_test.c" AND NOT TARGET shelf_test)
+    add_executable(shelf_test
+        ${VEXSPOKE_TEST_DIR}/shelf_test.c
+    )
+    target_compile_options(shelf_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(shelf_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)
