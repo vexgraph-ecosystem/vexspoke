@@ -137,6 +137,7 @@ add_library(vexspoke STATIC
     src/relational/variable.c
     src/relational/variable_pool.c
     src/relational/variable_slot.c
+    src/relational/variable_hash_map.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -387,6 +388,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_slot_test.c" AND NOT TARGET variable_sl
     )
     target_compile_options(variable_slot_test PRIVATE -Wall -Wextra -Werror)
     target_link_libraries(variable_slot_test PRIVATE vexspoke)
+endif()
+
+# Relational name => pointer hash map (hash system B) test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_hash_map_test.c" AND NOT TARGET variable_hash_map_test)
+    add_executable(variable_hash_map_test
+        ${VEXSPOKE_TEST_DIR}/variable_hash_map_test.c
+    )
+    target_compile_options(variable_hash_map_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(variable_hash_map_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)

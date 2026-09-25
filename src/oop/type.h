@@ -226,8 +226,10 @@
 
 // --- REFLECTION CLASSES (the 32-byte name box atom) ---
 #define ID_VARIABLE_SLOT 0x008Cu
+#define ID_VARIABLE_HASH_MAP 0x008Du
 
 #define TYPE_VARIABLE_SLOT          (PROJ_VEXSPOKE | FORM_STRUCT_SINGLETON | ID_VARIABLE_SLOT)
+#define TYPE_VARIABLE_HASH_MAP      (PROJ_VEXSPOKE | FORM_STRUCT_SINGLETON | ID_VARIABLE_HASH_MAP)
 
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
 // Every project ships its own *-type.h registry and numbers its classes
