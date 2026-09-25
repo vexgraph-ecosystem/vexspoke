@@ -16,9 +16,10 @@
 // carries no value of its own.
 //
 // Per the 24-Byte Variable Slot Law (The 23+1 Rule): names are 1..23 ASCII
-// characters folded to lowercase over the charset [a-z0-9_$-]; the dot is the
-// path splitter and is never a name character. Two slots pack into one 64-byte
-// cache line with zero padding waste.
+// characters folded to lowercase over the charset [a-z0-9_$-], with '.' as the
+// SEARCH SPLITTER between segments (character.position.x); the dot is stored but
+// is never a segment of its own. Two slots pack into one 64-byte cache line with
+// zero padding waste.
 //
 // A slot is usable inline (a pool row) or arena-allocated (the arity
 // constructors). All behavior takes the slot by pointer; getters are null-safe
@@ -43,11 +44,12 @@ _Static_assert(sizeof(VariableSlot) == VARIABLE_SLOT_SIZE, "VariableSlot must st
 // failure). This is the cold validation seam for the name charset.
 bool VariableSlot_init(VariableSlot *self, const char *name, uintptr_t pointer);
 
-// Validate + fold a name into the slot charset (lowercase [a-z0-9_$-], 1..23;
-// the dot is the path splitter and is rejected). Writes NUL-terminated folded
-// bytes into out, which must hold at least VARIABLE_SLOT_NAME_BYTES. The atom
-// owns its name policy; the relational hash map reuses it. False on
-// null/empty/overlong/illegal.
+// Validate + fold a name into the slot grammar: one or more '.'-separated
+// segments of [a-z0-9_$-], 1..23 characters total, folded to lowercase. Writes
+// NUL-terminated folded bytes into out, which must hold VARIABLE_SLOT_NAME_BYTES.
+// The dot is the search splitter (stored, never a segment of its own; empty
+// segments rejected). The atom owns this policy; the hash map and the segment
+// search reuse it. False on null/empty/overlong/illegal.
 bool VariableSlot_foldName(const char *name, char *out);
 
 // Arena-allocated conveniences (the Arity and Constructive Convenience Law).

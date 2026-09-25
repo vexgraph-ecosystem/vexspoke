@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "c23/constructor.h"
+#include "relational/variable_slot.h"
 #include "struct/chunked_list.h"
 
 // relational/variable_hash_map.h — the relational name => pointer hash map.
@@ -77,6 +78,12 @@ bool VariableHashMap_get(const VariableHashMap *map, const char *name, uintptr_t
 
 // True when the name resolves. Pure probe — silent on miss (never logs).
 bool VariableHashMap_contains(const VariableHashMap *map, const char *name);
+
+// Visit every live entry (cold iteration; bands and slots spelled in order).
+// The visitor receives the row (name + pointer); it must not mutate the map. A
+// null map/fn is a no-op.
+typedef void (*VariableHashMapVisitFn)(VariableSlot *slot, void *userdata);
+void VariableHashMap_forEach(VariableHashMap *map, VariableHashMapVisitFn fn, void *userdata);
 
 // --- Getters (the Symmetric Getter/Setter Completeness Law: null-safe) ---
 uint32_t VariableHashMap_count(const VariableHashMap *map);

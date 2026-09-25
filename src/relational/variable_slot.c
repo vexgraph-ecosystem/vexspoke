@@ -89,27 +89,43 @@
  * ============================================================================
  */
 
-// Fold a name to lowercase pool space and validate the charset. Accepts
-// [A-Za-z0-9_$-], 1..23 characters; rejects empty, overlong, and every other
-// byte — including the dot, which is the path splitter and never a name
-// character. Writes NUL-terminated folded bytes into out, which must hold at
-// least VARIABLE_SLOT_NAME_BYTES.
+// Fold a name to lowercase and validate the segment grammar. A name is one or
+// more '.'-separated segments, each 1..23 characters of [a-z0-9_$-]; the whole
+// name is 1..23 characters (dots included). Case folds to lowercase. The dot is
+// the search splitter — stored between segments, never a segment of its own,
+// and never the first character (the hash bucket reads the first character).
+// Empty segments (leading, trailing, or doubled dots) are rejected. Writes
+// NUL-terminated folded bytes into out, which must hold VARIABLE_SLOT_NAME_BYTES.
 bool VariableSlot_foldName(const char *name, char *out) {
     if (name == nullptr || name[0] == '\0')
         return false;
-    size_t len = strlen(name);
-    if (len > VARIABLE_SLOT_NAME_MAX)
-        return false;
-    for (size_t i = 0; i < len; i++) {
-        unsigned char c = (unsigned char) name[i];
-        bool ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                  (c >= '0' && c <= '9') || c == '_' || c == '$' || c == '-';
+    size_t len = 0u;
+    size_t segLen = 0u;
+    for (const char *p = name; ; p++) {
+        char c = *p;
+        if (c == '\0' || c == '.') {
+            if (segLen == 0u)
+                return false; // leading, trailing, or doubled dot
+            if (c == '\0') {
+                out[len] = '\0';
+                return true;
+            }
+            if (len >= VARIABLE_SLOT_NAME_MAX)
+                return false;
+            out[len++] = '.';
+            segLen = 0u;
+            continue;
+        }
+        unsigned char u = (unsigned char) c;
+        bool ok = (u >= 'a' && u <= 'z') || (u >= 'A' && u <= 'Z') ||
+                  (u >= '0' && u <= '9') || u == '_' || u == '$' || u == '-';
         if (!ok)
             return false;
-        out[i] = (char) ((c >= 'A' && c <= 'Z') ? (c + 32) : c);
+        if (len >= VARIABLE_SLOT_NAME_MAX)
+            return false;
+        out[len++] = (char) ((u >= 'A' && u <= 'Z') ? (u + 32) : u);
+        segLen++;
     }
-    out[len] = '\0';
-    return true;
 }
 
 // Store a validated folded name into the slot, zero-padding the tail so the

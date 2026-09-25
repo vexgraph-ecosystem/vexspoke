@@ -81,6 +81,7 @@
  *   - VariableHashMap_add(map, name, pointer)   : insert or update
  *   - VariableHashMap_get(map, name, outPointer): resolve (dest-last, found flag)
  *   - VariableHashMap_contains(map, name)       : probe (silent miss)
+ *   - VariableHashMap_forEach(map, fn, userdata): cold iteration
  *
  * Public Getters: (.h)
  *   - VariableHashMap_count(map)
@@ -264,6 +265,27 @@ bool VariableHashMap_get(const VariableHashMap *map, const char *name, uintptr_t
 
 bool VariableHashMap_contains(const VariableHashMap *map, const char *name) {
     return VariableHashMap_get(map, name, nullptr);
+}
+
+void VariableHashMap_forEach(VariableHashMap *map, VariableHashMapVisitFn fn, void *userdata) {
+    if (!map || !(*map).active || !fn)
+        return;
+    for (uint32_t b = 0u; b < VARIABLE_HASH_BUCKETS; b++) {
+        ChunkedList **band = (*map).bands[b];
+        if (!band)
+            continue;
+        for (uint32_t s = 0u; s < VARIABLE_HASH_SLOTS; s++) {
+            ChunkedList *list = band[s];
+            if (!list)
+                continue;
+            uint32_t rows = ChunkedList_size(list);
+            for (uint32_t i = 0u; i < rows; i++) {
+                VariableSlot *row = (VariableSlot*) ChunkedList_slot(list, i);
+                if (row)
+                    fn(row, userdata);
+            }
+        }
+    }
 }
 
 // GETTERS
