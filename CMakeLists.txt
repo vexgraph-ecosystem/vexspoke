@@ -130,7 +130,6 @@ add_library(vexspoke STATIC
     src/objects/passive.c
     src/objects/probable.c
     src/objects/probable_objects.c
-    src/objects/reactive.c
     src/relational/symbol_table.c
     src/relational/variable_pool.c
     src/relational/variable_slot.c
@@ -144,6 +143,7 @@ add_library(vexspoke STATIC
     src/reflection/field.c
     src/reflection/variable.c
     src/reflection/method.c
+    src/reactive/reactive.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
