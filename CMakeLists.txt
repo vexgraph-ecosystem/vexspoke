@@ -144,6 +144,10 @@ add_library(vexspoke STATIC
     src/reflection/variable.c
     src/reflection/method.c
     src/reactive/reactive.c
+    src/reactive/reactive_bool.c
+    src/reactive/reactive_int.c
+    src/reactive/reactive_double.c
+    src/reactive/reactive_string.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
@@ -439,6 +443,15 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/reflection_test.c" AND NOT TARGET reflection_tes
     )
     target_compile_options(reflection_test PRIVATE -Wall -Wextra -Werror)
     target_link_libraries(reflection_test PRIVATE vexspoke)
+endif()
+
+# Typed reactives test
+if(EXISTS "${VEXSPOKE_TEST_DIR}/reactive_typed_test.c" AND NOT TARGET reactive_typed_test)
+    add_executable(reactive_typed_test
+        ${VEXSPOKE_TEST_DIR}/reactive_typed_test.c
+    )
+    target_compile_options(reactive_typed_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(reactive_typed_test PRIVATE vexspoke)
 endif()
 
 if(EXISTS "${VEXSPOKE_TEST_DIR}/variable_strict_test.c" AND NOT TARGET variable_strict_test)
