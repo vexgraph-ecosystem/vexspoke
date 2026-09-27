@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "exception/throw.h"
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "util/random.h"
@@ -69,6 +70,12 @@
 static const size_t SLOT_SIZE = 16;
 
 ProbableObjects *ProbableObjects_1(size_t capacity) {
+    // The allocator records payload lengths in 32 bits, as does this pool's
+    // capacity. Reject before computing bytes or narrowing the capacity.
+    if (capacity > (UINT32_MAX - sizeof(ProbableObjects)) / SLOT_SIZE) {
+        THROW("probable objects capacity is not representable");
+        return nullptr;
+    }
     size_t bytes = sizeof(ProbableObjects) + capacity * SLOT_SIZE;
     ProbableObjects *po = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS, bytes);
     if (!po) return nullptr;
@@ -80,13 +87,25 @@ ProbableObjects *ProbableObjects_1(size_t capacity) {
 
 ProbableObjects *ProbableObjects_2(const ProbableObjects *init, size_t count) {
     if (count == 0) return nullptr;
-    ProbableObjects *p = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS_ARRAY, sizeof(ProbableObjects) * count);
-    if (!p) return nullptr;
-    if (init) {
-        for (size_t i = 0; i < count; i++) p[i] = *init;
-    } else {
-        memset(p, 0, sizeof(ProbableObjects) * count);
+    // C arrays stride by sizeof(ProbableObjects), not by a flexible slot
+    // payload. Only a single element can own populated flexible storage.
+    if (init && (*init).capacity && count != 1) {
+        THROW("probable objects array cannot copy flexible slots");
+        return nullptr;
     }
+    if (count > UINT32_MAX / sizeof(ProbableObjects)) {
+        THROW("probable objects array size is not representable");
+        return nullptr;
+    }
+    size_t bytes = sizeof(ProbableObjects) * count;
+    if (init && (*init).capacity)
+        bytes += (size_t) (*init).capacity * SLOT_SIZE;
+    ProbableObjects *p = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS_ARRAY, bytes);
+    if (!p) return nullptr;
+    if (init && (*init).capacity)
+        memcpy(p, init, bytes);
+    else
+        memset(p, 0, bytes);
     return p;
 }
 void ProbableObjects_free(ProbableObjects *po) {
@@ -114,8 +133,14 @@ static uint8_t *slotAt(ProbableObjects *po, size_t index) {
 
 int ProbableObjects_add(ProbableObjects *po, uintptr_t object, uint32_t weight) {
     if (!po) return 0;
-    if ((*po).count >= (*po).capacity)
+    if ((*po).count >= (*po).capacity) {
+        THROW("probable objects pool is full");
         return 0;
+    }
+    if (weight > UINT32_MAX - (*po).totalWeight) {
+        THROW("probable objects total weight overflow");
+        return 0;
+    }
 
     uint8_t *slot = slotAt(po, (*po).count);
     *(uintptr_t*) slot = object;

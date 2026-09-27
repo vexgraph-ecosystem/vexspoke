@@ -24,10 +24,14 @@ typedef struct ProbableObjects {
     uint8_t slots[];
 } ProbableObjects;
 
-// Allocate an empty pool with room for capacity choices.
+// Allocate an empty pool with room for capacity choices. Rejects capacities
+// that cannot fit the allocator's 32-bit payload length.
 ProbableObjects *ProbableObjects_1(size_t capacity);
 
 
+// Clone one populated pool (including its slots), or create count empty
+// zero-capacity headers. Multiple populated pools cannot be represented as a
+// contiguous C array because each pool ends in a flexible array; rejected.
 ProbableObjects *ProbableObjects_2(const ProbableObjects *init, size_t count);
 
 #define ProbableObjects(...) CONSTRUCTOR_DISPATCH(ProbableObjects, __VA_ARGS__)
@@ -38,7 +42,8 @@ size_t ProbableObjects_size(ProbableObjects *po);
 size_t ProbableObjects_capacity(ProbableObjects *po);
 uint32_t ProbableObjects_totalWeight(ProbableObjects *po);
 
-// Append a choice. Returns 0 on overflow.
+// Append a choice. Returns 0 without changing the pool if full or if the
+// cumulative uint32_t weight would overflow.
 int ProbableObjects_add(ProbableObjects *po, uintptr_t object, uint32_t weight);
 
 // Append the object/weight of an existing Probable.
