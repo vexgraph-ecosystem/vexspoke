@@ -1,5 +1,6 @@
 #include "struct/array.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "nio/mem.h"
@@ -7,6 +8,10 @@
 #include "oop/type.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
+#include "annotation/checker.h"
+#include "annotation/hotcode.h"
+#include "exception/try_value.h"
+#include "exception/throw.h"
 
 ;;DEFINITION
 /**
@@ -57,6 +62,7 @@
  *
  * Getters:
  *   - Array_get(array, index)
+ *   - Array_getTry(array, index)
  *   - Array_isEmpty(array)
  * ============================================================================
  */
@@ -101,12 +107,27 @@ void Array_free(Array *array) {
     Memory_free(array);
 }
 
+;;HOTCODE
 uint64_t Array_get(Array *array, size_t index) {
     if (!array) return 0;
     Collection *c = asCollection(array);
     if (index >= (*c).activeCount)
         return 0;
     return Collection_readSlot(c, index);
+}
+
+;;CHECKER
+TryValue Array_getTry(Array *array, size_t index) {
+    if (array == nullptr) {
+        THROW("array getTry: null array");
+        return TryValue_error(TRY_NULL_ARG);
+    }
+    Collection *c = asCollection(array);
+    if (index >= (*c).activeCount) {
+        THROW("array getTry: index %zu out of range (count %u)", index, (*c).activeCount);
+        return TryValue_error(TRY_BOUNDS);
+    }
+    return TryValue_ok(Collection_readSlot(c, index));
 }
 
 void Array_set(Array *array, size_t index, uint64_t value) {

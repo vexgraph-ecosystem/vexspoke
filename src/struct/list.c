@@ -78,9 +78,11 @@ static Collection *asCollection(List *list) {
 }
 
 static uint8_t *bufferGrow(Collection *c, size_t needed) {
-    size_t newCap = (*c).capacity;
+    // Double, so growth is amortized O(1). A fixed increment makes "support a
+    // million" quadratic (the Dynamic Scalability & Anti-Hardcoding Law).
+    size_t newCap = (*c).capacity ? (*c).capacity : DEFAULT_CAPACITY;
     while (newCap < needed)
-        newCap += DEFAULT_CAPACITY;
+        newCap *= 2;
     size_t bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);

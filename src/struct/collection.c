@@ -1,8 +1,11 @@
 #include "struct/collection.h"
 
+#include <stdckdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "nio/mem.h"
+#include "exception/throw.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -136,24 +139,59 @@ uint8_t *Collection_dataBuffer(Collection *c) {
     return (*c).data;
 }
 
+// The BOUNDED read/write pair: an out-of-range index is refused with a safe
+// default AND reported on stderr (the Failure Observability Law) — never a
+// silent out-of-bounds dereference. index * stride is checked for overflow
+// (the Overflow Guard Law) so a hostile index cannot wrap the pointer.
 uint64_t Collection_readSlot(Collection *c, size_t index) {
-    if (!c) return 0;
-    uint8_t *slot = (*c).data + index * (*c).stride;
-    return readSlotAt(slot, (*c).stride);
+    if (!c)
+        return 0;
+    // Bound by CAPACITY (the physical memory bound), not activeCount: a
+    // circular container (Queue/Deque) reads a PHYSICAL slot (head) that may
+    // exceed the live count. Logical bounds are the callers' contract.
+    if (index >= (*c).capacity) {
+        THROW("collection readSlot: index %zu out of capacity (%u)",
+              index, (*c).capacity);
+        return 0;
+    }
+    size_t offset = 0;
+    if (ckd_mul(&offset, index, (size_t) (*c).stride)) {
+        THROW("collection readSlot: index %zu * stride %u overflows", index, (*c).stride);
+        return 0;
+    }
+    return readSlotAt((*c).data + offset, (*c).stride);
 }
 
 void Collection_writeSlot(Collection *c, size_t index, uint64_t value) {
-    if (!c) return;
-    uint8_t *slot = (*c).data + index * (*c).stride;
-    writeSlotAt(slot, (*c).stride, value);
+    if (!c)
+        return;
+    // Bound by CAPACITY, not activeCount: an append (List_add) writes the slot
+    // at index == activeCount, a legal PHYSICAL slot. activeCount is the
+    // caller's contract; capacity is the memory bound.
+    if (index >= (*c).capacity) {
+        THROW("collection writeSlot: index %zu out of capacity (%u)",
+              index, (*c).capacity);
+        return;
+    }
+    size_t offset = 0;
+    if (ckd_mul(&offset, index, (size_t) (*c).stride)) {
+        THROW("collection writeSlot: index %zu * stride %u overflows", index, (*c).stride);
+        return;
+    }
+    writeSlotAt((*c).data + offset, (*c).stride, value);
 }
 
+// Deliberately unchecked (trust-the-handle): NO bounds check on index — the
+// caller has validated it. Null-guarded so a hostile handle degrades instead of
+// crashing (the Cold-Strict, Hot-Minimal Validation Law).
 uint64_t Collection_readSlotUnsafe(Collection *c, size_t index) {
-    uint8_t *slot = (*c).data + index * (*c).stride;
-    return readSlotAt(slot, (*c).stride);
+    if (!c)
+        return 0;
+    return readSlotAt((*c).data + index * (*c).stride, (*c).stride);
 }
 
 void Collection_writeSlotUnsafe(Collection *c, size_t index, uint64_t value) {
-    uint8_t *slot = (*c).data + index * (*c).stride;
-    writeSlotAt(slot, (*c).stride, value);
+    if (!c)
+        return;
+    writeSlotAt((*c).data + index * (*c).stride, (*c).stride, value);
 }

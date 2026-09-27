@@ -100,7 +100,7 @@ static Queue *instant(uint32_t elementClass, size_t capacity, size_t count) {
 static int ensureCapacity(Collection *c) {
     if ((*c).activeCount < (*c).capacity)
         return 1;
-    size_t newCap = (*c).capacity + DEFAULT_CAPACITY;
+    size_t newCap = (*c).capacity * 2;
     size_t bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);

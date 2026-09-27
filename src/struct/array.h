@@ -7,6 +7,7 @@
 #include "c23/constructor.h"
 
 #include "struct/collection.h"
+#include "exception/try_value.h"
 
 // struct/array.h — the Array class, ported from struct/Array.java.
 //
@@ -26,6 +27,10 @@ void Array_free(Array *array);
 // Get/set the value or pointer at index (bounds-checked).
 uint64_t Array_get(Array *array, size_t index);
 void Array_set(Array *array, size_t index, uint64_t value);
+
+// Cold, checking accessor: the value or the named reason it is absent — the
+// `;;CHECKER` half of the pair; Array_get is the `;;HOTCODE` half.
+TryValue Array_getTry(Array *array, size_t index);
 
 // Pointer to the struct element at index (bounds-checked).
 uint8_t *Array_slot(Array *array, size_t index);
