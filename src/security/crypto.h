@@ -51,7 +51,13 @@ void     Crypto_rngInit(CryptoRng *rng, uint64_t seed);
 uint64_t Crypto_rngNextU64(CryptoRng *rng);
 void     Crypto_rngBytes(CryptoRng *rng, void *dest, size_t len);
 
-// Global default PRNG
+// Global default PRNG.
+//
+// WARNING: NOT SECURE. This is a seedable, deterministic PRNG (xorshift128+)
+// whose default stream starts from a fixed constant — its output is predictable
+// and identical across runs and processes. It exists for reproducible crypto
+// tests. NEVER use it for tokens, keys, nonces, salts, or session ids. For
+// unpredictable randomness use security/SecureRandom (the OS CSPRNG).
 void     Crypto_randomSeed(uint64_t seed);
 uint64_t Crypto_randomU64(void);
 void     Crypto_randomBytes(void *dest, size_t len);
