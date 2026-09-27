@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.28)
+
+# Platform Support Floor Law: Apple Silicon only (arm64), macOS 14.0+.
+# Cache entries set before project() so a standalone build enforces the same
+# floor as the umbrella. A user -D override is preserved.
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Platform Support Floor Law: Apple Silicon only (arm64)")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Platform Support Floor Law: macOS 14.0+")
+endif()
+
 project(vexspoke C)
 
 set(CMAKE_C_STANDARD 23)
@@ -98,7 +107,11 @@ add_library(vexspoke STATIC
     src/struct/sparseset.c
     src/struct/stack.c
     src/security/crypto.c
+    src/security/secure_random.c
     src/exception/exception.c
+    src/exception/try_code.c
+    src/exception/try_value.c
+    src/exception/try_ptr.c
     src/io/vexhome.c
     src/io/cache.c
     src/io/file.c
@@ -181,7 +194,7 @@ target_include_directories(vexspoke PUBLIC
 
 target_compile_definitions(vexspoke PUBLIC $<$<CONFIG:Debug>:DEBUG_BORROW_CHECK=1>)
 
-target_compile_options(vexspoke PRIVATE -Wall -Wextra -Werror -mcpu=native)
+target_compile_options(vexspoke PRIVATE -Wall -Wextra -Werror -mcpu=apple-m1)
 target_link_libraries(vexspoke PUBLIC pthread)
 
 if(APPLE)
@@ -516,6 +529,53 @@ if(EXISTS "${VEXSPOKE_TEST_DIR}/clipboard_test.c" AND NOT TARGET clipboard_test)
     )
     target_link_libraries(clipboard_test PRIVATE vexspoke)
 endif()
+
+# Try value-or-error primitive: TryValue / TryPtr / TryCode boundaries,
+# null-safety, and the toString projections (the `;;CHECKER` payload type).
+if(EXISTS "${VEXSPOKE_TEST_DIR}/exception/try_value_test.c" AND NOT TARGET try_value_test)
+    add_executable(try_value_test
+        ${VEXSPOKE_TEST_DIR}/exception/try_value_test.c
+    )
+    target_compile_options(try_value_test PRIVATE -Wall -Wextra -Werror)
+    target_link_libraries(try_value_test PRIVATE vexspoke)
+endif()
+
+# ============================================================================
+# Foundation-tier owner tests (the Test Tree Mirror Law): one per production
+# unit, mirrored under tests/vexspoke/<dir>/<unit>_test.c.
+# ============================================================================
+foreach(unit oop/stride util/arrays util/random c23/equals c23/free bit/bit
+             exception/try_code exception/try_ptr security/secure_random
+             primitive/int primitive/long primitive/float primitive/double
+             primitive/byte primitive/short primitive/bool primitive/brain
+             primitive/fixed32 primitive/fixed64 primitive/int_float
+             primitive/int_double primitive/long_float primitive/long_double
+             primitive/pack
+             struct/array
+             struct/collection
+             struct/list
+             struct/stack
+             struct/queue
+             struct/deque
+             struct/set
+             struct/map
+             struct/minheap
+             struct/sparseset
+             objects/choice
+             objects/future
+             objects/global
+             objects/local
+             objects/passive
+             objects/probable
+             objects/probable_objects
+             exception/throw)
+    get_filename_component(_vex_name "${unit}" NAME)
+    if(EXISTS "${VEXSPOKE_TEST_DIR}/${unit}_test.c" AND NOT TARGET ${_vex_name}_test)
+        add_executable(${_vex_name}_test "${VEXSPOKE_TEST_DIR}/${unit}_test.c")
+        target_compile_options(${_vex_name}_test PRIVATE -Wall -Wextra -Werror)
+        target_link_libraries(${_vex_name}_test PRIVATE vexspoke)
+    endif()
+endforeach()
 
 
 

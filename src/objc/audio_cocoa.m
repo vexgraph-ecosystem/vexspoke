@@ -258,6 +258,36 @@ float AudioClip_seconds(AudioClip *clip) {
     return clip ? (*clip).seconds : 0.0f;
 }
 
+// --- macOS 27 API carry (the Platform Support Floor Law) ---------------------
+// AVAudioEngine gained the error-returning connect:to:format:error:, and
+// AVAudioPlayerNode gained playAndReturnError:, in macOS 27. The floor is 14.0,
+// so those are reached only on 27+; the pre-27 arms below carry the floor (their
+// deprecation on the 27 SDK is silenced narrowly, not globally).
+
+// DEPRECATED-CARRY(connect:to:format: -> connect:to:format:error:, floor 14)
+static void audioConnect(AVAudioEngine *engine, AVAudioNode *node,
+                         AVAudioNode *dest, AVAudioFormat *format) {
+    if (@available(macOS 27.0, *)) {
+        (void) [engine connect:node to:dest format:format error:nullptr];
+        return;
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [engine connect:node to:dest format:format];
+#pragma clang diagnostic pop
+}
+
+// DEPRECATED-CARRY(play -> playAndReturnError:, floor 14)
+static bool audioNodePlay(AVAudioPlayerNode *node) {
+    if (@available(macOS 27.0, *))
+        return [node playAndReturnError:nullptr];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [node play];
+#pragma clang diagnostic pop
+    return true;
+}
+
 AudioVoice *AudioVoice_new(void) {
     if (!s_ready)
         return nullptr;
@@ -272,7 +302,7 @@ AudioVoice *AudioVoice_new(void) {
         }
         [s_engine attachNode:(*v).node];
         AVAudioFormat *out = [[s_engine outputNode] outputFormatForBus:0];
-        [s_engine connect:(*v).node to:[s_engine mainMixerNode] format:out error:nullptr];
+        audioConnect(s_engine, (*v).node, [s_engine mainMixerNode], out);
         if (!ensureRunning()) {
             [s_engine detachNode:(*v).node];
             Memory_free(v);
@@ -330,7 +360,7 @@ void AudioVoice_play(AudioVoice *voice) {
             ? AVAudioPlayerNodeBufferLoops
             : AVAudioPlayerNodeBufferInterrupts;
         [(*voice).node scheduleBuffer:buf atTime:nil options:opts completionHandler:nil];
-        if (![(*voice).node playAndReturnError:nullptr])
+        if (!audioNodePlay((*voice).node))
             return;
         (*voice).active = true;
     }
@@ -385,7 +415,7 @@ static bool audioWireUp(Audio *a) {
         return false;
     [s_engine attachNode:node];
     AVAudioFormat *fmt = [[s_engine outputNode] outputFormatForBus:0];
-    [s_engine connect:node to:[s_engine mainMixerNode] format:fmt error:nullptr];
+    audioConnect(s_engine, node, [s_engine mainMixerNode], fmt);
     if (!ensureRunning()) {
         [s_engine detachNode:node];
         return false;
@@ -462,7 +492,7 @@ void Audio_play(Audio *a) {
         ? AVAudioPlayerNodeBufferLoops
         : AVAudioPlayerNodeBufferInterrupts;
     [(*a).node scheduleBuffer:(*a).buffer atTime:nil options:opts completionHandler:nil];
-    if (![(*a).node playAndReturnError:nullptr])
+    if (!audioNodePlay((*a).node))
         return;
     (*a).active = true;
 }

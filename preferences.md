@@ -88,6 +88,10 @@ its ordinal may move as the document evolves.
 | 39 | No Hardcoding Law (Name It, Grow It, Vary It) |
 | 40 | WHAT Law |
 | 41 | Cold-Only Reflection Law |
+| 42 | Install Ledger Law (Machine-Scoped Install Memory) |
+| 43 | Platform Support Floor Law (Apple Silicon macOS 14+, Windows 10+) |
+| 44 | Capability Gating Law (Runtime Features Above the Floor) |
+| 45 | THROW Law (Loud Cold Rejection) |
 
 ---
 
@@ -97,7 +101,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
-   - *Laws*: the Single Class Per File Law, the Cohesive Commits Law & the Multi-Repo Atomic Commit Discipline Law, the Build & Naming Conventions Law (Apple Silicon native), the Teardown Order Law, the Bounded Wait Law, the Cold-Only Reflection Law, the Four System Levels Law (L1–L4, distinct from R1–R5 Supervisor Order), the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Dynamic Scalability & Anti-Hardcoding Law.
+   - *Laws*: the Single Class Per File Law, the Cohesive Commits Law & the Multi-Repo Atomic Commit Discipline Law, the Build & Naming Conventions Law (Apple Silicon native), the Platform Support Floor Law (Apple Silicon macOS 14+, Windows 10+), the Capability Gating Law (Runtime Features Above the Floor), the THROW Law (Loud Cold Rejection), the Teardown Order Law, the Bounded Wait Law, the Cold-Only Reflection Law, the Four System Levels Law (L1–L4, distinct from R1–R5 Supervisor Order), the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Dynamic Scalability & Anti-Hardcoding Law.
    - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
@@ -239,11 +243,25 @@ side only, so they read as explicit markers:
 ;;INHERITS("Base")
 ;;REACTIVE("objectName")
 ;;WHAT("uint64_t")
+;;CHECKER
+;;HOTCODE
 ```
 
 Two semicolons on the left, nothing on the right — even when the annotation
 carries params. The semicolons are plain null declarations; the marker macro
 inside expands to a `_Static_assert` that validates the annotation text.
+
+`;;CHECKER` is the cold-seam validation marker. It flags a function that
+validates untrusted input once and returns a `Try` (`TryValue`/`TryPtr`) instead
+of a bare value — the `getTry` half of an accessor pair (the Cold-Strict,
+Hot-Minimal Validation Law). It takes no text: `grep -rn ';;CHECKER'` lists every
+cold validator in the tree.
+
+`;;HOTCODE` is the hot-path declaration marker. It flags a function proven to run
+on a hot path — per frame, or inside a for/while loop that dominates a frame —
+and asserts it carries at most one entry guard, never logs, and never allocates
+(the Hot-Path Minimal Guard Law). It takes no text: `grep -rn ';;HOTCODE'` lists
+every hot site in the tree.
 
 ---
 
@@ -966,16 +984,17 @@ cold drop corrupts state; a log line per hot frame corrupts performance.
    (`AiProvider_get`, `ApiAuth_apply`, `Rest_postJson`,
    `McpServer_handleLine`, `HavenWsFanout_pollStep`, `ProcessSpawn_spawn`,
    checksums) check every hostile input: null, empty, wrong-id, bounds,
-   integer overflow, cancelled, timeout. One `Log_warn` per failure at most,
-   then drop-degrade per the Bounded Wait Law (return `false`, keep old
-   content, move on).
+   integer overflow, cancelled, timeout. One `THROW(...)` per failure at most
+   (the THROW Law), then drop-degrade per the Bounded Wait Law (return
+   `false`, keep old content, move on).
 2. **Hot paths guard minimally, never log.** Vk present, `Raster`, `SdfGpu`,
    darling layout, `GfxLoop_frame`, `presentFrameLocked`: at most one `nullptr`
    entry guard returning `false`, zero per-element revalidation, zero logging,
    zero allocation. The hot path trusts the cold-validated handle. Deeper
    invariants are proven at compile time (`_Static_assert`) or declared as
    `;;INTENTION("reason")` + `;;DRAFT` per the Conflict Triage Law, never
-   re-checked per frame.
+   re-checked per frame. Each hot path is declared `;;HOTCODE`; each cold
+   validator is declared `;;CHECKER`.
    ```c
    if (self == nullptr)
        return false;
@@ -1311,3 +1330,100 @@ flat, predictable, and bounded.
 5. **Resolve once, hold the pointer.** A hot consumer that needs a value
    repeatedly resolves the name (or path) once, on the cold path, and holds the
    resulting pointer — it never re-resolves per frame.
+
+---
+
+## 42. Install Ledger Law (Machine-Scoped Install Memory)
+
+### Definition:
+The install ledger is a machine-scoped record of the application identities
+(`org`/`app`) that have been installed on this host. It lives OUTSIDE the
+install tree, in the OS per-user state directory as a plain record file
+(macOS `~/Library/Application Support`, Windows `%LOCALAPPDATA%`, Linux
+`$XDG_STATE_HOME`). `MANIFEST_REFLECT` records an install; `UNINSTALL` removes
+the tree but keeps the record (state `uninstalled`); and `MANIFEST_IS_FIRST_RUN`
+consults the ledger, so a wiped tree is never a fresh install. The in-tree
+`manifest.json` remains the ownership marker for safe deletion (see the
+Manifest Resilience Law); the ledger is the machine's out-of-tree memory of the
+install.
+
+### The Why:
+The in-tree `manifest.json` proves a directory is ours to delete, but it dies
+with the tree. Without an out-of-tree record, deleting the install directory —
+or just its fingerprint — makes the machine report a fresh install again,
+losing the upgrade, migration, and re-install state every platform installer
+must retain. A ledger that outlives the tree makes "has this app ever been
+installed here?" answerable even after a full uninstall.
+
+### The Rule:
+1. **Out of tree.** The ledger never lives inside the install root; it is a
+   machine-scoped store keyed by `org`/`app`.
+2. **Per-user state file, outside the tree.** It lives as a plain record file
+   in the OS per-user state directory (macOS `~/Library/Application Support`,
+   Windows `%LOCALAPPDATA%`, Linux `$XDG_STATE_HOME`), never inside the app
+   tree and never in the OS secure store or registry. It is a plain record, not
+   a secure store.
+3. **Uninstall keeps the record.** `UNINSTALL` clears the tree and flips the
+   record to `uninstalled`; the record is never erased by uninstall. Only an
+   explicit `forget` (a deliberate machine reset) purges it.
+4. **First-run consults the ledger.** `MANIFEST_IS_FIRST_RUN` is true only when
+   the ledger holds no record for the identity and the in-tree mark is absent.
+5. **Correctness, not security.** The ledger answers "does the machine
+   remember?", never "can the machine be stopped from forgetting?". A local user
+   with the machine can always clear the store; the ledger must never be relied
+   on as a security boundary.
+
+---
+
+## 43. Platform Support Floor Law (Apple Silicon macOS 14+, Windows 10+)
+
+### Definition:
+The ecosystem declares and enforces one hardware and OS floor. On macOS the floor is **Apple Silicon only** — `arm64`, M1 (2020) and later, including the A-series A18 Pro MacBook Neo — at **macOS 14.0 (Sonoma)**; Intel `x86_64` is never a target and no Universal binary is produced. On Windows the floor is **Windows 10**. A configuration below the floor is not supported.
+
+### The Why:
+macOS 27 "Golden Gate" is the first macOS to run exclusively on Apple Silicon; carrying `x86_64` paths or pre-14 shims buys nothing but doubles the code paths and slows every build. And a floor is the only thing that makes availability drift visible: the compiler warns about an unguarded newer API only when a deployment target is set, so "it compiled" becomes a promise that it runs on the oldest supported Mac.
+
+### The Rule:
+1. **macOS hardware floor: Apple Silicon (`arm64`), never Intel.** `CMAKE_OSX_ARCHITECTURES=arm64`. No `x86_64`, no `arm64;x86_64` Universal, no `#if defined(__x86_64__)` paths.
+2. **macOS software floor: 14.0 (Sonoma).** `CMAKE_OSX_DEPLOYMENT_TARGET=14.0`. Every API newer than the floor is reached only through an explicit availability guard; an unguarded newer-API call is a defect, not a warning.
+3. **Windows floor: Windows 10.** `_WIN32_WINNT` / `WINVER` pinned to `0x0A00`.
+4. **Portable CPU baseline, never `native`, in shipped code.** Targets compile with `-mcpu=apple-m1` so a binary built on an M6 / A18 still runs on an M1. `native` is a local-dev-only convenience and is never the default.
+5. **Platform-exclusive backends state their floor.** A backend compiled only on its own host records its proven floor and its unproved-on-other-host status (the Per-File Battle Test Law's explicit gap).
+6. **The floor moves only by law.** Raising the floor — a new macOS number, a new chip family, a new Windows floor — is a deliberate amendment of this law, landed in the same cycle as the CMake change (the Living Preferences Law; Zero Drift).
+7. **A feature above the floor is a capability, not a floor move.** A hardware or OS feature newer than the floor — ray tracing on M3+, mesh shaders, an instruction set, a post-floor API — never raises the floor; it is a runtime-probed capability under the Capability Gating Law.
+
+---
+
+## 44. Capability Gating Law (Runtime Features Above the Floor)
+
+### Definition:
+The Platform Support Floor Law fixes the minimum the ecosystem is built for. Every capability **newer than that floor** — a GPU feature (ray tracing on M3+), a CPU instruction set (dot-product, SVE/SME), an OS API past the deployment target — is a **runtime-probed capability**, never a floor change. A capability is probed **once at cold boot**, cached in a bitset, and either used or replaced by a **stated fallback**; a capability a component **requires** is declared in the manifest and refused at the manifest gate on unsupported hardware.
+
+### The Why:
+Raising the floor to adopt a feature exiles every machine below it: hardware ray tracing arrived with M3, so "RT means floor M3" would drop the entire M1/M2 base. The floor answers *what do we ship*; a capability answers *what can this machine do*; conflating them throws away reach for every new feature. And the probe must be cold and cached — re-querying device features per frame is how frames die (the Cold-Strict, Hot-Minimal Validation Law).
+
+### The Rule:
+1. **The floor is the compile minimum; a feature is a capability.** A capability never moves the floor (the Platform Support Floor Law rule 7). RT, mesh shaders, SME/SVE, the Neural Engine, and any post-floor OS API are capabilities.
+2. **Probe once, cold, cached.** Each capability resolves once at boot (device / CPU / OS probe) into a bitset; hot paths branch on the cached bit and never re-probe (the Cold-Strict, Hot-Minimal Validation Law; the Hot-Path Minimal Guard Law).
+3. **Every capability has a disposition, and it is one of two.** *Best-effort*: a stated fallback path (RT absent → the Raster dialect). *Required*: declared in the manifest and refused at the manifest gate on unsupported hardware (the Dynamic Module ABI Verification Law's gate), with the reason surfaced (the Failure Observability Law). A silently degraded **required** capability is a defect.
+4. **No capability is assumed.** A call site that depends on a capability checks the cached bit first; an unguarded use of a post-floor feature is the same defect as an unguarded post-floor API under the Platform Support Floor Law.
+5. **CPU capabilities dispatch a variant; GPU capabilities select a dialect.** A newer CPU feature is reached only through a runtime-dispatched variant (`-mcpu=apple-m1` compiles the floor; the newer arm runs only when its bit is set). A GPU capability selects the dialect/pipeline (graphvex's Vulkan/Raster/Null rows).
+6. **The probe is owned, named, and queryable.** Host / CPU / OS capabilities live in the R1 host (`Capability`); device / GPU capabilities live in the R3 driver (`graphvex`). Every capability has a stable name and a `has` query (the Symmetric Getter/Setter Completeness Law; the toString Law).
+
+---
+
+## 45. THROW Law (Loud Cold Rejection)
+
+### Definition:
+THROW is the one primitive a **cold** rejection uses to report itself. `THROW(fmt, ...)` is a macro (`exception/throw.h`) that emits a single `[vex] <file>:<line>: <message>` line to stderr and returns to the caller — it never unwinds, never allocates, never blocks, and never terminates. A rejected operation returns its safe default **and** THROWs its reason on the way out.
+
+### The Why:
+A crash, a silent no-op, and a correct rejection are indistinguishable unless something says which happened (the Failure Observability Law). THROW makes the rejection legible at the exact site: the macro captures the source location, the fixed `[vex]` prefix keeps the channel greppable and parseable, and `grep -rn THROW` enumerates every loud rejection in the tree. And it must be a cold primitive — a log line per frame is how frames die.
+
+### The Rule:
+1. **Cold seams reject loudly.** A function that refuses input it cannot serve returns its safe default **and** calls `THROW(...)`, once per failure (the Cold-Strict, Hot-Minimal Validation Law). It never returns the default silently.
+2. **Hot paths never THROW.** A `;;HOTCODE` getter, or any per-frame path, carries no THROW; its rejection is a silent safe default (the Hot-Path Minimal Guard Law). Observability is a **cold** obligation.
+3. **One primitive, one format.** Rejections go through THROW only — never a bare `fprintf`, `printf`, `perror`, or ad-hoc print. The output is exactly `[vex] <file>:<line>: <message>`, so the channel stays greppable and machine-parseable.
+4. **THROW does not unwind.** It never `longjmp`s, never `exit`s, never allocates. It reports and returns; the caller owns the disposition (the Teardown Order Law; the Bounded Wait Law).
+5. **THROW is not a control path.** It marks a problem; it does not catch or resume. Catching, escalation, and any terminal disposition belong to the R1 supervisor (the Vertical Integration Law). The relational model has no exception stack.
+6. **A THROW site is greppable and owned.** `grep -rn THROW` lists every loud rejection; a new THROW without a covering cold-seam test is a gap (the Failure Observability Law).
