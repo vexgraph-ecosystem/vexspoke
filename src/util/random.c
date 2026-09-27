@@ -249,7 +249,9 @@ uintptr_t Random_probablePool(Random *r, const ProbableObjects *pool) {
     while (low < high) {
         size_t mid = (low + high) / 2;
         uint32_t cumulative = ProbableObjects_cumulativeAt((ProbableObjects*) pool, mid);
-        if (cumulative < target)
+        // target is zero-based: a slot owns [previous cumulative, cumulative).
+        // A zero-weight slot owns no target, including target zero.
+        if (cumulative <= target)
             low = mid + 1;
         else
             high = mid;
