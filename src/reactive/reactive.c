@@ -50,6 +50,8 @@
  *     bool active;              // runtime-active flag
  *     ReactiveObserverList *onSet;     // fires once per drained batch
  *     ReactiveObserverList *onChanged; // fires when the drained word moved
+ *     ReactiveObserverList *onGet;     // fires on each read (immediate)
+ *     ReactiveObserverList *onNullptr; // fires when a drained word is 0
  *     ReactiveObserverList *onRemove;  // fires on free (teardown)
  *   }
  *
@@ -64,7 +66,7 @@
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) Reactive_init, Reactive_1, Reactive_2, Reactive_free
  * Public Core Functions: (.h) Reactive_get, Reactive_set, Reactive_drain
- * Public Observers: (.h) Reactive_addOnSet/_addOnChanged/_addOnRemove (+ removes)
+ * Public Observers: (.h) Reactive_addOnSet/_addOnChanged/_addOnGet/_addOnNullptr/_addOnRemove (+ removes)
  * Public Getters: (.h) Reactive_observerCount, Reactive_isDirty, Reactive_isActive
  * ============================================================================
  */
@@ -161,6 +163,8 @@ bool Reactive_init(Reactive *self, uintptr_t initialWord) {
     (*self).active = true;
     (*self).onSet = nullptr;
     (*self).onChanged = nullptr;
+    (*self).onGet = nullptr;
+    (*self).onNullptr = nullptr;
     (*self).onRemove = nullptr;
     return true;
 }
@@ -200,6 +204,8 @@ void Reactive_shutdown(Reactive *self) {
     }
     listFree(&(*self).onSet);
     listFree(&(*self).onChanged);
+    listFree(&(*self).onGet);
+    listFree(&(*self).onNullptr);
     listFree(&(*self).onRemove);
     (*self).active = false;
 }
@@ -216,7 +222,19 @@ void Reactive_free(Reactive *self) {
 uintptr_t Reactive_get(Reactive *self) {
     if (self == nullptr)
         return 0u;
-    return atomic_load_explicit(&(*self).value, memory_order_acquire);
+    uintptr_t value = atomic_load_explicit(&(*self).value, memory_order_acquire);
+    // onGet is the ONE-FIRE READ: it fires immediately, on the reader's thread,
+    // every time the value is read. No observers bound -> a bare atomic load, so
+    // the hot path stays cheap.
+    ReactiveObserverList *list = (*self).onGet;
+    if (list != nullptr) {
+        for (size_t i = 0; i < (*list).count; i++) {
+            ReactiveObserver o = (*list).items[i];
+            if (o.cb != nullptr)
+                ((ReactiveGetFn) o.cb)(self, value, o.userdata);
+        }
+    }
+    return value;
 }
 
 void Reactive_set(Reactive *self, uintptr_t word) {
@@ -258,6 +276,15 @@ bool Reactive_drain(Reactive *self) {
             }
         }
     }
+    // onNullptr fires when the drained word is empty (0 = no value bound).
+    if (value == 0u && (*self).onNullptr != nullptr) {
+        ReactiveObserverList *list = (*self).onNullptr;
+        for (size_t i = 0; i < (*list).count; i++) {
+            ReactiveObserver o = (*list).items[i];
+            if (o.cb != nullptr)
+                ((ReactiveNullptrFn) o.cb)(self, o.userdata);
+        }
+    }
     return true;
 }
 
@@ -287,6 +314,22 @@ bool Reactive_removeOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata
     return self ? listRemove(&(*self).onRemove, (void*) cb, userdata) : false;
 }
 
+bool Reactive_addOnGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
+    return self ? listAdd(&(*self).onGet, (void*) cb, userdata) : false;
+}
+
+bool Reactive_removeOnGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
+    return self ? listRemove(&(*self).onGet, (void*) cb, userdata) : false;
+}
+
+bool Reactive_addOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
+    return self ? listAdd(&(*self).onNullptr, (void*) cb, userdata) : false;
+}
+
+bool Reactive_removeOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
+    return self ? listRemove(&(*self).onNullptr, (void*) cb, userdata) : false;
+}
+
 // GETTERS
 
 size_t Reactive_observerCount(const Reactive *self) {
@@ -299,6 +342,16 @@ size_t Reactive_observerCount(const Reactive *self) {
             if ((*list).items[i].cb != nullptr) n++;
     }
     list = (*self).onChanged;
+    if (list != nullptr) {
+        for (size_t i = 0; i < (*list).count; i++)
+            if ((*list).items[i].cb != nullptr) n++;
+    }
+    list = (*self).onGet;
+    if (list != nullptr) {
+        for (size_t i = 0; i < (*list).count; i++)
+            if ((*list).items[i].cb != nullptr) n++;
+    }
+    list = (*self).onNullptr;
     if (list != nullptr) {
         for (size_t i = 0; i < (*list).count; i++)
             if ((*list).items[i].cb != nullptr) n++;

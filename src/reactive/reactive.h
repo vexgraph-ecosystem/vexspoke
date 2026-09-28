@@ -37,12 +37,16 @@ typedef struct Reactive {
     bool active;               // runtime-active flag
     ReactiveObserverList *onSet;     // fires once per drained batch
     ReactiveObserverList *onChanged; // fires when the drained word moved
-    ReactiveObserverList *onRemove;  // fires on free (teardown)
+    ReactiveObserverList *onGet;     // fires on each read (immediate; the reader's thread)
+    ReactiveObserverList *onNullptr; // fires when a drained word is 0 (empty)
+    ReactiveObserverList *onRemove;  // fires on free (teardown; unbinds observers)
 } Reactive;
 
 typedef void (*ReactiveSetFn)(Reactive *self, uintptr_t newValue, void *userdata);
 typedef void (*ReactiveChangedFn)(Reactive *self, uintptr_t oldValue, uintptr_t newValue, void *userdata);
 typedef void (*ReactiveRemoveFn)(Reactive *self, void *userdata);
+typedef void (*ReactiveGetFn)(Reactive *self, uintptr_t value, void *userdata);
+typedef void (*ReactiveNullptrFn)(Reactive *self, void *userdata);
 
 // --- Constructors ---
 // Embedded init: seed the word (its own shadow starts equal, so the first drain
@@ -60,7 +64,9 @@ void Reactive_shutdown(Reactive *self);
 void Reactive_free(Reactive *self);
 
 // --- Core functions ---
-// Atomic acquire load — safe from any thread.
+// Atomic acquire load — safe from any thread. Fires the onGet observers
+// immediately (on the caller's thread) when any are bound; with none bound it is
+// a single atomic load, so a bare read stays hot-path cheap.
 uintptr_t Reactive_get(Reactive *self);
 // Atomic release store + dirty mark. Safe from ANY thread and NEVER fires
 // observers. For a word-sized reactive the word IS the value; for a big one it
@@ -79,6 +85,10 @@ bool Reactive_addOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata)
 bool Reactive_removeOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata);
 bool Reactive_addOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata);
 bool Reactive_removeOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata);
+bool Reactive_addOnGet(Reactive *self, ReactiveGetFn cb, void *userdata);
+bool Reactive_removeOnGet(Reactive *self, ReactiveGetFn cb, void *userdata);
+bool Reactive_addOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
+bool Reactive_removeOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
 
 // --- Getters (the Symmetric Getter/Setter Completeness Law: null-safe) ---
 size_t Reactive_observerCount(const Reactive *self);
