@@ -12,6 +12,15 @@
 // primitive/long_float.h — LongFloat primitive (Legacy: primitive/LongFloat.java).
 // Delegates to Bit128 width pool (16B stride).
 
+// LongFloat — the value: an int64 scalar plus a normalized float fraction in
+// [-1, 1). 16 bytes (int64 + aligned float) — too big for one engine word.
+typedef struct LongFloat {
+    int64_t scalar;   // the integer part
+    float   decimal;  // the fractional part, in [-1, 1)
+} LongFloat;
+
+_Static_assert(sizeof(LongFloat) == 16, "LongFloat must be 16 bytes");
+
 extern BitPool g_long_floatPool;
 
 bool LongFloat_init(void);

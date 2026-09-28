@@ -1,4 +1,5 @@
-// reactive/reactive_double.c — the Java-double typed reactive.
+// reactive/reactive_double.c — the Java-double typed reactive, STAMPED from
+// reactive/reactive_tmpl.inc.
 
 #include "reactive/reactive_double.h"
 
@@ -14,10 +15,14 @@
  * ============================================================================
  * DEFINITION: ReactiveDouble
  * ============================================================================
- * A word-sized typed reactive: the 64-bit double is BIT-CAST into the engine's
- * atomic word (never numerically converted), so every bit pattern — including
- * NaN and -0.0 — round-trips exactly. One compare detects a change. Java
- * semantics: double. Arena-allocated (TYPE_REACTIVE_DOUBLE) or embedded.
+ * A word-sized typed reactive stamped from reactive/reactive_tmpl.inc: the
+ * 64-bit double is BIT-CAST into the engine's atomic word (never numerically
+ * converted), so every bit pattern — including NaN and -0.0 — round-trips
+ * exactly. One compare detects a change. Java semantics: double. Arena-allocated
+ * (TYPE_REACTIVE_DOUBLE) or embedded.
+ *
+ * The value packing is the only per-type part: the static bitsOf/doubleOf pair is
+ * the bit-cast, wired into the template's VEX_TO_WORD / VEX_FROM_WORD blanks.
  * ============================================================================
  */
 
@@ -25,9 +30,9 @@
 /**
  * ============================================================================
  * CLASS: ReactiveDouble (reactive/reactive_double.c)
- * LEVEL: L2 — Behavior (typed reactive)
  * ============================================================================
- * the 64-bit double typed reactive (an embedded Reactive engine).
+ * the 64-bit double typed reactive (an embedded Reactive engine), stamped from
+ * reactive/reactive_tmpl.inc.
  *
  * STRUCT FIELDS (Mirroring reactive/reactive_double.h):
  * ----------------------------------------------------------------------------
@@ -35,7 +40,7 @@
  *
  * PRIVATE HELPERS: bitsOf(value) / doubleOf(word) — the bit-cast pair (static)
  *
- * FUNCTION REGISTRY:
+ * FUNCTION REGISTRY (emitted by the template):
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) ReactiveDouble_0(), ReactiveDouble_1(initial), _free
  * Public Setters: (.h) ReactiveDouble_set(self, value)
@@ -56,33 +61,16 @@ static double doubleOf(uintptr_t word) {
     return value;
 }
 
-ReactiveDouble *ReactiveDouble_1(double initial) {
-    ReactiveDouble *self = (ReactiveDouble*) Memory_alloc(TYPE_REACTIVE_DOUBLE, sizeof(ReactiveDouble));
-    if (self == nullptr)
-        return nullptr;
-    Reactive_init(&(*self).base, bitsOf(initial));
-    return self;
-}
-
-ReactiveDouble *ReactiveDouble_0(void) {
-    return ReactiveDouble_1(0.0);
-}
-
-void ReactiveDouble_free(ReactiveDouble *self) {
-    if (self == nullptr)
-        return;
-    Reactive_shutdown(&(*self).base);
-    Memory_free(self);
-}
-
-void ReactiveDouble_set(ReactiveDouble *self, double value) {
-    if (self == nullptr)
-        return;
-    Reactive_set(&(*self).base, bitsOf(value));
-}
-
-double ReactiveDouble_get(const ReactiveDouble *self) {
-    if (self == nullptr)
-        return 0.0;
-    return doubleOf(Reactive_get((Reactive*) &(*self).base));
-}
+#define VEX_NAME       ReactiveDouble
+#define VEX_T          double
+#define VEX_TYPE_ID    TYPE_REACTIVE_DOUBLE
+#define VEX_TO_WORD(v)   bitsOf(v)
+#define VEX_FROM_WORD(w) doubleOf(w)
+#define VEX_ZERO       0.0
+#include "reactive/reactive_tmpl.inc"
+#undef VEX_NAME
+#undef VEX_T
+#undef VEX_TYPE_ID
+#undef VEX_TO_WORD
+#undef VEX_FROM_WORD
+#undef VEX_ZERO

@@ -6,8 +6,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "c23/constructor.h"
-
 // reactive/reactive.h — the one reactive engine.
 //
 // A reactive is ONE atomic word — a scalar (<= 8 bytes) or a pointer to an
@@ -53,7 +51,9 @@ bool Reactive_init(Reactive *self, uintptr_t initialWord);
 // Arena-allocated conveniences (the Arity and Constructive Convenience Law).
 Reactive *Reactive_1(uintptr_t initialWord);
 Reactive *Reactive_2(const Reactive *init, size_t count);
-#define Reactive(...) CONSTRUCTOR_DISPATCH(Reactive, __VA_ARGS__)
+// The bare `Reactive(...)` arity chooser is retired: the token is promoted to the
+// generic family constructor `Reactive(T)` (reactive/generic.h), so a bare engine
+// is built through Reactive_1/Reactive_2, and typed reactives through Reactive(T).
 // Fire onRemove and release the observer lists, WITHOUT freeing the block
 // (embedded engines live inside a typed facade, which frees itself).
 void Reactive_shutdown(Reactive *self);

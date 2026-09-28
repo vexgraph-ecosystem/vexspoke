@@ -12,6 +12,18 @@
 // primitive/int_float.h — IntFloat primitive (Legacy: primitive/IntFloat.java).
 // Delegates to Bit64 width pool (8B stride).
 
+// IntFloat — the value: a number as an integer scalar plus a normalized
+// fractional part in [-1, 1). Keeping the magnitude in the integer and the
+// remainder in a bounded fraction holds the value precise and consistent (the
+// integer never loses low bits to float drift). Layout is 8 bytes — exactly one
+// engine word, so a reactive over it rides the word by bit-cast.
+typedef struct IntFloat {
+    int32_t scalar;   // the integer part
+    float   decimal;  // the fractional part, in [-1, 1)
+} IntFloat;
+
+_Static_assert(sizeof(IntFloat) == 8, "IntFloat must be one 8-byte word");
+
 extern BitPool g_int_floatPool;
 
 bool IntFloat_init(void);

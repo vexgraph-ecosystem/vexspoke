@@ -1,4 +1,5 @@
-// reactive/reactive_bool.c — the Java-boolean typed reactive.
+// reactive/reactive_bool.c — the Java-boolean typed reactive, STAMPED from
+// reactive/reactive_tmpl.inc.
 
 #include "reactive/reactive_bool.h"
 
@@ -12,10 +13,14 @@
  * ============================================================================
  * DEFINITION: ReactiveBool
  * ============================================================================
- * A word-sized typed reactive: it embeds the engine (reactive/reactive.h) and
- * the engine's atomic word IS the boolean (0 or 1). One compare detects a
- * change; the engine supplies the observers, dirty flag, and owner-affine drain.
- * Java semantics: boolean. Arena-allocated (TYPE_REACTIVE_BOOL) or embedded.
+ * A word-sized typed reactive stamped from reactive/reactive_tmpl.inc: it embeds
+ * the engine (reactive/reactive.h) and the engine's atomic word IS 0 or 1. One
+ * compare detects a change; the engine supplies the observers, dirty flag, and
+ * owner-affine drain. Java semantics: boolean. Arena-allocated
+ * (TYPE_REACTIVE_BOOL) or embedded.
+ *
+ * The value packing is the only per-type part: VEX_TO_WORD maps true/false to
+ * 1/0; VEX_FROM_WORD maps any nonzero word back to true.
  * ============================================================================
  */
 
@@ -23,15 +28,15 @@
 /**
  * ============================================================================
  * CLASS: ReactiveBool (reactive/reactive_bool.c)
- * LEVEL: L2 — Behavior (typed reactive)
  * ============================================================================
- * the boolean typed reactive (an embedded Reactive engine).
+ * the boolean typed reactive (an embedded Reactive engine), stamped from
+ * reactive/reactive_tmpl.inc.
  *
  * STRUCT FIELDS (Mirroring reactive/reactive_bool.h):
  * ----------------------------------------------------------------------------
  *   ReactiveBool { Reactive base; } // embed-first; word = 0/1
  *
- * FUNCTION REGISTRY:
+ * FUNCTION REGISTRY (emitted by the template):
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) ReactiveBool_0(), ReactiveBool_1(initial), _free
  * Public Setters: (.h) ReactiveBool_set(self, value)
@@ -39,33 +44,16 @@
  * ============================================================================
  */
 
-ReactiveBool *ReactiveBool_1(bool initial) {
-    ReactiveBool *self = (ReactiveBool*) Memory_alloc(TYPE_REACTIVE_BOOL, sizeof(ReactiveBool));
-    if (self == nullptr)
-        return nullptr;
-    Reactive_init(&(*self).base, initial ? 1u : 0u);
-    return self;
-}
-
-ReactiveBool *ReactiveBool_0(void) {
-    return ReactiveBool_1(false);
-}
-
-void ReactiveBool_free(ReactiveBool *self) {
-    if (self == nullptr)
-        return;
-    Reactive_shutdown(&(*self).base);
-    Memory_free(self);
-}
-
-void ReactiveBool_set(ReactiveBool *self, bool value) {
-    if (self == nullptr)
-        return;
-    Reactive_set(&(*self).base, value ? 1u : 0u);
-}
-
-bool ReactiveBool_get(const ReactiveBool *self) {
-    if (self == nullptr)
-        return false;
-    return Reactive_get((Reactive*) &(*self).base) != 0u;
-}
+#define VEX_NAME       ReactiveBool
+#define VEX_T          bool
+#define VEX_TYPE_ID    TYPE_REACTIVE_BOOL
+#define VEX_TO_WORD(v)   ((uintptr_t) ((v) ? 1u : 0u))
+#define VEX_FROM_WORD(w) ((w) != 0u)
+#define VEX_ZERO       false
+#include "reactive/reactive_tmpl.inc"
+#undef VEX_NAME
+#undef VEX_T
+#undef VEX_TYPE_ID
+#undef VEX_TO_WORD
+#undef VEX_FROM_WORD
+#undef VEX_ZERO

@@ -12,6 +12,15 @@
 // primitive/long_double.h — LongDouble primitive (Legacy: primitive/LongDouble.java).
 // Delegates to Bit128 width pool (16B stride).
 
+// LongDouble — the value: an int64 scalar plus a normalized double fraction in
+// [-1, 1). 16 bytes (int64 + aligned double) — too big for one engine word.
+typedef struct LongDouble {
+    int64_t scalar;   // the integer part
+    double  decimal;  // the fractional part, in [-1, 1)
+} LongDouble;
+
+_Static_assert(sizeof(LongDouble) == 16, "LongDouble must be 16 bytes");
+
 extern BitPool g_long_doublePool;
 
 bool LongDouble_init(void);

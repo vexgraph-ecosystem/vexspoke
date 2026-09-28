@@ -5,25 +5,23 @@
 #include <stdint.h>
 
 #include "c23/constructor.h"
+#include "reactive/generic.h"
 #include "reactive/reactive.h"
 
-// reactive/reactive_bool.h — the Java-boolean typed reactive.
+// reactive/reactive_bool.h — the Java-boolean typed reactive, STAMPED from
+// reactive/reactive_tmpl.h.
 //
-// A word-sized reactive: the engine's atomic word IS the value, so a
-// ReactiveBool is one Reactive (embed-first: a ReactiveBool* is a Reactive*).
-// Pick this type instead of a plain bool to make a variable reactive — it wires
-// itself (observers, dirty, drain) with no setup.
+// A word-sized reactive: the engine's atomic word IS 0 or 1, so a ReactiveBool is
+// one Reactive (embed-first: a ReactiveBool* is a Reactive*). Pick this type
+// instead of a plain bool to make a variable reactive — it wires itself (observers,
+// dirty, drain) with no setup. Java semantics: boolean.
 
-typedef struct ReactiveBool {
-    Reactive base;
-} ReactiveBool;
+#define VEX_NAME ReactiveBool
+#define VEX_T    bool
+#include "reactive/reactive_tmpl.h"
+#undef VEX_NAME
+#undef VEX_T
 
-ReactiveBool *ReactiveBool_0(void);
-ReactiveBool *ReactiveBool_1(bool initial);
 #define ReactiveBool(...) CONSTRUCTOR_DISPATCH(ReactiveBool, __VA_ARGS__)
-void ReactiveBool_free(ReactiveBool *self);
-
-void ReactiveBool_set(ReactiveBool *self, bool value);
-bool ReactiveBool_get(const ReactiveBool *self);
 
 #endif

@@ -12,6 +12,15 @@
 // primitive/int_double.h — IntDouble primitive (Legacy: primitive/IntDouble.java).
 // Delegates to Bit128 width pool (16B stride).
 
+// IntDouble — the value: an int32 scalar plus a normalized double fraction in
+// [-1, 1). 16 bytes (int32 + aligned double) — too big for one engine word.
+typedef struct IntDouble {
+    int32_t scalar;   // the integer part
+    double  decimal;  // the fractional part, in [-1, 1)
+} IntDouble;
+
+_Static_assert(sizeof(IntDouble) == 16, "IntDouble must be 16 bytes");
+
 extern BitPool g_int_doublePool;
 
 bool IntDouble_init(void);
