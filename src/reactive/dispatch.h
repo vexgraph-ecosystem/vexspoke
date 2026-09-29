@@ -4,13 +4,7 @@
 #include "reactive/generic.h"
 #include "reactive/reactive.h"
 #include "reactive/reactive_primitive.h"
-#include "reactive/reactive_vec2.h"
-#include "reactive/reactive_vec3.h"
-#include "reactive/reactive_vec4.h"
-#include "reactive/reactive_rectangle.h"
-#include "reactive/reactive_int_double.h"
-#include "reactive/reactive_long_float.h"
-#include "reactive/reactive_long_double.h"
+#include "reactive/reactive_object.h"
 
 // reactive/dispatch.h — the generic channel surface (the Java-like face).
 //
