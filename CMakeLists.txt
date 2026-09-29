@@ -157,20 +157,11 @@ add_library(vexspoke STATIC
     src/reflection/variable.c
     src/reflection/method.c
     src/reactive/reactive.c
-    src/reactive/reactive_bool.c
-    src/reactive/reactive_int.c
-    src/reactive/reactive_double.c
-    src/reactive/reactive_string.c
-    src/reactive/reactive_byte.c
-    src/reactive/reactive_short.c
-    src/reactive/reactive_char.c
-    src/reactive/reactive_long.c
-    src/reactive/reactive_float.c
+    src/reactive/reactive_primitive.c
     src/reactive/reactive_vec2.c
     src/reactive/reactive_vec3.c
     src/reactive/reactive_vec4.c
     src/reactive/reactive_rectangle.c
-    src/reactive/reactive_int_float.c
     src/reactive/reactive_int_double.c
     src/reactive/reactive_long_float.c
     src/reactive/reactive_long_double.c
