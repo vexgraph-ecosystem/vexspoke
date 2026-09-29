@@ -35,6 +35,22 @@
 #define Reactive(T)         VEX_CAT(Reactive, T)
 #define ReactiveProbable(T) VEX_CAT(ReactiveProbable, T)
 
+// Lowercase bridge: `##` pastes the literal token, so Reactive(int) would mangle
+// to `Reactiveint` (not `ReactiveInt`). C cannot uppercase a token, so the C
+// scalar spellings get an alias onto the camelCase class — then BOTH Reactive(int)
+// (the C type) and Reactive(Int) (the class token) land on ReactiveInt. Objects
+// (Reactive(Buffer), Reactive(Vec4)) need no bridge: the token already matches.
+#define Reactiveint     ReactiveInt
+#define Reactivechar    ReactiveChar
+#define Reactiveshort   ReactiveShort
+#define Reactivelong    ReactiveLong
+#define Reactivefloat   ReactiveFloat
+#define Reactivedouble  ReactiveDouble
+#define Reactivebool    ReactiveBool
+#define Reactivestring  ReactiveString
+
+#define ReactiveProbableint ReactiveProbableInt
+
 // --- The typed channel surface (shared by the template and TYPEDEF_REACTIVE) ---
 //
 // The callback receives the VALUE — never the reactive — because the value IS the
