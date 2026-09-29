@@ -10,7 +10,7 @@
 //
 // A reactive is ONE atomic word — a scalar (<= 8 bytes) or a pointer to an
 // immutable block — plus a shadow of the last drained word, a dirty flag, and
-// three observer lists (onSet / onChanged / onRemove). Nothing about it is
+// four observer lists (onSet / onChanged / onGet / onNullptr). Nothing about it is
 // type-specific, so every typed reactive (reactive_int.h, reactive_string.h, …)
 // EMBEDS this engine as its first member: a ReactiveInt* is also a Reactive*.
 //
@@ -39,12 +39,10 @@ typedef struct Reactive {
     ReactiveObserverList *onChanged; // fires when the drained word moved
     ReactiveObserverList *onGet;     // fires on each read (immediate; the reader's thread)
     ReactiveObserverList *onNullptr; // fires when a drained word is 0 (empty)
-    ReactiveObserverList *onRemove;  // fires on free (teardown; unbinds observers)
 } Reactive;
 
 typedef void (*ReactiveSetFn)(Reactive *self, uintptr_t newValue, void *userdata);
 typedef void (*ReactiveChangedFn)(Reactive *self, uintptr_t oldValue, uintptr_t newValue, void *userdata);
-typedef void (*ReactiveRemoveFn)(Reactive *self, void *userdata);
 typedef void (*ReactiveGetFn)(Reactive *self, uintptr_t value, void *userdata);
 typedef void (*ReactiveNullptrFn)(Reactive *self, void *userdata);
 
@@ -58,8 +56,8 @@ Reactive *Reactive_2(const Reactive *init, size_t count);
 // The bare `Reactive(...)` arity chooser is retired: the token is promoted to the
 // generic family constructor `Reactive(T)` (reactive/generic.h), so a bare engine
 // is built through Reactive_1/Reactive_2, and typed reactives through Reactive(T).
-// Fire onRemove and release the observer lists, WITHOUT freeing the block
-// (embedded engines live inside a typed facade, which frees itself).
+// Release the observer lists, WITHOUT freeing the block (embedded engines live
+// inside a typed facade, which frees itself). Freeing is just freeing.
 void Reactive_shutdown(Reactive *self);
 void Reactive_free(Reactive *self);
 
@@ -79,16 +77,14 @@ bool Reactive_drain(Reactive *self);
 
 // --- Observer add / remove (per event; multiple functions allowed) ---
 // Owner-affine: add/remove on the owner thread only.
-bool Reactive_addOnSet(Reactive *self, ReactiveSetFn cb, void *userdata);
-bool Reactive_removeOnSet(Reactive *self, ReactiveSetFn cb, void *userdata);
-bool Reactive_addOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata);
-bool Reactive_removeOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata);
-bool Reactive_addOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata);
-bool Reactive_removeOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata);
-bool Reactive_addOnGet(Reactive *self, ReactiveGetFn cb, void *userdata);
-bool Reactive_removeOnGet(Reactive *self, ReactiveGetFn cb, void *userdata);
-bool Reactive_addOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
-bool Reactive_removeOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
+bool Reactive_watchSet(Reactive *self, ReactiveSetFn cb, void *userdata);
+bool Reactive_unwatchSet(Reactive *self, ReactiveSetFn cb, void *userdata);
+bool Reactive_watchChanged(Reactive *self, ReactiveChangedFn cb, void *userdata);
+bool Reactive_unwatchChanged(Reactive *self, ReactiveChangedFn cb, void *userdata);
+bool Reactive_watchGet(Reactive *self, ReactiveGetFn cb, void *userdata);
+bool Reactive_unwatchGet(Reactive *self, ReactiveGetFn cb, void *userdata);
+bool Reactive_watchNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
+bool Reactive_unwatchNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata);
 
 // --- Getters (the Symmetric Getter/Setter Completeness Law: null-safe) ---
 size_t Reactive_observerCount(const Reactive *self);

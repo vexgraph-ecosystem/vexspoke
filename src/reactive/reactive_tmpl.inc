@@ -11,7 +11,8 @@
 //   VEX_ZERO         the additive identity for VEX_T (the Construction and arity clause).
 //
 // The engine contract is unchanged: _set is atomic and never fires; the owner
-// drains. _free tears the engine down before releasing the block.
+// drains. _free tears the engine down before releasing the block. The typed
+// channels are trampolines over the engine's uniform channels (reactive/generic.h).
 
 VEX_NAME *VEX_CAT(VEX_NAME, _1)(VEX_T initial) {
     VEX_NAME *self = (VEX_NAME*) Memory_alloc(VEX_TYPE_ID, sizeof(VEX_NAME));
@@ -43,3 +44,6 @@ VEX_T VEX_CAT(VEX_NAME, _get)(const VEX_NAME *self) {
         return VEX_ZERO;
     return VEX_FROM_WORD(Reactive_get((Reactive*) &(*self).base));
 }
+
+// The four typed channels: trampolines over the engine's uniform channels.
+VEX_CHANNELS_DEF(VEX_NAME, VEX_FROM_WORD);

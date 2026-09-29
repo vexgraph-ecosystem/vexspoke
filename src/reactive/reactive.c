@@ -16,7 +16,7 @@
  * DEFINITION: Reactive
  * ============================================================================
  * The reactive engine: one atomic word + a shadow + a dirty flag + three
- * observer lists (onSet / onChanged / onRemove). Type-agnostic — every typed
+ * observer lists (onSet / onChanged / onGet / onNullptr). Type-agnostic — every typed
  * reactive embeds it. Reactive_set (any thread) moves the word and marks dirty
  * and never fires; Reactive_drain (owner thread) coalesces the pending writes
  * into one batch and fires onSet then onChanged, with old = shadow and new =
@@ -28,7 +28,7 @@
  * never invalidates a fire.
  *
  * Lifetime: reactive_init for an embedded engine (inside a typed facade), or
- * Reactive_1/_2 for an arena one. reactiveShutdown fires onRemove and releases
+ * Reactive_1/_2 for an arena one. reactiveShutdown releases
  * the lists; reactiveFree additionally releases the block.
  * ============================================================================
  */
@@ -52,7 +52,6 @@
  *     ReactiveObserverList *onChanged; // fires when the drained word moved
  *     ReactiveObserverList *onGet;     // fires on each read (immediate)
  *     ReactiveObserverList *onNullptr; // fires when a drained word is 0
- *     ReactiveObserverList *onRemove;  // fires on free (teardown)
  *   }
  *
  * PRIVATE HELPERS (kept file-local, pure data + list math only):
@@ -60,13 +59,13 @@
  *   ReactiveObserver { void *cb; void *userdata; }        // SLOT RECORD
  *   ReactiveObserverList { ReactiveObserver *items; size_t count, cap; } // SLOT RECORD
  *   listEnsure(slot) / listAdd(list, cb, userdata) / listRemove(...) / listFree(list)
- *   fireSet/fireChanged/fireRemove(list, self, ...)       // the fire walks
+ *   fireSet/fireChanged (inline over the lists)           // the fire walks
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) Reactive_init, Reactive_1, Reactive_2, Reactive_free
  * Public Core Functions: (.h) Reactive_get, Reactive_set, Reactive_drain
- * Public Observers: (.h) Reactive_addOnSet/_addOnChanged/_addOnGet/_addOnNullptr/_addOnRemove (+ removes)
+ * Public Observers: (.h) Reactive_watchSet/_watchChanged/_watchGet/_watchNullptr (+ unwatch*)
  * Public Getters: (.h) Reactive_observerCount, Reactive_isDirty, Reactive_isActive
  * ============================================================================
  */
@@ -165,7 +164,6 @@ bool Reactive_init(Reactive *self, uintptr_t initialWord) {
     (*self).onChanged = nullptr;
     (*self).onGet = nullptr;
     (*self).onNullptr = nullptr;
-    (*self).onRemove = nullptr;
     return true;
 }
 
@@ -192,21 +190,10 @@ Reactive *Reactive_2(const Reactive *init, size_t count) {
 void Reactive_shutdown(Reactive *self) {
     if (self == nullptr)
         return;
-    // Teardown notify FIRST: every onRemove observer unbinds before the lists go
-    // (the Teardown Order Law — no dangling observer).
-    if ((*self).onRemove != nullptr) {
-        ReactiveObserverList *list = (*self).onRemove;
-        for (size_t i = 0; i < (*list).count; i++) {
-            ReactiveObserver o = (*list).items[i];
-            if (o.cb != nullptr)
-                ((ReactiveRemoveFn) o.cb)(self, o.userdata);
-        }
-    }
     listFree(&(*self).onSet);
     listFree(&(*self).onChanged);
     listFree(&(*self).onGet);
     listFree(&(*self).onNullptr);
-    listFree(&(*self).onRemove);
     (*self).active = false;
 }
 
@@ -290,43 +277,35 @@ bool Reactive_drain(Reactive *self) {
 
 // OBSERVERS
 
-bool Reactive_addOnSet(Reactive *self, ReactiveSetFn cb, void *userdata) {
+bool Reactive_watchSet(Reactive *self, ReactiveSetFn cb, void *userdata) {
     return self ? listAdd(&(*self).onSet, (void*) cb, userdata) : false;
 }
 
-bool Reactive_removeOnSet(Reactive *self, ReactiveSetFn cb, void *userdata) {
+bool Reactive_unwatchSet(Reactive *self, ReactiveSetFn cb, void *userdata) {
     return self ? listRemove(&(*self).onSet, (void*) cb, userdata) : false;
 }
 
-bool Reactive_addOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata) {
+bool Reactive_watchChanged(Reactive *self, ReactiveChangedFn cb, void *userdata) {
     return self ? listAdd(&(*self).onChanged, (void*) cb, userdata) : false;
 }
 
-bool Reactive_removeOnChanged(Reactive *self, ReactiveChangedFn cb, void *userdata) {
+bool Reactive_unwatchChanged(Reactive *self, ReactiveChangedFn cb, void *userdata) {
     return self ? listRemove(&(*self).onChanged, (void*) cb, userdata) : false;
 }
 
-bool Reactive_addOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata) {
-    return self ? listAdd(&(*self).onRemove, (void*) cb, userdata) : false;
-}
-
-bool Reactive_removeOnRemove(Reactive *self, ReactiveRemoveFn cb, void *userdata) {
-    return self ? listRemove(&(*self).onRemove, (void*) cb, userdata) : false;
-}
-
-bool Reactive_addOnGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
+bool Reactive_watchGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
     return self ? listAdd(&(*self).onGet, (void*) cb, userdata) : false;
 }
 
-bool Reactive_removeOnGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
+bool Reactive_unwatchGet(Reactive *self, ReactiveGetFn cb, void *userdata) {
     return self ? listRemove(&(*self).onGet, (void*) cb, userdata) : false;
 }
 
-bool Reactive_addOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
+bool Reactive_watchNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
     return self ? listAdd(&(*self).onNullptr, (void*) cb, userdata) : false;
 }
 
-bool Reactive_removeOnNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
+bool Reactive_unwatchNullptr(Reactive *self, ReactiveNullptrFn cb, void *userdata) {
     return self ? listRemove(&(*self).onNullptr, (void*) cb, userdata) : false;
 }
 
@@ -352,11 +331,6 @@ size_t Reactive_observerCount(const Reactive *self) {
             if ((*list).items[i].cb != nullptr) n++;
     }
     list = (*self).onNullptr;
-    if (list != nullptr) {
-        for (size_t i = 0; i < (*list).count; i++)
-            if ((*list).items[i].cb != nullptr) n++;
-    }
-    list = (*self).onRemove;
     if (list != nullptr) {
         for (size_t i = 0; i < (*list).count; i++)
             if ((*list).items[i].cb != nullptr) n++;

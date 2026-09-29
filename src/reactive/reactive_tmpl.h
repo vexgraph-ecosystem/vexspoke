@@ -26,3 +26,7 @@ VEX_NAME *VEX_CAT(VEX_NAME, _1)(VEX_T initial);
 void VEX_CAT(VEX_NAME, _free)(VEX_NAME *self);
 void VEX_CAT(VEX_NAME, _set)(VEX_NAME *self, VEX_T value);
 VEX_T VEX_CAT(VEX_NAME, _get)(const VEX_NAME *self);
+
+// The four typed channels (onSet / onChanged / onGet / onNullptr): the callback
+// receives the VALUE, never the reactive. See reactive/generic.h.
+VEX_CHANNELS_DECL(VEX_NAME, VEX_T);
