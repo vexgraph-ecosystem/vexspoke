@@ -144,12 +144,12 @@
     void VEX_RFN(NAME, _set)(VEX_RCLASS(NAME) *self, NAME *value) {     \
         if (self == nullptr)                                            \
             return;                                                     \
-        Reactive_set(&(*self).base, (uintptr_t) value);                 \
+        Reactive_store(&(*self).base, (uintptr_t) value);                 \
     }                                                                   \
     NAME *VEX_RFN(NAME, _get)(const VEX_RCLASS(NAME) *self) {           \
         if (self == nullptr)                                            \
             return nullptr;                                             \
-        return (NAME*) Reactive_get((Reactive*) &(*self).base);         \
+        return (NAME*) Reactive_load((Reactive*) &(*self).base);         \
     }                                                                   \
     VEX_CHANNELS_DEF(VEX_RCLASS(NAME), VEX_OBJECT_FROM)
 

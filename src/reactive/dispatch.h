@@ -60,4 +60,13 @@
 #define Reactive_addOnNullptr(r, ...)    _Generic((r), VEX_REACTIVE_FAMILY(VEX_ARM_ADD_NULLPTR) default: Reactive_watchNullptr)((r), __VA_ARGS__)
 #define Reactive_removeOnNullptr(r, ...) _Generic((r), VEX_REACTIVE_FAMILY(VEX_ARM_REM_NULLPTR) default: Reactive_unwatchNullptr)((r), __VA_ARGS__)
 
+// --- the generic value accessors (a reactive reads like a variable) ---
+// Reactive_set(gold, 100) / Reactive_get(gold) resolve to the per-class _set/_get
+// by the reactive's type; a bare Reactive* (or nullptr) routes to the raw engine.
+#define VEX_ARM_VAL_SET(T) VEX_CAT(Reactive, T) *: VEX_CAT(VEX_CAT(Reactive, T), _set),
+#define VEX_ARM_VAL_GET(T) VEX_CAT(Reactive, T) *: VEX_CAT(VEX_CAT(Reactive, T), _get),
+
+#define Reactive_set(r, ...) _Generic((r), VEX_REACTIVE_FAMILY(VEX_ARM_VAL_SET) default: Reactive_store)((r), __VA_ARGS__)
+#define Reactive_get(r)      _Generic((r), VEX_REACTIVE_FAMILY(VEX_ARM_VAL_GET) default: Reactive_load)((r))
+
 #endif

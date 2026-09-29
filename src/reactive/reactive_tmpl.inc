@@ -36,13 +36,13 @@ void VEX_CAT(VEX_NAME, _free)(VEX_NAME *self) {
 void VEX_CAT(VEX_NAME, _set)(VEX_NAME *self, VEX_T value) {
     if (self == nullptr)
         return;
-    Reactive_set(&(*self).base, VEX_TO_WORD(value));
+    Reactive_store(&(*self).base, VEX_TO_WORD(value));
 }
 
 VEX_T VEX_CAT(VEX_NAME, _get)(const VEX_NAME *self) {
     if (self == nullptr)
         return VEX_ZERO;
-    return VEX_FROM_WORD(Reactive_get((Reactive*) &(*self).base));
+    return VEX_FROM_WORD(Reactive_load((Reactive*) &(*self).base));
 }
 
 // The four typed channels: trampolines over the engine's uniform channels.

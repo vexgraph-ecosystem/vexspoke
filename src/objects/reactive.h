@@ -7,6 +7,7 @@
 // one engine + the typed reactives). This shim keeps existing includes
 // (graphvex, main, tests) compiling; new code includes "reactive/reactive.h".
 
+#include "reactive/dispatch.h"
 #include "reactive/reactive.h"
 
 #endif

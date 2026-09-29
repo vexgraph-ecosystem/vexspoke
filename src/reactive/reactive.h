@@ -14,7 +14,7 @@
 // type-specific, so every typed reactive (reactive_int.h, reactive_string.h, …)
 // EMBEDS this engine as its first member: a ReactiveInt* is also a Reactive*.
 //
-// WRITE ANYWHERE, NOTIFY ON THE OWNER. Reactive_set is atomic and safe from any
+// WRITE ANYWHERE, NOTIFY ON THE OWNER. Reactive_store is atomic and safe from any
 // thread; it moves the word and marks dirty and NEVER fires an observer. The
 // owner (Thread 0, the pump / paint pass) calls Reactive_drain, which coalesces
 // every write since the last drain into one batch (last value wins) and fires
@@ -65,11 +65,11 @@ void Reactive_free(Reactive *self);
 // Atomic acquire load — safe from any thread. Fires the onGet observers
 // immediately (on the caller's thread) when any are bound; with none bound it is
 // a single atomic load, so a bare read stays hot-path cheap.
-uintptr_t Reactive_get(Reactive *self);
+uintptr_t Reactive_load(Reactive *self);
 // Atomic release store + dirty mark. Safe from ANY thread and NEVER fires
 // observers. For a word-sized reactive the word IS the value; for a big one it
 // is a pointer to an immutable block (see the typed facades).
-void Reactive_set(Reactive *self, uintptr_t word);
+void Reactive_store(Reactive *self, uintptr_t word);
 // The owner-thread notification point: consume the writes since the last drain
 // as ONE coalesced batch and fire onSet then onChanged (only on a real move).
 // Returns true when a batch fired. Lock-free — never blocks.

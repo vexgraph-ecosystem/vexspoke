@@ -17,7 +17,7 @@
  * ============================================================================
  * The reactive engine: one atomic word + a shadow + a dirty flag + three
  * observer lists (onSet / onChanged / onGet / onNullptr). Type-agnostic — every typed
- * reactive embeds it. Reactive_set (any thread) moves the word and marks dirty
+ * reactive embeds it. Reactive_store (any thread) moves the word and marks dirty
  * and never fires; Reactive_drain (owner thread) coalesces the pending writes
  * into one batch and fires onSet then onChanged, with old = shadow and new =
  * value, so a change is exactly one compare and both endpoints are exact.
@@ -64,7 +64,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) Reactive_init, Reactive_1, Reactive_2, Reactive_free
- * Public Core Functions: (.h) Reactive_get, Reactive_set, Reactive_drain
+ * Public Core Functions: (.h) Reactive_load, Reactive_store, Reactive_drain
  * Public Observers: (.h) Reactive_watchSet/_watchChanged/_watchGet/_watchNullptr (+ unwatch*)
  * Public Getters: (.h) Reactive_observerCount, Reactive_isDirty, Reactive_isActive
  * ============================================================================
@@ -181,7 +181,7 @@ Reactive *Reactive_2(const Reactive *init, size_t count) {
     Reactive *p = (Reactive*) Memory_alloc(TYPE_REACTIVE_ARRAY, sizeof(Reactive) * count);
     if (p == nullptr)
         return nullptr;
-    uintptr_t seed = (init != nullptr) ? Reactive_get((Reactive*) init) : 0u;
+    uintptr_t seed = (init != nullptr) ? Reactive_load((Reactive*) init) : 0u;
     for (size_t i = 0; i < count; i++)
         Reactive_init(&p[i], seed);
     return p;
@@ -206,7 +206,7 @@ void Reactive_free(Reactive *self) {
 
 // CORE FUNCTIONS
 
-uintptr_t Reactive_get(Reactive *self) {
+uintptr_t Reactive_load(Reactive *self) {
     if (self == nullptr)
         return 0u;
     uintptr_t value = atomic_load_explicit(&(*self).value, memory_order_acquire);
@@ -224,7 +224,7 @@ uintptr_t Reactive_get(Reactive *self) {
     return value;
 }
 
-void Reactive_set(Reactive *self, uintptr_t word) {
+void Reactive_store(Reactive *self, uintptr_t word) {
     if (self == nullptr)
         return;
     // Any thread: move the word, mark dirty, fire nothing.
