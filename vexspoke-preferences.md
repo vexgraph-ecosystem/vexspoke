@@ -1,15 +1,15 @@
 # vexspoke — Repo-Local Living Preferences
-> Exclusive repository-level preferences (the Living Preferences Law).
+> Repo-local preferences governed by the Living Documentation Law.
 > Universal Supreme Constitution: preferences.md (vexspoke).
-
-;;SYNC("mirrors ecosystem/vexspoke/preferences.md @ 2026.09-universal")
 
 ## 0. Constitution Link (supreme)
 - [preferences.md](https://github.com/vexgraph-dev/vexspoke/blob/main/preferences.md) (canonical, vexspoke) — accessible locally at ../../preferences.md
 - All universal laws in `preferences.md` are mandatory and binding across the ecosystem.
 - This document codifies **exclusive** preferences that apply uniquely to `vexspoke` (R2 Relational Memory Substrate).
 
-## 1. Exclusive Preferences Binding Matrix
+## 1. Repo-Local Law Index (Binding Matrix)
+
+Universal laws are inherited from the canonical `preferences.md` Index; this table indexes the additional laws specific to this repository.
 
 | Law Title | Scope | Enforcement |
 | :--- | :--- | :--- |
@@ -17,6 +17,7 @@
 | **Self-Describing Memory Block Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
 | **BitPool Slot Segregation Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
 | **24-Byte Variable Slot Law (The 23+1 Rule)** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
+| **Reactive Generics Law** | R2 behavior (the reactive engine + the generic family) | Mandatory for `vexspoke` |
 
 ## 2. Exclusive Repo-Local Laws (FULL PROSE RESTATEMENT)
 
@@ -83,12 +84,67 @@ In a relational memory substrate where symbols resolve to addresses, string allo
 
 ---
 
+### Reactive Generics Law
+
+#### Definition:
+Reactivity is **one engine** and **one generic spelling**. `Reactive` is a single
+type-agnostic engine — one atomic word, a shadow, a dirty flag, and the typed
+channel lists — exposed through `Reactive(T)`: `Reactive(int)`, `Reactive(Vec4)`,
+`Reactive(Buffer)`, where the argument is a leaf type. The typed classes are
+**stamped, not hand-written**: `TYPEDEF_REACTIVE(NAME)` / `IMPLEMENT_REACTIVE(NAME)`
+stamp any object in two lines, and the built-in families live one file pair each —
+`reactive_primitive` (the scalar set), `reactive_object` (Vec2/3/4, Rectangle, the
+pairs), `reactive_probable` (the merged probable). A `_Generic` surface
+(`Reactive_set`/`Reactive_get`/`Reactive_addOnChanged`/…) names ONE function for
+any type at the call site. Four channels carry typed callbacks: `onSet`,
+`onChanged`, `onGet` (the one-fire read), `onNullptr`.
+
+#### The Why:
+The engine is already type-agnostic at runtime (one word, everything is a pointer),
+so the generic layer is an **ergonomics and safety** surface, not a new runtime —
+and generating it from templates means a new reactive is one line. The callback is
+`fn(T value)` because the *value* is the payload: a consumer of "gold" hears the new
+gold, not which reactive fired. Nesting is refused (`Reactive(Probable(T))` does not
+exist) because the bell can only ring from **inside** the object that owns the value
+— a reactive over a probable is the MERGED `ReactiveProbable(T)`, never a wrapper.
+
+#### The Rule:
+1. **One spelling.** `Reactive(T)`; the lowercase C spellings (`Reactive(int)`,
+   `Reactive(float)`) bridge to the camelCase class. Never a bespoke per-type name
+   at the call site.
+2. **No nesting.** `Reactive(Probable(T))` does not exist; the merged
+   `ReactiveProbable(T)` is the composite. A reactive over a probable pools belongs
+   to the merged class too.
+3. **Typed channels, `fn(T value)`.** The observer receives the value; `removeOn`
+   matches the function-pointer address (there is no userdata). `onGet` is a
+   one-fire read (fires with the value as it is read); `onNullptr` fires on an empty
+   slot.
+4. **One generic function surface.** `_Generic` resolves `Reactive_set`/`Reactive_get`/
+   `Reactive_addOnChanged`/… to the per-class arm by the reactive's type; a bare
+   `Reactive*` (or `nullptr`) routes to the raw engine channel.
+5. **Families are one file pair each.** The scalar, object, and probable families
+   each live in a single `reactive_<family>.{h,c}`; a *new* object is stamped by
+   `TYPEDEF_REACTIVE(NAME)` on its own single-class file.
+6. **Observers with no bind are free.** A metric with no observers must not fire on
+   a hot path — a bare `Reactive_get` stays one atomic load.
+
+#### Managed exception:
+```c
+;;INTENTION("the family files — reactive_primitive, reactive_object,
+reactive_probable — waive the Single Class Per File Law BY INTENT: they are
+mechanical template stamps that differ only in VEX_T, not hand-authored classes;
+one file pair per family reads clearer than twenty identical ones. Per the
+Conflict Triage Law.")
+```
+
+---
+
 ## 3. Repo-Local Extensions (managed, per the Conflict Triage Law)
 
 ;;INTENTION("R2 Relational Memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
 
 ---
 
-## 4. Readiness Cross-Reference (the Living Feature Readiness Law)
+## 4. Readiness Cross-Reference (Living Documentation Law)
 
 - Feature readiness matrix tracked in [`../../_repositories/.ecosystem/vexspoke.md`](../../_repositories/.ecosystem/vexspoke.md) (rendered as `[[vexspoke]]` wiki page).
