@@ -174,6 +174,7 @@ add_library(vexspoke STATIC
     src/reactive/reactive_int_double.c
     src/reactive/reactive_long_float.c
     src/reactive/reactive_long_double.c
+    src/reactive/reactive_probable_int.c
     src/relational/relational.c
     src/atomic/ring.c
     src/atomic/registry.c
