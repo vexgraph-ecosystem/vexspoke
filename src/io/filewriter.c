@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * CLASS: Filewriter (io/filewriter.c)
- * LEVEL: L2 — Behavior (I/O behavior API)
  * ============================================================================
  * the FileWriter class, ported from io/FileWriter.java.
  *
@@ -52,7 +51,7 @@
 // filewriter.c — FileWriter port (Legacy: io/FileWriter.java).
 
 bool FileWriter_open(FileWriter *w, const char *path) {
-    if (!path)
+    if (!w || !path)
         return false;
     (*w).open = false;
     (*w).bytes_written = 0;
