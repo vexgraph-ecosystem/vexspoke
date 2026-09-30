@@ -1,6 +1,6 @@
 #include "lang/mat4.h"
 
-#include "lang/fastmath.h"
+#include "math/fast_math.h"
 #include "nio/mem.h"
 #include "oop/type.h"
 #include "annotation/definition.h"
@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Mat4 (lang/mat4.c)
- * LEVEL: L2 — Behavior (math behavior API)
  * ============================================================================
  * the Mat4 class, ported from lang/Mat4.java.
  *
@@ -161,16 +160,16 @@ void Mat4_transpose(const Mat4 *src, Mat4 *dest) {
 void Mat4_createTransformationMatrix(float pos_x, float pos_y, float pos_z,
                                      float rot_x_deg, float rot_y_deg, float rot_z_deg,
                                      float scale_x, float scale_y, float scale_z, Mat4 *dest) {
-    float rx = rot_x_deg * FastMath_DEG_TO_RAD;
-    float ry = rot_y_deg * FastMath_DEG_TO_RAD;
-    float rz = rot_z_deg * FastMath_DEG_TO_RAD;
+    float rx = rot_x_deg * FAST_MATH_DEG_TO_RAD;
+    float ry = rot_y_deg * FAST_MATH_DEG_TO_RAD;
+    float rz = rot_z_deg * FAST_MATH_DEG_TO_RAD;
 
-    float cx = FastMath_cos32(rx);
-    float sx = FastMath_sin32(rx);
-    float cy = FastMath_cos32(ry);
-    float sy = FastMath_sin32(ry);
-    float cz = FastMath_cos32(rz);
-    float sz = FastMath_sin32(rz);
+    float cx = FastMath_cos(rx);
+    float sx = FastMath_sin(rx);
+    float cy = FastMath_cos(ry);
+    float sy = FastMath_sin(ry);
+    float cz = FastMath_cos(rz);
+    float sz = FastMath_sin(rz);
 
     float cycz = cy * cz;
     float cysz = cy * sz;
@@ -198,9 +197,9 @@ void Mat4_createTransformationMatrix(float pos_x, float pos_y, float pos_z,
 
 void Mat4_createTransformationMatrix2D(float pos_x, float pos_y,
                                        float rot_z_deg, float scale_x, float scale_y, Mat4 *dest) {
-    float rz = rot_z_deg * FastMath_DEG_TO_RAD;
-    float cz = FastMath_cos32(rz);
-    float sz = FastMath_sin32(rz);
+    float rz = rot_z_deg * FAST_MATH_DEG_TO_RAD;
+    float cz = FastMath_cos(rz);
+    float sz = FastMath_sin(rz);
 
     Mat4_zero(dest);
     Mat4_set(dest, 0, 0, cz * scale_x);
@@ -217,13 +216,13 @@ void Mat4_createViewMatrix(float pos_x, float pos_y, float pos_z,
                            float pitch_deg, float yaw_deg, float roll_deg, Mat4 *dest) {
     (void)roll_deg;
 
-    float pitch_rad = pitch_deg * FastMath_DEG_TO_RAD;
-    float yaw_rad = yaw_deg * FastMath_DEG_TO_RAD;
+    float pitch_rad = pitch_deg * FAST_MATH_DEG_TO_RAD;
+    float yaw_rad = yaw_deg * FAST_MATH_DEG_TO_RAD;
 
-    float cp = FastMath_cos32(pitch_rad);
-    float sp = FastMath_sin32(pitch_rad);
-    float cy = FastMath_cos32(yaw_rad);
-    float sy = FastMath_sin32(yaw_rad);
+    float cp = FastMath_cos(pitch_rad);
+    float sp = FastMath_sin(pitch_rad);
+    float cy = FastMath_cos(yaw_rad);
+    float sy = FastMath_sin(yaw_rad);
 
     float m00 = cy,  m01 = sy * sp, m02 = sy * cp;
     float m10 = 0.0f, m11 = cp,     m12 = -sp;
@@ -264,15 +263,15 @@ void Mat4_scale(const Mat4 *src, float sx, float sy, float sz, Mat4 *dest) {
 void Mat4_rotate(const Mat4 *src, float angle_radians,
                  float axis_x, float axis_y, float axis_z, Mat4 *dest) {
     float len_sq = axis_x * axis_x + axis_y * axis_y + axis_z * axis_z;
-    if (len_sq <= FastMath_EPSILON)
+    if (len_sq <= FAST_MATH_EPSILON)
         return;
     float inv_len = FastMath_invSqrt(len_sq);
     axis_x *= inv_len;
     axis_y *= inv_len;
     axis_z *= inv_len;
 
-    float c = FastMath_cos32(angle_radians);
-    float s = FastMath_sin32(angle_radians);
+    float c = FastMath_cos(angle_radians);
+    float s = FastMath_sin(angle_radians);
     float nc = 1.0f - c;
 
     float xy = axis_x * axis_y, yz = axis_y * axis_z, zx = axis_z * axis_x;
@@ -298,12 +297,15 @@ void Mat4_rotate(const Mat4 *src, float angle_radians,
         Mat4_set(dest, row, 0, m0 * r00 + m1 * r10 + m2 * r20);
         Mat4_set(dest, row, 1, m0 * r01 + m1 * r11 + m2 * r21);
         Mat4_set(dest, row, 2, m0 * r02 + m1 * r12 + m2 * r22);
+        // carry the translation column unchanged (a rotation has no translation,
+        // but src's column 3 must survive into a non-aliased dest)
+        Mat4_set(dest, row, 3, Mat4_get(src, row, 3));
     }
 }
 
 void Mat4_perspective(float fov_y_radians, float aspect, float z_near, float z_far, Mat4 *dest) {
     Mat4_zero(dest);
-    float tan_half_fov = FastMath_tan32(fov_y_radians / 2.0f);
+    float tan_half_fov = FastMath_tan(fov_y_radians / 2.0f);
 
     Mat4_set(dest, 0, 0, 1.0f / (aspect * tan_half_fov));
     Mat4_set(dest, 1, 1, 1.0f / tan_half_fov);
@@ -338,7 +340,7 @@ void Mat4_lookAt(float eye_x, float eye_y, float eye_z,
     float fy = eye_y - target_y;
     float fz = eye_z - target_z;
     float f_len_sq = fx * fx + fy * fy + fz * fz;
-    if (f_len_sq > FastMath_EPSILON) {
+    if (f_len_sq > FAST_MATH_EPSILON) {
         float inv_f = FastMath_invSqrt(f_len_sq);
         fx *= inv_f;
         fy *= inv_f;
@@ -349,7 +351,7 @@ void Mat4_lookAt(float eye_x, float eye_y, float eye_z,
     float ry = up_z * fx - up_x * fz;
     float rz = up_x * fy - up_y * fx;
     float r_len_sq = rx * rx + ry * ry + rz * rz;
-    if (r_len_sq > FastMath_EPSILON) {
+    if (r_len_sq > FAST_MATH_EPSILON) {
         float inv_r = FastMath_invSqrt(r_len_sq);
         rx *= inv_r;
         ry *= inv_r;
