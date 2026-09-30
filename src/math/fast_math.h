@@ -42,7 +42,7 @@ float FastMath_atan2(float y, float x);
 // Branchless absolute value (IEEE sign-bit clear).
 float FastMath_abs(float x);
 
-// Magic-float fast rounding (16384 trick).
+// Magic-float fast rounding (2^23 trick).
 float FastMath_round(float x);
 
 // Branchless clamp.

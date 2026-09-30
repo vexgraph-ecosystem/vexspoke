@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: FastMath (math/fast_math.c — defined in math/fast_math.h)
- * LEVEL: L2 — Behavior (relaxed approximations deliberately trading IEEE conformance for speed)
  * ============================================================================
  * High-speed mathematical approximations for real-time 3D, procedural animations,
  * particles, and graphics. Replaces expensive libm routines with branchless
@@ -151,12 +150,16 @@ float FastMath_abs(float x) {
 }
 
 float FastMath_round(float x) {
+    // 2^23 is the magic constant for float32: adding it forces the mantissa to
+    // integer precision, so the add/sub round-trip rounds x to the nearest
+    // integer (IEEE round-half-to-even). 2^14 (the old constant) only rounded
+    // to the float ulp at that magnitude (~2^-9), i.e. not to integers at all.
     if (x >= 0.0f) {
-        float f = x + 16384.0f;
-        return f - 16384.0f;
+        float f = x + 8388608.0f;
+        return f - 8388608.0f;
     } else {
-        float f = x - 16384.0f;
-        return f + 16384.0f;
+        float f = x - 8388608.0f;
+        return f + 8388608.0f;
     }
 }
 
