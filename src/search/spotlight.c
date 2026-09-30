@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Spotlight (search/spotlight.c — defined in search/spotlight.h)
- * LEVEL: L2 — Behavior (ranked search and math expression evaluation)
  * ============================================================================
  * Scores query strings against candidates using tiered relevance ranking and
  * evaluates in-line mathematical calculations.
@@ -114,9 +113,11 @@ size_t Spotlight_rank(const char *query, const char *const *candidates, const ui
     if (!query || !candidates || !outMatches || maxCount == 0) return 0;
 
     size_t matchCount = 0;
+    size_t total = 0;
     for (size_t i = 0; i < candidateCount; i++) {
         int score = calculate_score(candidates[i], query);
         if (score > 0) {
+            total++;
             if (matchCount < maxCount) {
                 outMatches[matchCount].id = ids ? ids[i] : (uint32_t) i;
                 outMatches[matchCount].score = score;
@@ -129,7 +130,7 @@ size_t Spotlight_rank(const char *query, const char *const *candidates, const ui
         qsort(outMatches, matchCount, sizeof(SpotlightMatch), compare_matches);
     }
 
-    return matchCount;
+    return total;   // documented: TOTAL matches found (not capped at maxCount)
 }
 
 bool Spotlight_tryCalculate(const char *query, double *outResult) {
