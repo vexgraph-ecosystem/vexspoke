@@ -103,7 +103,7 @@ uint8_t *String_append(const uint8_t *a, const uint8_t *b);
 uint8_t *String_appendLiteral(const uint8_t *a, const char *b);
 uint8_t *String_appendLiterals(const char *a, const char *b);
 void String_appendInto(const uint8_t *a, const uint8_t *b, uint8_t *dest);
-void String_appendFirst(uint8_t *a, const uint8_t *b);
-void String_appendFirstLiteral(uint8_t *a, const char *b);
+uint8_t *String_appendFirst(uint8_t *a, const uint8_t *b);
+uint8_t *String_appendFirstLiteral(uint8_t *a, const char *b);
 
 #endif

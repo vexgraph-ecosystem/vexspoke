@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * MODULE: String (primitive/string.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * the string class, ported from primitive/string.java.
  *
@@ -341,29 +340,38 @@ void String_appendInto(const uint8_t *a, const uint8_t *b, uint8_t *dest) {
     dest[aLen + bLen] = '\0';
 }
 
-void String_appendFirst(uint8_t *a, const uint8_t *b) {
-    if (!a || !b)
-        return;
+uint8_t *String_appendFirst(uint8_t *a, const uint8_t *b) {
+    if (!a)
+        return b ? string_copy(b) : nullptr;
+    if (!b || b[0] == '\0')
+        return a;
     size_t aLen = string_length(a);
     size_t bLen = string_length(b);
-    size_t cap = string_capacity(a);
     size_t need = aLen + bLen + 1;
-    if (cap >= need) {
-        memcpy(a + aLen, b, bLen + 1);
-        return;
+    if (string_capacity(a) < need) {
+        uint8_t *grown = Memory_realloc(a, need);
+        if (!grown)
+            return a;
+        a = grown;
     }
-    // realloc via new block — caller must reassign: a = String_append(a,b); free old not done here
-    // For in-place grow, we require capacity; if not enough, do nothing (caller should use String_append)
+    memcpy(a + aLen, b, bLen + 1);
+    return a;
 }
 
-void String_appendFirstLiteral(uint8_t *a, const char *b) {
-    if (!a || !b)
-        return;
+uint8_t *String_appendFirstLiteral(uint8_t *a, const char *b) {
+    if (!a)
+        return b ? string_allocate(b) : nullptr;
+    if (!b || b[0] == '\0')
+        return a;
     size_t aLen = string_length(a);
     size_t bLen = strlen(b);
-    size_t cap = string_capacity(a);
     size_t need = aLen + bLen + 1;
-    if (cap >= need) {
-        memcpy(a + aLen, b, bLen + 1);
+    if (string_capacity(a) < need) {
+        uint8_t *grown = Memory_realloc(a, need);
+        if (!grown)
+            return a;
+        a = grown;
     }
+    memcpy(a + aLen, b, bLen + 1);
+    return a;
 }
