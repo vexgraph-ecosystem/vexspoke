@@ -41,7 +41,6 @@
 /**
  * ============================================================================
  * CLASS: Spin (atomic/spin.c)
- * LEVEL: L4 — Self-Management (spinlock sync primitive)
  * ============================================================================
  * spinlock API (Legacy: thread/SpinLock.java).
  *
@@ -140,5 +139,7 @@ void SpinLock_unlock(SpinLock *lock) {
 
 // is_locked takes a const pointer, so cast away const for the atomic load.
 bool SpinLock_isLocked(const SpinLock *lock) {
+    if (!lock)
+        return false;
     return atomic_load_explicit(&(*(SpinLock*) lock).word, memory_order_acquire) != 0;
 }
