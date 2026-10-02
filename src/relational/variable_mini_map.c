@@ -37,7 +37,6 @@
 /**
  * ============================================================================
  * CLASS: VariableMiniMap (relational/variable_mini_map.c)
- * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
  * the scoped name => pointer mini map (39 single-level buckets).
  *

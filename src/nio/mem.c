@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * CLASS: ForeignMemory (nio/mem)
- * LEVEL: L4 — Self-Management (arena/slab memory manager)
  * ============================================================================
  * Pre-allocated Master Arena and Size-Class Slab Allocator fulfilling the
  * Vex Paradigm: zero steady-state malloc, cache-hot slot recycling, and
@@ -93,7 +92,7 @@
  *   - Memory_findAll(typeId, outArray, maxCount)
  *
  * Arena Functions (Phase-4):
- *   - MemoryArena_create(totalBytes)
+ *   - MemoryArena(totalBytes)
  *   - MemoryArena_destroy(a)
  *   - MemoryArena_alloc(a, typeId, numBytes)
  *   - MemoryArena_realloc(a, userPtr, newBytes)
@@ -677,7 +676,7 @@ size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount) {
     return MemoryArena_findAll(&s_default, typeId, outArray, maxCount);
 }
 
-MemoryArena *MemoryArena_create(size_t totalBytes) {
+MemoryArena *MemoryArena_1(size_t totalBytes) {
     MemoryArena *a = (MemoryArena*) calloc(1, sizeof(MemoryArena));
     if (!a)
         return nullptr;

@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: SphereArray (struct/sphere_array.c)
- * LEVEL: L2 — Off-Heap Spatial Container
  * ============================================================================
  * 3D Spherical Voxel Matrix evaluated via the 3D Pythagorean Theorem.
  *
@@ -47,7 +46,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - SphereArray_create(radius, elementClass)
+ *   - SphereArray(radius, elementClass)
  *   - SphereArray_createWithStride(radius, elementClass, stride)
  *
  * Core Functions:
@@ -126,7 +125,7 @@ SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-SphereArray *SphereArray_create(int32_t radius, uint32_t elementClass) {
+SphereArray *SphereArray_2(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;

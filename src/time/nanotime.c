@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * CLASS: Nanotime (time/nanotime.c)
- * LEVEL: L2 — Behavior (time behavior API)
  * ============================================================================
  * the monotonic clock (Legacy: time/NanoTime.java).
  *

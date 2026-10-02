@@ -22,7 +22,6 @@
 /**
  * ============================================================================
  * MODULE: Tls_curl (net/tls_curl.c)
- * LEVEL: L4 — Self-Management (TLS platform backend (non-Apple))
  * ============================================================================
  * libcurl TLS backend for non-Apple platforms.
  *

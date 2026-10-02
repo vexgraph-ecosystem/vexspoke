@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Queue (struct/queue.c)
- * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * the Queue class, ported from struct/Queue.java.
  *

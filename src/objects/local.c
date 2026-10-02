@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Local (objects/local.c)
- * LEVEL: L2 — Behavior (object behavior API)
  * ============================================================================
  * Thread-local variable slot table object wrapper. Values live in an
  * arena-backed table indexed by thread id; the table starts at 8 slots and

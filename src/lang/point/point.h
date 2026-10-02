@@ -33,6 +33,7 @@ typedef struct Point {
 //   Point(x, y)    : Point_2(x, y)
 Point *Point_0(void);
 Point *Point_2(int32_t x, int32_t y);
+#define Point(...) CONSTRUCTOR_DISPATCH(Point, __VA_ARGS__)
 void Point_free(Point *p);
 
 // Setters

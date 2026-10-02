@@ -33,7 +33,6 @@ extern char **environ;
 /**
  * ============================================================================
  * CLASS: ProcessSpawn (io/process_spawn.c)
- * LEVEL: L2 — Behavior (R1 leaf driver handle: bounded child-job table)
  * ============================================================================
  * A bounded child-process job table for the R1 leaf layer. Fixed slots
  * (PROCESS_SPAWN_JOBS_MAX), per-job pid/exit/done rows, table-level

@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Octree (struct/octree.c)
- * LEVEL: L2 — Off-Heap Spatial Tree
  * ============================================================================
  * 3D Spatial Partitioning Octree.
  *
@@ -65,7 +64,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - Octree_create(bounds, maxDepth, maxItemsPerNode)
+ *   - Octree(bounds, maxDepth, maxItemsPerNode)
  *
  * Public Core Functions: (.h)
  *   - Octree_free(self)
@@ -79,7 +78,7 @@
  *   - OctreeAABB_intersectsSphere(box, center, radius)
  *
  * Private Core Functions: (.c static)
- *   - OctreeNode_create(bounds, capacity)
+ *   - octreeNodeAlloc(bounds, capacity)
  *   - OctreeNode_free(node)
  *   - OctreeNode_subdivide(node, childCapacity)
  *   - OctreeNode_insert(node, item, depth, maxDepth, maxItems)
@@ -119,7 +118,7 @@ bool OctreeAABB_intersectsSphere(OctreeAABB box, OctreePoint center, float radiu
     return (dx * dx + dy * dy + dz * dz) <= (radius * radius);
 }
 
-static OctreeNode *OctreeNode_create(OctreeAABB bounds, uint32_t capacity) {
+static OctreeNode *octreeNodeAlloc(OctreeAABB bounds, uint32_t capacity) {
     OctreeNode *node = (OctreeNode*) Memory_alloc(TYPE_OCTREE, sizeof(OctreeNode));
     if (node == nullptr) {
         return nullptr;
@@ -182,7 +181,7 @@ static void OctreeNode_subdivide(OctreeNode *node, uint32_t childCapacity) {
     subBounds[7] = (OctreeAABB) { midX, midY, midZ, (*node).bounds.maxX, (*node).bounds.maxY, (*node).bounds.maxZ };
 
     for (int i = 0; i < 8; i++) {
-        (*node).children[i] = OctreeNode_create(subBounds[i], childCapacity);
+        (*node).children[i] = octreeNodeAlloc(subBounds[i], childCapacity);
     }
     (*node).isLeaf = false;
 }
@@ -238,7 +237,7 @@ static bool OctreeNode_insert(OctreeNode *node, OctreeItem item, uint32_t depth,
     return false;
 }
 
-Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode) {
+Octree *Octree_3(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode) {
     if (maxDepth == 0) maxDepth = OCTREE_DEFAULT_MAX_DEPTH;
     if (maxItemsPerNode == 0) maxItemsPerNode = OCTREE_DEFAULT_NODE_CAPACITY;
 
@@ -250,7 +249,7 @@ Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPer
     (*self).maxDepth = maxDepth;
     (*self).maxItemsPerNode = maxItemsPerNode;
     (*self).totalItems = 0;
-    (*self).root = OctreeNode_create(bounds, maxItemsPerNode);
+    (*self).root = octreeNodeAlloc(bounds, maxItemsPerNode);
     if ((*self).root == nullptr) {
         Memory_free(self);
         return nullptr;
@@ -358,6 +357,6 @@ void Octree_clear(Octree *self) {
     if (self == nullptr || (*self).root == nullptr) return;
     OctreeAABB bounds = (*(*self).root).bounds;
     OctreeNode_free((*self).root);
-    (*self).root = OctreeNode_create(bounds, (*self).maxItemsPerNode);
+    (*self).root = octreeNodeAlloc(bounds, (*self).maxItemsPerNode);
     (*self).totalItems = 0;
 }

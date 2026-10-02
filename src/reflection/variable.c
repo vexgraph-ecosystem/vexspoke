@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * CLASS: Variable (reflection/variable.c)
- * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
  * the Variable metadata record (name + reader + target).
  *

@@ -5,11 +5,11 @@
 
 // exception/throw.h — the loud-failure macro (the Failure Observability Law).
 //
-// THROW("...") is how a COLD rejection reports itself: one red "[vex]" line to
-// stderr, prefixed with its source location, and nothing more. It never unwinds,
-// never allocates, never blocks, and never returns from a caller — the
-// relational model has no exception stack. A rejected operation returns its
-// safe default AND THROWs the reason on the way out (the Cold-Strict,
+// THROW("...") reports a detected COLD rejection: one "[vex]" line to
+// stderr, prefixed with its source location. It never unwinds or exits; the
+// caller must return a safe result. Stderr is synchronous and may block, so
+// this macro is not for a hot path, signal handler, or bounded teardown.
+// Tests prove both the error result and diagnostic (the Cold-Strict,
 // Hot-Minimal Validation Law).
 //
 // It is a MACRO by design: the source location is captured at the call site,

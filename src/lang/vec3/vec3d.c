@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Vec3d (lang/vec3/vec3d.c — defined in lang/vec3/vec3d.h)
- * LEVEL: L2 — Behavior (32-byte SIMD double-precision 3D vector)
  * ============================================================================
  * Ultra-precision 3D spatial vector for orbital and high-fidelity physics.
  *

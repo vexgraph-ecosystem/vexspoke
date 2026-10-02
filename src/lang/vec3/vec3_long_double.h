@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "math/coord_frame.h"
+#include "c23/constructor.h"
 
 // lang/vec3/vec3_long_double.h — Cosmic-Scale 3D Vector (int64 sector + double local).
 //
@@ -27,7 +28,8 @@ typedef struct Vec3LongDouble {
 } Vec3LongDouble;
 
 Vec3LongDouble *Vec3LongDouble_0(void);
-Vec3LongDouble *Vec3LongDouble_create(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame);
+#define Vec3LongDouble(...) CONSTRUCTOR_DISPATCH(Vec3LongDouble, __VA_ARGS__)
+Vec3LongDouble *Vec3LongDouble_7(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame);
 void Vec3LongDouble_free(Vec3LongDouble *v);
 
 void Vec3LongDouble_rebalance(Vec3LongDouble *v, double sectorSize);

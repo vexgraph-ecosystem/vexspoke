@@ -1,4 +1,5 @@
 #include "thread/ui.h"
+#include "thread/compute.h"
 
 #include "annotation/incomplete.h"
 
@@ -23,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Ui (thread/ui.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the UI worker (Legacy: UIThread.java).
  *
@@ -48,13 +48,14 @@
 
 static void ui_job(Thread *self, void *task) {
     (void)self;
+    if (ComputeJob_run(task)) return;   // a generic job handed to this role
     if (!task)
         return; // TODO(ui): tickComponents(self) once UI components land.
     // TODO(ui): dispatch(packet) for queued UI packets.
 }
 
 Thread *UIThread_invoke(void) {
-    return Thread_new(TYPE_THREAD_UI_SINGLETON, ui_job, 1024, true, false);
+    return Thread(TYPE_THREAD_UI_SINGLETON, ui_job, 1024, true, false);
 }
 
 bool UIThread_submit(Thread *w, void *packet) {

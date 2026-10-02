@@ -21,7 +21,6 @@
 /**
  * ============================================================================
  * MODULE: Stride (oop/stride.c)
- * LEVEL: L1 — File Metadata (class byte-width metadata)
  * ============================================================================
  * the Stride utility, ported from oop/Stride.java.
  *

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // algo/dijkstra.h — Shortest-Path Graph Solver.
 //
@@ -29,7 +30,8 @@ typedef struct DijkstraGraph {
     DijkstraNode *nodes;
 } DijkstraGraph;
 
-DijkstraGraph *Dijkstra_create(uint32_t nodeCount);
+DijkstraGraph *DijkstraGraph_1(uint32_t nodeCount);
+#define DijkstraGraph(...) CONSTRUCTOR_DISPATCH(DijkstraGraph, __VA_ARGS__)
 void           Dijkstra_free(DijkstraGraph *graph);
 
 bool Dijkstra_addEdge(DijkstraGraph *graph, uint32_t from, uint32_t to, float weight);

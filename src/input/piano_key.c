@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: PianoKey (input/piano_key.c)
- * LEVEL: L2 — Musical Input & Tuning Model
  * ============================================================================
  * Musical / MIDI Keyboard Pitch & Event Model.
  *

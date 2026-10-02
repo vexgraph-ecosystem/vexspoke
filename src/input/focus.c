@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * MODULE: Focus (input/focus.c)
- * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
  * THE spotlight (one focused window per machine).
  *

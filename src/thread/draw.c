@@ -1,4 +1,5 @@
 #include "thread/draw.h"
+#include "thread/compute.h"
 
 #include "annotation/incomplete.h"
 
@@ -25,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Draw (thread/draw.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the rendering worker pool (Legacy: DrawThread.java).
  *
@@ -72,6 +72,7 @@ static Thread *roleWorker(int role) {
 
 static void draw_job(Thread *self, void *task) {
     (void)self;
+    if (ComputeJob_run(task)) return;   // a generic job handed to this role
     if (!task)
         return;
     // TODO(draw): route by slot role into the renderer once it lands.
@@ -81,7 +82,7 @@ Thread *DrawThread_invokeRole(int role) {
     for (int i = 0; i < DRAW_ROLE_SLOTS; i++) {
         if (!s_roles[i].worker) {
             bool core = role == DRAW_ROLE_CORE;
-            Thread *w = Thread_new(TYPE_THREAD_DRAW_SINGLETON, draw_job,
+            Thread *w = Thread(TYPE_THREAD_DRAW_SINGLETON, draw_job,
                                    1024, false, core);
             if (!w)
                 return nullptr;

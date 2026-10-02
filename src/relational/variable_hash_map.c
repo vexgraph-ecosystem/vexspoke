@@ -46,7 +46,6 @@
 /**
  * ============================================================================
  * CLASS: VariableHashMap (relational/variable_hash_map.c)
- * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
  * the relational name => pointer hash map (hash system B).
  *

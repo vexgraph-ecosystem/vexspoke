@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: AppDetect (system/app_detect)
- * LEVEL: L1 — File Metadata over L2 probes (declarative rows + trivial
  * POSIX/libproc probes; swappable/extendable with zero code changes)
  * ============================================================================
  * Local application detection for the engine: "is opencode installed?"

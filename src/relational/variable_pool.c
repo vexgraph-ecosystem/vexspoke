@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * MODULE: StringPoolService (relational/variable_pool.c — static intern table)
- * LEVEL: L2 — Behavior (relational name interning service)
  * ============================================================================
  * Process-wide interned string pool: names stated once in fixed 32-byte
  * slots ([ptr][str1][str2][str3]), shared by pointer, never copied. Static

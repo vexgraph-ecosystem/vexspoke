@@ -19,7 +19,6 @@
 /**
  * ============================================================================
  * MODULE: Hash (util/hash.c)
- * LEVEL: L2 — Behavior (utility behavior API)
  * ============================================================================
  * the Hash utility, ported from util/Hash.java.
  *

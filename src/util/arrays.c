@@ -20,7 +20,6 @@
 /**
  * ============================================================================
  * MODULE: Arrays (util/arrays.c)
- * LEVEL: L2 — Behavior (utility behavior API)
  * ============================================================================
  * the Arrays utility, ported from util/Arrays.java.
  *

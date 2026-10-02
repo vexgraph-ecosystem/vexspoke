@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: CircleArray (struct/circle_array.c)
- * LEVEL: L2 — Off-Heap Spatial Container
  * ============================================================================
  * 2D Circular Matrix evaluated via the Pythagorean Theorem.
  *
@@ -53,7 +52,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - CircleArray_create(radius, elementClass)
+ *   - CircleArray(radius, elementClass)
  *   - CircleArray_createWithStride(radius, elementClass, stride)
  *
  * Public Core Functions: (.h)
@@ -121,7 +120,7 @@ CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-CircleArray *CircleArray_create(int32_t radius, uint32_t elementClass) {
+CircleArray *CircleArray_2(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;

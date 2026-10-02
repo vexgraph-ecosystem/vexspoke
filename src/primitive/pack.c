@@ -18,7 +18,6 @@
 /**
  * ============================================================================
  * MODULE: Pack (primitive/pack.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * bit-packing utilities (Legacy: primitive/Pack.java).
  *

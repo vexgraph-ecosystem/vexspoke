@@ -29,6 +29,7 @@ typedef struct Vec4 {
 
 Vec4 *Vec4_0(void);
 Vec4 *Vec4_4(float horizontal, float vertical, float depth, float w);
+#define Vec4(...) CONSTRUCTOR_DISPATCH(Vec4, __VA_ARGS__)
 void Vec4_free(Vec4 *v);
 
 // Spatial Directional Getters & Setters (w is untouched)

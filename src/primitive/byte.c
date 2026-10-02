@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Byte (primitive/byte.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * Byte primitive (Legacy: primitive/Byte.java).
  *

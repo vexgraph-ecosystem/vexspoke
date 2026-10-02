@@ -1,17 +1,25 @@
 // reactive/reactive_probable_tmpl.inc — the ReactiveProbable DEFINITION template.
 //
 // TEMPLATE, NOT A SOURCE: included once per instantiation's own `.c`. The caller
-// defines VEX_NAME, VEX_T, VEX_TYPE_ID, VEX_TO_WORD, VEX_FROM_WORD, VEX_ZERO.
+// defines VEX_NAME, VEX_T, VEX_TYPE_ID, VEX_TO_WORD, VEX_FROM_WORD, VEX_ZERO,
+// and VEX_VALUE_OF (formats the value for the engine's valueOf).
 //
 // get() is the roll: with probability `chance` it yields the held value, else the
 // empty value. _set publishes a new value+chance (atomic, never fires — the owner
 // drains, same engine contract). The typed channels are the shared trampolines.
+
+// The typed stringifier: bound to the engine so Reactive_valueOf finds it.
+static void VEX_CAT(VEX_NAME, _valueOf)(uintptr_t word, char *out, size_t cap) {
+    VEX_T value = VEX_FROM_WORD(word);
+    VEX_VALUE_OF(out, cap, value);
+}
 
 VEX_NAME *VEX_CAT(VEX_NAME, _2)(VEX_T value, float chance) {
     VEX_NAME *self = (VEX_NAME*) Memory_alloc(VEX_TYPE_ID, sizeof(VEX_NAME));
     if (self == nullptr)
         return nullptr;
     Reactive_init(&(*self).base, VEX_TO_WORD(value));
+    Reactive_setValueOf(&(*self).base, VEX_CAT(VEX_NAME, _valueOf));
     (*self).chance = chance;
     return self;
 }

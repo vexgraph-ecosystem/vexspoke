@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: CoordFrame (math/coord_frame.c — defined in math/coord_frame.h)
- * LEVEL: L2 — Behavior (12 spatial coordinate frames & basis resolution)
  * ============================================================================
  * Defines and resolves the 12 canonical 3D coordinate frames based on Up axis
  * (+/- Y, +/- Z, +/- X) and Handedness (Left vs Right).

@@ -1,4 +1,5 @@
 #include "thread/scripting.h"
+#include "thread/compute.h"
 
 #include "annotation/incomplete.h"
 #include "annotation/definition.h"
@@ -23,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Scripting (thread/scripting.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the scripting worker (Legacy: ScriptingThread.java).
  *
@@ -47,11 +47,12 @@
 
 static void scripting_job(Thread *self, void *task) {
     (void)self;
+    if (ComputeJob_run(task)) return;   // a generic job handed to this role
     (void)task; // TODO(lang): execute(task) once the script surface lands.
 }
 
 Thread *ScriptingThread_invoke(void) {
-    return Thread_new(TYPE_THREAD_SCRIPTING_SINGLETON, scripting_job,
+    return Thread(TYPE_THREAD_SCRIPTING_SINGLETON, scripting_job,
                       1024, false, false);
 }
 

@@ -30,7 +30,7 @@ typedef struct AudioHal AudioHal;
 
 AudioHalConfig AudioHalConfig_default(void);
 
-bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out);
+bool AudioHal_open(const AudioHalConfig *config, AudioHal **hal_out);
 bool AudioHal_start(AudioHal *hal);
 bool AudioHal_stop(AudioHal *hal);
 void AudioHal_destroy(AudioHal *hal);

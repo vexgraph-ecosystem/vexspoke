@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * CLASS: Field (reflection/field.c)
- * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
  * the Field metadata record (an embedded Variable + setter).
  *

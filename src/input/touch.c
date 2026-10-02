@@ -41,7 +41,6 @@
 /**
  * ============================================================================
  * CLASS: Touch (input/touch.c)
- * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
  * trackpad touch state + event stream (Legacy: input/Touch.java).
  *

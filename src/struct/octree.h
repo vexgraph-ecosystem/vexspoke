@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // struct/octree.h — 3D Spatial Partitioning Octree.
 //
@@ -49,7 +50,8 @@ typedef struct Octree {
     size_t      totalItems;
 } Octree;
 
-Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode);
+Octree *Octree_3(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode);
+#define Octree(...) CONSTRUCTOR_DISPATCH(Octree, __VA_ARGS__)
 void Octree_free(Octree *self);
 
 bool Octree_insert(Octree *self, OctreePoint point, uint64_t payload);

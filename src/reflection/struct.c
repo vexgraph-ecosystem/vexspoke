@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * CLASS: Struct (reflection/struct.c)
- * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
  * the Struct metadata record (a named list of Fields).
  *

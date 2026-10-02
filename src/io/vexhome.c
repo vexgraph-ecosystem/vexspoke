@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * CLASS: VexHome (io/vexhome.c)
- * LEVEL: L4 — Self-Management (Rule 28: owns the per-user filesystem layout)
  * ============================================================================
  * The VexHome class (was AntiHome, renamed on the vexspoke/darling split).
  * Manages the per-user engine home directory layout on disk.

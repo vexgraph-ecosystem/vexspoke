@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Vec4d (lang/vec4/vec4d.c — defined in lang/vec4/vec4d.h)
- * LEVEL: L2 — Behavior (32-byte SIMD 4D double precision vector)
  * ============================================================================
  *
  * STRUCT FIELDS (Mirroring lang/vec4/vec4d.h):

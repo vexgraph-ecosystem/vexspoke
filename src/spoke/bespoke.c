@@ -8,7 +8,6 @@
 /**
  * ============================================================================
  * CLASS: Bespoke (spoke/bespoke.c)
- * LEVEL: L2 — Behavior (unified bespoke bridge hub)
  * ============================================================================
  * Unified Bespoke Bridge Hub. Coordinates R3 drivers (graphics, networking,
  * storage/etc.) via weak extern function hooks. Supports initial launch

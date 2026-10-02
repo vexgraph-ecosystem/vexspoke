@@ -43,7 +43,6 @@
 /**
  * ============================================================================
  * CLASS: VariableSlot (relational/variable_slot.c)
- * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
  * the 32-byte name box: a folded name plus a value-cell pointer.
  *

@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * CLASS: Vec3 (lang/vec3/vec3.c — defined in lang/vec3/vec3.h)
- * LEVEL: L2 — Behavior (16-byte SIMD spatial coordinate-agnostic 3D vector)
  * ============================================================================
  * Coordinate-agnostic 3D spatial vector carrying embedded CoordFrame metadata.
  * Components:

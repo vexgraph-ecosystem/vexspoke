@@ -36,7 +36,6 @@
 /**
  * ============================================================================
  * CLASS: Cell (relational/cell.c)
- * LEVEL: L2 — Behavior (relational behavior API)
  * ============================================================================
  * the 32-byte identity cell (MemoryHeader identity + a value slot).
  *

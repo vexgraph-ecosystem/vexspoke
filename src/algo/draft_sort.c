@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: DraftSort (algo/draft_sort.c — defined in algo/draft_sort.h)
- * LEVEL: L2 — Behavior (draft sorting and spatial Morton curve indexing)
  * ============================================================================
  * Scaffolded algorithms for darkbase table sorting and 3D spatial indexing.
  *

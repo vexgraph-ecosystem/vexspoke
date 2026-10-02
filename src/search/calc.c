@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * CLASS: Calc (search/calc.c — defined in search/calc.h)
- * LEVEL: L2 — Behavior (allocation-free string math expression calculator)
  * ============================================================================
  * Fast recursive-descent math parser supporting operator precedence, constants,
  * and scientific / trigonometric functions. Evaluates in-place on the stack.

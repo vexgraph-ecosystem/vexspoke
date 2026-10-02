@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: KdTree (algo/kd_tree.c)
- * LEVEL: L2 — 3D Spatial Partitioning KD-Tree
  * ============================================================================
  * Recursively partitions 3D space by alternating split axes (X, Y, Z)
  * enabling O(log N) nearest-neighbor and spherical radius queries.

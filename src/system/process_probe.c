@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * CLASS: ProcessProbe (system/process_probe)
- * LEVEL: L2 — Behavior (live OS probes; no state, no allocation)
  * ============================================================================
  * The concurrency-free "what is running now" primitive: enumerates the
  * live process table via libproc and matches executable basenames

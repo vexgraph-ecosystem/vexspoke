@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: CaptureTool (system/capture_tool)
- * LEVEL: L1 — File Metadata over L2 probes (declarative rows + live
  * process/driver liveness; extendable with zero code changes)
  * ============================================================================
  * The capture/recording directory: 15 static descriptor rows over the

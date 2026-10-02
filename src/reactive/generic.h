@@ -138,14 +138,17 @@
     VEX_CHANNELS_DECL(VEX_RCLASS(NAME), NAME *)
 
 // Definitions. The source must have already included nio/mem.h and oop/type.h
-// (Memory_alloc/Memory_free, TYPE_REACTIVE).
-#define IMPLEMENT_REACTIVE(NAME)                                        \
+// (Memory_alloc/Memory_free, TYPE_REACTIVE), plus <stdio.h> for the pointer
+// stringifier. Each object binds a valueOf so a type-erased consumer (a Label []
+// slot) can render it as text — the object family's own valueOf().
+#define VEX_IMPLEMENT_REACTIVE_BODY(NAME, VALUEOF)                      \
     VEX_RCLASS(NAME) *VEX_RFN(NAME, _1)(NAME *initial) {                \
         VEX_RCLASS(NAME) *self = (VEX_RCLASS(NAME)*)                    \
             Memory_alloc(TYPE_REACTIVE, sizeof(VEX_RCLASS(NAME)));      \
         if (self == nullptr)                                            \
             return nullptr;                                             \
         Reactive_init(&(*self).base, (uintptr_t) initial);              \
+        Reactive_setValueOf(&(*self).base, VALUEOF);                    \
         return self;                                                    \
     }                                                                   \
     VEX_RCLASS(NAME) *VEX_RFN(NAME, _0)(void) {                         \
@@ -168,5 +171,22 @@
         return (NAME*) Reactive_load((Reactive*) &(*self).base);         \
     }                                                                   \
     VEX_CHANNELS_DEF(VEX_RCLASS(NAME), VEX_OBJECT_FROM)
+
+// The PLAIN one-liner: the object renders as its pointer (hex). Use when the
+// object has no textual form.
+#define IMPLEMENT_REACTIVE(NAME)                                            \
+    static void VEX_CAT(VEX_RCLASS(NAME), _valueOfPtr)(uintptr_t word, char *out, size_t cap) { \
+        snprintf((out), (cap), "%p", (void*) word);                         \
+    }                                                                       \
+    VEX_IMPLEMENT_REACTIVE_BODY(NAME, VEX_CAT(VEX_RCLASS(NAME), _valueOfPtr))
+
+// The TYPED one-liner: the object class supplies its valueOf()
+//   void STRFN(const NAME *value, char *out, size_t cap);
+// (declared before the stamp). A Label [] slot then renders real text.
+#define IMPLEMENT_REACTIVE_STR(NAME, STRFN)                                 \
+    static void VEX_CAT(VEX_RCLASS(NAME), _valueOfStr)(uintptr_t word, char *out, size_t cap) { \
+        STRFN((const NAME*) word, out, cap);                                \
+    }                                                                       \
+    VEX_IMPLEMENT_REACTIVE_BODY(NAME, VEX_CAT(VEX_RCLASS(NAME), _valueOfStr))
 
 #endif

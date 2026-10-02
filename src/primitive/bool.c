@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * MODULE: Bool (primitive/bool.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * Bool primitive (Legacy: primitive/Bool.java).
  *

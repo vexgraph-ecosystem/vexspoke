@@ -1,4 +1,5 @@
 #include "thread/networking.h"
+#include "thread/compute.h"
 
 #include "annotation/incomplete.h"
 
@@ -25,7 +26,6 @@
 /**
  * ============================================================================
  * MODULE: Networking (thread/networking.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the networking worker (Legacy: NetworkingThread.java).
  *
@@ -53,17 +53,18 @@ static Thread *s_core = nullptr;
 
 static void networking_job(Thread *self, void *task) {
     (void)self;
+    if (ComputeJob_run(task)) return;   // a generic job handed to this role
     (void)task; // TODO(net): PollRequest_executeAll(batch) once ported.
 }
 
 Thread *NetworkingThread_invoke(void) {
-    return Thread_new(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
+    return Thread(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
                       2048, false, false);
 }
 
 Thread *NetworkingThread_core(void) {
     if (!s_core)
-        s_core = Thread_new(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
+        s_core = Thread(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
                             2048, false, true);
     return s_core;
 }

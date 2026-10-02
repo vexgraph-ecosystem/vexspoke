@@ -187,6 +187,11 @@
 #define ID_THREAD_DRAW        0x0083u
 #define ID_THREAD_SCRIPTING   0x0084u
 #define ID_THREAD_UI          0x0085u
+// The thread block resumed past the later families: 0x0086..0x00A7 are taken
+// (audio, input, reflection, the reactive scalars), so the two new roles append
+// here rather than reuse a live id.
+#define ID_THREAD_REACTIVE    0x00A8u
+#define ID_THREAD_COMPUTE     0x00A9u
 
 #define TYPE_THREAD_SINGLETON             (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD)
 #define TYPE_THREAD_NETWORKING_SINGLETON  (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_NETWORKING)
@@ -194,6 +199,8 @@
 #define TYPE_THREAD_DRAW_SINGLETON        (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_DRAW)
 #define TYPE_THREAD_SCRIPTING_SINGLETON   (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_SCRIPTING)
 #define TYPE_THREAD_UI_SINGLETON          (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_UI)
+#define TYPE_THREAD_REACTIVE_SINGLETON    (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_REACTIVE)
+#define TYPE_THREAD_COMPUTE_SINGLETON     (PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD_COMPUTE)
 
 // --- AUDIO CLASSES (native playback seam) ---
 #define ID_AUDIO_CLIP   0x0086u

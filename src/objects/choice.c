@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Choice (objects/choice.c)
- * LEVEL: L2 — Behavior (object behavior API)
  * ============================================================================
  * Immutable deterministic choice / branch dispatcher.
  *

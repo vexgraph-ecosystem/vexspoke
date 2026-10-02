@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Dijkstra (algo/dijkstra.c)
- * LEVEL: L2 — Graph Shortest-Path Engine
  * ============================================================================
  * Solves single-source shortest paths on adjacency lists using min-priority
  * relaxation. Operates over contiguous off-heap memory.
@@ -52,7 +51,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - Dijkstra_create(nodeCount)
+ *   - DijkstraGraph(nodeCount)
  *
  * Public Core Functions: (.h)
  *   - Dijkstra_free(graph)
@@ -66,7 +65,7 @@
  * ============================================================================
  */
 
-DijkstraGraph *Dijkstra_create(uint32_t nodeCount) {
+DijkstraGraph *DijkstraGraph_1(uint32_t nodeCount) {
     if (nodeCount == 0) return nullptr;
 
     DijkstraGraph *graph = (DijkstraGraph*) Memory_alloc(TYPE_BYTE_ARRAY, sizeof(DijkstraGraph));

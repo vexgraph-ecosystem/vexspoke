@@ -34,7 +34,8 @@ float AudioClip_seconds(AudioClip *clip);
 
 // Voices: one player channel each. A voice holds at most one clip reference;
 // re-set clips freely between plays.
-AudioVoice *AudioVoice_new(void);
+AudioVoice *AudioVoice_0(void);
+#define AudioVoice(...) CONSTRUCTOR_DISPATCH(AudioVoice, __VA_ARGS__)
 void AudioVoice_free(AudioVoice *voice);
 void AudioVoice_setClip(AudioVoice *voice, AudioClip *clip);
 void AudioVoice_setGain(AudioVoice *voice, float gain);    // 0.0 .. 1.0+

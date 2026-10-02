@@ -31,7 +31,6 @@
 /**
  * ============================================================================
  * CLASS: Clock (time/clock.c)
- * LEVEL: L2 — Behavior (time behavior API)
  * ============================================================================
  * the virtual clock (Legacy: time/Clock.java).
  *
@@ -48,7 +47,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Clock_create(void)
+ *   - Clock(void)
  *
  * Core Functions:
  *   - Clock_tick(clock)
@@ -81,7 +80,7 @@ static uint64_t monoMillis(void) {
     return (uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL;
 }
 
-Clock Clock_create(void) {
+Clock Clock_0(void) {
     Clock c;
     c.timeScale = 1.0;
     c.baseRealMillis = currentTimeMillis();

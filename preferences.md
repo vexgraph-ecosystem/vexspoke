@@ -238,6 +238,7 @@ The complexity of *"how do I instantiate this / extend it / zero it / name its e
 5. **Every class ships `Class_zero()` (or `ZERO`).**
 6. **Canonical numeric constants live in one header.** No bare `-1`, `1000000`, or `INFINITY` literals at a call site — the name is the contract.
 7. **Uniform across repos.** Same names, same shapes everywhere — the convenience surface is identical in every framework (the Per-Repo Preferences Extension Law restates it, never forks it).
+8. **Managed exception — generic-family tokens.** A class whose bare name is already a generic-family macro cannot also carry a variadic chooser under the same token: `reactive/generic.h` defines `#define Reactive(T) VEX_CAT(Reactive, T)`, so `Reactive(int)` / `Reactive(Vec4)` are the typed constructors and `Reactive(...)` cannot coexist (one macro name). Such a family keeps its numbered bare-engine constructors (`Reactive_1`, `Reactive_2`) as the sanctioned spelling and is exempt from rule 2 by explicit `;;INTENTION` — never by silence (the Conflict Triage Law). `Reactive` is the only such token in the ecosystem; a new one requires an amendment here.
 
 ### Legacy title map
 

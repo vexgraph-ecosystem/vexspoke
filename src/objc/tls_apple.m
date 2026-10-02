@@ -31,7 +31,6 @@
 /**
  * ============================================================================
  * MODULE: Tls_apple (objc/tls_apple.m)
- * LEVEL: L4 — Self-Management (Native TLS via Network.framework)
  * ============================================================================
  * Native Apple TLS transport backend using Network.framework and system trust roots.
  *

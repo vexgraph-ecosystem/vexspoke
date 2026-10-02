@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "math/coord_frame.h"
+#include "c23/constructor.h"
 
 // lang/vec3/vec3_int_float.h — Large-World 3D Vector (int32 sector + float local).
 //
@@ -27,7 +28,8 @@ typedef struct Vec3IntFloat {
 } Vec3IntFloat;
 
 Vec3IntFloat *Vec3IntFloat_0(void);
-Vec3IntFloat *Vec3IntFloat_create(int32_t sH, float lH, int32_t sV, float lV, int32_t sD, float lD, CoordFrame frame);
+#define Vec3IntFloat(...) CONSTRUCTOR_DISPATCH(Vec3IntFloat, __VA_ARGS__)
+Vec3IntFloat *Vec3IntFloat_7(int32_t sH, float lH, int32_t sV, float lV, int32_t sD, float lD, CoordFrame frame);
 void Vec3IntFloat_free(Vec3IntFloat *v);
 
 // Normalize sector overflow: when |local| >= sectorSize, bump sector

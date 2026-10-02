@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: TryPtr (exception/try_ptr.c)
- * LEVEL: L2 — Behavior (value-or-error primitive)
  * ============================================================================
  * the pointer value-or-error return, paired with TryValue for the scalar form.
  *

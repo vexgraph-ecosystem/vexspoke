@@ -40,7 +40,6 @@
 /**
  * ============================================================================
  * CLASS: ChunkedList (struct/chunked_list.c)
- * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * Never-moved radix-paged list: rows live in stable leaves, so a row address
  * handed out once stays valid until free.

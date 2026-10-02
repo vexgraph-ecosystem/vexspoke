@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: Vec2d (lang/vec2/vec2d.c — defined in lang/vec2/vec2d.h)
- * LEVEL: L2 — Behavior (2D double precision spatial vector)
  * ============================================================================
  *
  * STRUCT FIELDS (Mirroring lang/vec2/vec2d.h):

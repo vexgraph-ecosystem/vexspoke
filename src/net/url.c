@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * MODULE: Url (net/url.c)
- * LEVEL: L2 — Behavior (net behavior API)
  * ============================================================================
  * URI synthesis & authentication headers (Legacy:
  *

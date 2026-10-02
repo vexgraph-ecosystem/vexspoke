@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * MODULE: Clipboard_stub (io/clipboard_stub.c)
- * LEVEL: L4 — Platform Abstraction (Clipboard Fallback)
  * ============================================================================
  * Platform-exclusive stub for the system clipboard bridge on non-Apple
  * systems without NSPasteboard. Procedural Clipboard API backed by a static

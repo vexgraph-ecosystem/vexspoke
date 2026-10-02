@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Str (lang/str.c)
- * LEVEL: L1 — File Metadata (a bounded string builder value)
  * ============================================================================
  * SUMMARY:
  *   Borrows a destination buffer; every append is bounded and flags truncation.

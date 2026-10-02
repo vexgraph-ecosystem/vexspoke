@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Turntable (input/turntable.c)
- * LEVEL: L2 — DJ Turntable & Jog Wheel Physics Model
  * ============================================================================
  * Models vinyl scratch physics, platter angular momentum, pitch adjustment,
  * cue triggers, and crossfader curves for DJ performance software.

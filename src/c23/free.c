@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * MODULE: Free (c23/free.c)
- * LEVEL: L2 — Behavior (relational runtime behavior)
  * ============================================================================
  * The Relational Destructor Dispatcher.
  *

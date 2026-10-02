@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: SecureRandom (security/secure_random.c)
- * LEVEL: L2 — Behavior (OS CSPRNG delegation)
  * ============================================================================
  * OS-backed cryptographically secure randomness. Non-reproducible by design;
  * it is the counterpart to util/random.h's seedable Random.

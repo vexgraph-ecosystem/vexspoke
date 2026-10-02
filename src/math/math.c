@@ -21,7 +21,6 @@
 /**
  * ============================================================================
  * CLASS: Math (math/math.c — defined in math/math.h)
- * LEVEL: L2 — Behavior (unified math facade)
  * ============================================================================
  * Dispatches math operations according to the dual precision doctrine:
  *   - No fast prefix: strictly IEEE 754 precision via StrictMath.

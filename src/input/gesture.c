@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Gesture (input/gesture.c)
- * LEVEL: L2 — Multi-Touch Trackpad Gesture Engine
  * ============================================================================
  * Processes trackpad pinch magnification, rotation, momentum scrolling,
  * and swipe directionality for high-precision creative viewports.

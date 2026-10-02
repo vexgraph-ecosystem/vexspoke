@@ -31,7 +31,6 @@
 /**
  * ============================================================================
  * CLASS: Class (reflection/class.c)
- * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
  * the Class metadata record (name + construct + Struct layout + Methods).
  *

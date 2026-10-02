@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Set (struct/set.c)
- * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * the Set class, ported from struct/Set.java.
  *

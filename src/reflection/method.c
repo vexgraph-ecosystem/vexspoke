@@ -30,7 +30,6 @@
 /**
  * ============================================================================
  * CLASS: Method (reflection/method.c)
- * LEVEL: L2 — Behavior (reflection metadata)
  * ============================================================================
  * the Method metadata record (name + callable + target).
  *

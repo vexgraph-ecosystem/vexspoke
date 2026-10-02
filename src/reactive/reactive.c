@@ -3,6 +3,7 @@
 #include "reactive/reactive.h"
 
 #include <stdatomic.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "annotation/definition.h"
@@ -37,7 +38,6 @@
 /**
  * ============================================================================
  * CLASS: Reactive (reactive/reactive.c)
- * LEVEL: L2 — Behavior (reactive engine)
  * ============================================================================
  * one atomic word + shadow + dirty + three observer lists.
  *
@@ -48,6 +48,9 @@
  *     uintptr_t shadow;         // owner-affine: the last drained word
  *     _Atomic bool dirty;       // a write awaits the owner's drain
  *     bool active;              // runtime-active flag
+ *     bool deliverBound;        // true: own hook; false: inherit the default
+ *     ReactiveDeliverFn deliver; // auto-delivery on store; nullptr = manual
+ *     ReactiveValueFn valueOf;   // formats the word as text (typed), or nullptr
  *     ReactiveObserverList *onSet;     // fires once per drained batch
  *     ReactiveObserverList *onChanged; // fires when the drained word moved
  *     ReactiveObserverList *onGet;     // fires on each read (immediate)
@@ -151,6 +154,11 @@ static void listFree(ReactiveObserverList **slot) {
     *slot = nullptr;
 }
 
+// The process-wide default delivery hook. Unset (nullptr) means the engine keeps
+// its original contract: store marks dirty, the caller/owner drains by hand.
+// thread/reactive.c sets this to its wake so a plain set self-delivers.
+static ReactiveDeliverFn s_defaultDelivery = nullptr;
+
 // CONSTRUCTORS
 
 bool Reactive_init(Reactive *self, uintptr_t initialWord) {
@@ -160,6 +168,9 @@ bool Reactive_init(Reactive *self, uintptr_t initialWord) {
     (*self).shadow = initialWord; // shadow starts equal: the first drain is silent
     atomic_init(&(*self).dirty, false);
     (*self).active = true;
+    (*self).deliverBound = false; // inherit the process default until bound
+    (*self).deliver = nullptr;
+    (*self).valueOf = nullptr;    // hex fallback until a typed stample binds one
     (*self).onSet = nullptr;
     (*self).onChanged = nullptr;
     (*self).onGet = nullptr;
@@ -230,6 +241,58 @@ void Reactive_store(Reactive *self, uintptr_t word) {
     // Any thread: move the word, mark dirty, fire nothing.
     atomic_store_explicit(&(*self).value, word, memory_order_release);
     atomic_store_explicit(&(*self).dirty, true, memory_order_release);
+    // The delivery hook only SCHEDULES an owner drain (thread/reactive.c); the
+    // observers still run on the owner's thread, never here.
+    ReactiveDeliverFn fn = (*self).deliverBound ? (*self).deliver : s_defaultDelivery;
+    if (fn != nullptr)
+        fn(self);
+}
+
+void Reactive_setDelivery(Reactive *self, ReactiveDeliverFn deliver) {
+    if (self == nullptr)
+        return;
+    (*self).deliver = deliver;
+    (*self).deliverBound = true; // explicit (nullptr means "none", not "inherit")
+}
+
+void Reactive_clearDelivery(Reactive *self) {
+    if (self == nullptr)
+        return;
+    (*self).deliver = nullptr;
+    (*self).deliverBound = false; // fall back to the process default
+}
+
+ReactiveDeliverFn Reactive_getDelivery(const Reactive *self) {
+    return self ? (*self).deliver : nullptr;
+}
+
+void Reactive_setDefaultDelivery(ReactiveDeliverFn deliver) {
+    s_defaultDelivery = deliver;
+}
+
+ReactiveDeliverFn Reactive_getDefaultDelivery(void) {
+    return s_defaultDelivery;
+}
+
+void Reactive_setValueOf(Reactive *self, ReactiveValueFn valueOf) {
+    if (self == nullptr)
+        return;
+    (*self).valueOf = valueOf;
+}
+
+const char *Reactive_valueOf(Reactive *self, char *out, size_t cap) {
+    if (out == nullptr || cap == 0u)
+        return out;
+    if (self == nullptr) {
+        out[0] = '\0';
+        return out;
+    }
+    uintptr_t word = atomic_load_explicit(&(*self).value, memory_order_acquire);
+    if ((*self).valueOf != nullptr)
+        (*self).valueOf(word, out, cap);
+    else
+        snprintf(out, cap, "%llu", (unsigned long long) word);
+    return out;
 }
 
 bool Reactive_drain(Reactive *self) {

@@ -21,7 +21,6 @@
 /**
  * ============================================================================
  * CLASS: TryCode (exception/try_code.c)
- * LEVEL: L2 — Behavior (value-or-error taxonomy)
  * ============================================================================
  * The named reasons a Try carries; no struct, an enum plus its two projections.
  *

@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * CLASS: Point (lang/point/point.c — defined in lang/point/point.h)
- * LEVEL: L2 — Behavior (integer pixel geometry)
  * ============================================================================
  * Integer-precision 2D position in native pixel space (the Pixel Coordinate
  * Contract: the Graphics API, layout buffers and hit-testing all speak

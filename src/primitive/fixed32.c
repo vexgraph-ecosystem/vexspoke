@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * MODULE: Fixed32 (primitive/fixed32.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * Fixed32 primitive (Legacy: primitive/Fixed32.java).
  *

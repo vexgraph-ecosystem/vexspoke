@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: Vec2 (lang/vec2/vec2.c — defined in lang/vec2/vec2.h)
- * LEVEL: L2 — Behavior (2D spatial vector)
  * ============================================================================
  * 2D spatial vector with horizontal and vertical components.
  *

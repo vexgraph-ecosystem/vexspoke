@@ -40,7 +40,6 @@
 /**
  * ============================================================================
  * CLASS: SegmentIndex (algo/segment_index.c)
- * LEVEL: L2 — Behavior (search algorithm)
  * ============================================================================
  * a positional segment index + ranked phrase search over dotted names.
  *
@@ -118,7 +117,7 @@ static bool postSegment(SegmentIndex *index, uint32_t entry, uint32_t position, 
     if (VariableHashMap_get(postings, segment, &existing))
         list = (ChunkedList*) existing;
     if (!list) {
-        list = ChunkedList_3(ID_SEGMENT_POSTING, (uint32_t) sizeof(SegmentPosting), VEX_CHUNKED_BYTES_DEFAULT);
+        list = ChunkedList(ID_SEGMENT_POSTING, (uint32_t) sizeof(SegmentPosting), VEX_CHUNKED_BYTES_DEFAULT);
         if (!list)
             return false;
         if (!VariableHashMap_add(postings, segment, (uintptr_t) list)) {
@@ -295,10 +294,10 @@ bool SegmentIndex_init(SegmentIndex *index) {
     if (!index)
         return false;
     memset(index, 0, sizeof(*index));
-    ChunkedList *entries = ChunkedList_3(ID_SEGMENT_ENTRY, (uint32_t) sizeof(SegmentEntry), VEX_CHUNKED_BYTES_DEFAULT);
+    ChunkedList *entries = ChunkedList(ID_SEGMENT_ENTRY, (uint32_t) sizeof(SegmentEntry), VEX_CHUNKED_BYTES_DEFAULT);
     if (!entries)
         return false;
-    VariableHashMap *postings = VariableHashMap_0();
+    VariableHashMap *postings = VariableHashMap();
     if (!postings) {
         ChunkedList_free(entries);
         return false;
@@ -352,7 +351,7 @@ void SegmentIndex_clear(SegmentIndex *index) {
     VariableHashMap_shutdown((*index).postings);
     VariableHashMap_init((*index).postings);
     ChunkedList_free((*index).entries);
-    ChunkedList *entries = ChunkedList_3(ID_SEGMENT_ENTRY, (uint32_t) sizeof(SegmentEntry), VEX_CHUNKED_BYTES_DEFAULT);
+    ChunkedList *entries = ChunkedList(ID_SEGMENT_ENTRY, (uint32_t) sizeof(SegmentEntry), VEX_CHUNKED_BYTES_DEFAULT);
     (*index).entries = entries;
     (*index).count = 0u;
     if (!entries)

@@ -4,6 +4,8 @@
 
 #include "reactive/reactive_object.h"
 
+#include <stdio.h>
+
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
@@ -37,10 +39,34 @@
  * ============================================================================
  */
 
-IMPLEMENT_REACTIVE(Vec2);
-IMPLEMENT_REACTIVE(Vec3);
-IMPLEMENT_REACTIVE(Vec4);
-IMPLEMENT_REACTIVE(Rectangle);
+// The standard objects' valueOf(): render the FIELDS, not the pointer. A null
+// value (the word is the object pointer) prints "null".
+static void vec2_str(const Vec2 *v, char *out, size_t cap) {
+    if (v == nullptr) { snprintf(out, cap, "null"); return; }
+    snprintf(out, cap, "(%.3g, %.3g)", (double) v->x, (double) v->y);
+}
+
+static void vec3_str(const Vec3 *v, char *out, size_t cap) {
+    if (v == nullptr) { snprintf(out, cap, "null"); return; }
+    snprintf(out, cap, "(%.3g, %.3g, %.3g)", (double) v->x, (double) v->y, (double) v->z);
+}
+
+static void vec4_str(const Vec4 *v, char *out, size_t cap) {
+    if (v == nullptr) { snprintf(out, cap, "null"); return; }
+    snprintf(out, cap, "(%.3g, %.3g, %.3g, %.3g)",
+             (double) v->x, (double) v->y, (double) v->z, (double) v->w);
+}
+
+static void rectangle_str(const Rectangle *r, char *out, size_t cap) {
+    if (r == nullptr) { snprintf(out, cap, "null"); return; }
+    snprintf(out, cap, "[%.3g, %.3g, %.3g x %.3g]",
+             (double) r->x, (double) r->y, (double) r->width, (double) r->height);
+}
+
+IMPLEMENT_REACTIVE_STR(Vec2, vec2_str);
+IMPLEMENT_REACTIVE_STR(Vec3, vec3_str);
+IMPLEMENT_REACTIVE_STR(Vec4, vec4_str);
+IMPLEMENT_REACTIVE_STR(Rectangle, rectangle_str);
 IMPLEMENT_REACTIVE(IntDouble);
 IMPLEMENT_REACTIVE(LongFloat);
 IMPLEMENT_REACTIVE(LongDouble);

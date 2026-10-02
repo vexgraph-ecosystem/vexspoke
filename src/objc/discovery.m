@@ -34,7 +34,6 @@
 /**
  * ============================================================================
  * MODULE: Discovery (objc/discovery.m)
- * LEVEL: L4 — Self-Management (native hardware discovery probe)
  * ============================================================================
  * native hardware, display, and GPU probe (Legacy: system/SystemDiscovery.java)
  *

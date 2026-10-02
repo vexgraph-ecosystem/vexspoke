@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * MODULE: Commandparser (cli/commandparser.c)
- * LEVEL: L2 — Behavior (CLI behavior API)
  * ============================================================================
  * the CommandParser class, ported from
  *

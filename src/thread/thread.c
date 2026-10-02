@@ -18,7 +18,7 @@
  * ============================================================================
  * The worker-thread engine (Legacy: the six *Thread.java classes): a
  * supervised pthread wrapper with an atomic state flag, a RingBuffer task
- * queue, and an optional idle-tick job. Thread_new allocates from the Memory
+ * queue, and an optional idle-tick job. Thread_5 allocates from the Memory
  * arena and registers the handle in a central Map; Thread_run spawns the
  * platform thread, Thread_stop flips state and joins, Thread_free tears down
  * queue, registry entry, and block. Core handles are immune to stop/free
@@ -31,7 +31,6 @@
 /**
  * ============================================================================
  * CLASS: Thread (thread/thread.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the worker-thread engine (Legacy: the six *Thread.java
  *
@@ -51,7 +50,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Thread_new(typeId, job, queueCapacity, tickWhenIdle, core)
+ *   - Thread_5(typeId, job, queueCapacity, tickWhenIdle, core)
  *
  * Core Functions:
  *   - Thread_run(self)
@@ -98,8 +97,8 @@ static Map *workers(void) {
     return s_workers;
 }
 
-Thread *Thread_new(uint64_t typeId, Thread_Job job, size_t queueCapacity,
-                   bool tickWhenIdle, bool core) {
+Thread *Thread_5(uint64_t typeId, Thread_Job job, size_t queueCapacity,
+                 bool tickWhenIdle, bool core) {
     if (!job || queueCapacity == 0)
         return nullptr;
     Thread *t = Memory_alloc(typeId, sizeof(Thread));

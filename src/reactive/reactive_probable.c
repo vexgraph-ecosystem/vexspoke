@@ -3,6 +3,8 @@
 
 #include "reactive/reactive_probable.h"
 
+#include <stdio.h>
+
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
@@ -44,6 +46,7 @@
 #define VEX_TO_WORD(v)   ((uintptr_t) (uint32_t) (v))
 #define VEX_FROM_WORD(w) ((int32_t) (uint32_t) (w))
 #define VEX_ZERO       ((int32_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%d", (int) (v))
 #include "reactive/reactive_probable_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -51,3 +54,4 @@
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF

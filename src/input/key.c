@@ -51,7 +51,6 @@
 /**
  * ============================================================================
  * CLASS: Key (input/key.c)
- * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
  * listener registries grow exponentially (the Dynamic Scalability &
  * Anti-Hardcoding Law): window scope is a row keyed by the opaque OS window

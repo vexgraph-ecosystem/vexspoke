@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: Find (search/find.c — defined in search/find.h)
- * LEVEL: L2 — Behavior (IDE-style find with flags and SQL LIKE matching)
  * ============================================================================
  * Evaluates text searches with flags: case-sensitivity, whole word boundaries,
  * and SQL '%' and '_' wildcards.

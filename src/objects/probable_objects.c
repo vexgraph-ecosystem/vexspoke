@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Probable_objects (objects/probable_objects.c)
- * LEVEL: L2 — Behavior (object behavior API)
  * ============================================================================
  * the ProbableObjects class, ported from
  *

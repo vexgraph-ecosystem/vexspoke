@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * MODULE: TreeSit (algo/tree_sit.c)
- * LEVEL: L3 — Structural Subsystem (Syntax & Relational AST Traversal)
  * ============================================================================
  * Relational AST tree-sitter graph structure with pre-order, post-order, and
  * span-based query capabilities.

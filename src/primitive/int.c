@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * MODULE: Int (primitive/int.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * Int primitive (Legacy: primitive/Int.java).
  *

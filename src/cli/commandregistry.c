@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * MODULE: Commandregistry (cli/commandregistry.c)
- * LEVEL: L2 — Behavior (CLI behavior API)
  * ============================================================================
  * the CommandRegistry class, ported from
  *

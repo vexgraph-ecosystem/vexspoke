@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * MODULE: Image_mac (system/image_mac.m)
- * LEVEL: L4 — Self-Management (native image-decode OS shim)
  * ============================================================================
  * detect format (PNG, JPEG, etc)
  *

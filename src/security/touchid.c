@@ -93,7 +93,6 @@
 /**
  * ============================================================================
  * CLASS: Touchid (security/touchid.c)
- * LEVEL: L2 — Behavior (portable auth behavior stub)
  * ============================================================================
  * perform operation
  *

@@ -4,6 +4,7 @@
 
 #include "reactive/reactive_primitive.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #include "annotation/definition.h"
@@ -97,6 +98,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) ((v) ? 1u : 0u))
 #define VEX_FROM_WORD(w) ((w) != 0u)
 #define VEX_ZERO       false
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%s", (v) ? "true" : "false")
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -104,6 +106,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveByte
 #define VEX_T    int8_t
@@ -111,6 +114,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (uint8_t) (v))
 #define VEX_FROM_WORD(w) ((int8_t) (uint8_t) (w))
 #define VEX_ZERO       ((int8_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%d", (int) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -118,6 +122,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveShort
 #define VEX_T    int16_t
@@ -125,6 +130,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (uint16_t) (v))
 #define VEX_FROM_WORD(w) ((int16_t) (uint16_t) (w))
 #define VEX_ZERO       ((int16_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%d", (int) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -132,6 +138,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveChar
 #define VEX_T    uint16_t
@@ -139,6 +146,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (uint16_t) (v))
 #define VEX_FROM_WORD(w) ((uint16_t) (w))
 #define VEX_ZERO       ((uint16_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%u", (unsigned) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -146,6 +154,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveInt
 #define VEX_T    int32_t
@@ -153,6 +162,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (uint32_t) (v))
 #define VEX_FROM_WORD(w) ((int32_t) (uint32_t) (w))
 #define VEX_ZERO       ((int32_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%d", (int) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -160,6 +170,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveLong
 #define VEX_T    int64_t
@@ -167,6 +178,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (v))
 #define VEX_FROM_WORD(w) ((int64_t) (w))
 #define VEX_ZERO       ((int64_t) 0)
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%lld", (long long) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -174,6 +186,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveFloat
 #define VEX_T    float
@@ -181,6 +194,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   floatBits(v)
 #define VEX_FROM_WORD(w) floatOf(w)
 #define VEX_ZERO       0.0f
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%g", (double) (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -188,6 +202,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveDouble
 #define VEX_T    double
@@ -195,6 +210,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   bitsOf(v)
 #define VEX_FROM_WORD(w) doubleOf(w)
 #define VEX_ZERO       0.0
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%g", (v))
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -202,6 +218,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveString
 #define VEX_T    const uint8_t *
@@ -209,6 +226,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   ((uintptr_t) (v))
 #define VEX_FROM_WORD(w) ((const uint8_t*) (w))
 #define VEX_ZERO       nullptr
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%s", (v) ? (const char*) (v) : "")
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -216,6 +234,7 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF
 
 #define VEX_NAME ReactiveIntFloat
 #define VEX_T    IntFloat
@@ -223,6 +242,7 @@ static IntFloat intFloatZero(void) {
 #define VEX_TO_WORD(v)   intFloatBits(v)
 #define VEX_FROM_WORD(w) intFloatOf(w)
 #define VEX_ZERO       intFloatZero()
+#define VEX_VALUE_OF(out, cap, v) snprintf((out), (cap), "%g", (double) (v).scalar + (double) (v).decimal)
 #include "reactive/reactive_tmpl.inc"
 #undef VEX_NAME
 #undef VEX_T
@@ -230,3 +250,4 @@ static IntFloat intFloatZero(void) {
 #undef VEX_TO_WORD
 #undef VEX_FROM_WORD
 #undef VEX_ZERO
+#undef VEX_VALUE_OF

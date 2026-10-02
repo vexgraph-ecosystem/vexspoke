@@ -29,7 +29,6 @@
 /**
  * ============================================================================
  * MODULE: Bvh (algo/bvh.c)
- * LEVEL: L3 — Structural Subsystem (Spatial Acceleration)
  * ============================================================================
  * Bounding Volume Hierarchy (BVH) for accelerated 3D ray tracing and spatial queries.
  *

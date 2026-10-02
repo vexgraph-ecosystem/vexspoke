@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: Vec3LongDouble (lang/vec3/vec3_long_double.c — defined in lang/vec3/vec3_long_double.h)
- * LEVEL: L2 — Behavior (cosmic scale int64 sector + double local 3D vector)
  * ============================================================================
  * Unbounded spatial coordinate representation for solar-system and galaxy scale.
  *
@@ -44,7 +43,7 @@
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
  *   - Vec3LongDouble_0(void)
- *   - Vec3LongDouble_create(sH, lH, sV, lV, sD, lD, frame)
+ *   - Vec3LongDouble(sH, lH, sV, lV, sD, lD, frame)
  * Public Core Functions: (.h)
  *   - Vec3LongDouble_free(v)
  *   - Vec3LongDouble_rebalance(v, sectorSize)
@@ -73,7 +72,7 @@ Vec3LongDouble *Vec3LongDouble_0(void) {
     return v;
 }
 
-Vec3LongDouble *Vec3LongDouble_create(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame) {
+Vec3LongDouble *Vec3LongDouble_7(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame) {
     Vec3LongDouble *v = (Vec3LongDouble*) Memory_alloc(ID_VEC3, sizeof(Vec3LongDouble));
     if (!v) return nullptr;
     (*v).horizontal.sector = sH;

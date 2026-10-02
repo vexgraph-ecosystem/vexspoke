@@ -36,7 +36,6 @@
 /**
  * ============================================================================
  * CLASS: Random (util/random.c)
- * LEVEL: L2 — Behavior (utility behavior API)
  * ============================================================================
  * the Random class, ported from util/Random.java.
  *

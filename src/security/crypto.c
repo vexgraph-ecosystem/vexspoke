@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: Crypto (security/crypto.c)
- * LEVEL: L1 — Cryptographic & Hashing Core
  * ============================================================================
  * Zero-allocation cryptographic digests (NIST SHA-256), side-channel-safe
  * constant-time equality checks, relational hash mixers, and XorShift128+ PRNG.

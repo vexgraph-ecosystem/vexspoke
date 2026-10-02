@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: WsClient (io/ws_client.c)
- * LEVEL: L2 — Behavior (R1 leaf driver handle: bounded frame slot)
  * ============================================================================
  * A bounded, thread-free WebSocket frame slot for the R1 leaf layer.
  * Fixed rx buffer, connection state, cancel flag, and timeout — zero

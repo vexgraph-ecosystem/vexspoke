@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: StrictMath (math/strict_math.c — defined in math/strict_math.h)
- * LEVEL: L2 — Behavior (strict IEEE 754 precision math for physics & simulations)
  * ============================================================================
  * Full-precision floating-point functions conforming strictly to IEEE 754.
  * Guaranteed accuracy, bit-exact roundings, and rigorous domain checks for

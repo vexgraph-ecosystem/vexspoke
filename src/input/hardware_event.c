@@ -23,7 +23,6 @@
 /**
  * ============================================================================
  * CLASS: HardwareEvent (input/hardware_event.c)
- * LEVEL: L2 — Hardware Input Event Multiplexer
  * ============================================================================
  * Provides factory constructors packaging discrete hardware device events
  * into unified, cache-friendly event packets.

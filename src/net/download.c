@@ -33,7 +33,6 @@ extern char **environ;
 /**
  * ============================================================================
  * MODULE: Download (net/download.c)
- * LEVEL: L4 — External Systems (Curl / Package Download Integration)
  * ============================================================================
  * Safe download bridge utilizing system curl to retrieve packages (Homebrew, assets)
  * to disk or in-memory buffers.

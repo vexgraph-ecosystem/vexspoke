@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Equals (c23/equals.c)
- * LEVEL: L2 — Behavior (relational runtime behavior)
  * ============================================================================
  * relational equality: identity, then block header, then payload bytes.
  *

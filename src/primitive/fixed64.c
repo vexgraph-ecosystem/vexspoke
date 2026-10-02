@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * MODULE: Fixed64 (primitive/fixed64.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * Fixed64 primitive (Legacy: primitive/Fixed64.java).
  *

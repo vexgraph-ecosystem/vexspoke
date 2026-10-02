@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: List (struct/list.c)
- * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * the List class, ported from struct/List.java.
  *

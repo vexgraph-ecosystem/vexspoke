@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: RadixSort (algo/radix_sort.c)
- * LEVEL: L1 — High-Throughput Sorting Core
  * ============================================================================
  * Least-Significant-Digit (LSD) Radix Sort with 256 counting buckets (8-bit radix).
  * Delivers predictable O(k*N) linear sorting time independent of initial ordering.

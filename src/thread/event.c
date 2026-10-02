@@ -1,4 +1,5 @@
 #include "thread/event.h"
+#include "thread/compute.h"
 
 #include "input/key.h"
 #include "input/mouse.h"
@@ -26,7 +27,6 @@
 /**
  * ============================================================================
  * MODULE: Event (thread/event.c)
- * LEVEL: L2 — Behavior (worker-thread behavior API)
  * ============================================================================
  * the event dispatcher worker (Legacy: EventThread.java).
  *
@@ -47,6 +47,7 @@
 
 static void event_job(Thread *self, void *task) {
     (void)self;
+    if (ComputeJob_run(task)) return;   // a generic job handed to this role
     if (!task) {
         Key_dispatchEvents();
         Mouse_dispatchEvents();
@@ -57,7 +58,7 @@ static void event_job(Thread *self, void *task) {
 }
 
 Thread *EventThread_invoke(void) {
-    return Thread_new(TYPE_THREAD_EVENT_SINGLETON, event_job, 1024, true, false);
+    return Thread(TYPE_THREAD_EVENT_SINGLETON, event_job, 1024, true, false);
 }
 
 bool EventThread_submit(Thread *w, void *packet) {

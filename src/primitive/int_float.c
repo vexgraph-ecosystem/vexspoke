@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Int_float (primitive/int_float.c)
- * LEVEL: L2 — Behavior (primitive behavior API)
  * ============================================================================
  * IntFloat primitive (Legacy: primitive/IntFloat.java).
  *

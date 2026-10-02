@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * MODULE: Console (cli/console.c)
- * LEVEL: L2 — Behavior (CLI behavior API)
  * ============================================================================
  * the Console class, ported from cli/Console.java.
  *

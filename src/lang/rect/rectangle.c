@@ -26,7 +26,6 @@
 /**
  * ============================================================================
  * CLASS: Rectangle (lang/rect/rectangle.c — defined in lang/rect/rectangle.h)
- * LEVEL: L2 — Behavior (pixel-space rectangle geometry)
  * ============================================================================
  * Axis-aligned rectangle in native pixel space (the Pixel Coordinate
  * Contract: the Graphics API, layout buffers and hit-testing all speak

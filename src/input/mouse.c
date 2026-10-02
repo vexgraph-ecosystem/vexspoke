@@ -51,7 +51,6 @@
 /**
  * ============================================================================
  * CLASS: Mouse (input/mouse.c)
- * LEVEL: L2 — Behavior (input behavior API)
  * ============================================================================
  * mouse buttons, position, and event stream. Listener registries grow
  * exponentially (the Dynamic Scalability & Anti-Hardcoding Law): window scope

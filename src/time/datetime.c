@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Datetime (time/datetime.c)
- * LEVEL: L2 — Behavior (time behavior API)
  * ============================================================================
  * UTC date/time breakdown (Legacy: time/DateTime.java).
  *

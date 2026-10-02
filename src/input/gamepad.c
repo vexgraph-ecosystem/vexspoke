@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * CLASS: Gamepad (input/gamepad.c)
- * LEVEL: L2 — Game Controller Hardware Input
  * ============================================================================
  * Processes digital game controller buttons, dual-motor rumble haptics,
  * and radial circular deadzone vector mapping for analog thumbsticks.

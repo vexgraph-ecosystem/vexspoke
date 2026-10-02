@@ -24,7 +24,6 @@
 /**
  * ============================================================================
  * MODULE: Clipboard_mac (objc/clipboard_mac.m)
- * LEVEL: L4 — Self-Management (native macOS pasteboard bridge)
  * ============================================================================
  * Native macOS NSPasteboard bridge supporting UTF-8 text and raw RGBA bitmaps.
  *

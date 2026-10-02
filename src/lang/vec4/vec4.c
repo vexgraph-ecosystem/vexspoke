@@ -27,7 +27,6 @@
 /**
  * ============================================================================
  * CLASS: Vec4 (lang/vec4/vec4.c — defined in lang/vec4/vec4.h)
- * LEVEL: L2 — Behavior (16-byte SIMD 4D vector)
  * ============================================================================
  * 4D vector with horizontal, vertical, depth, and w components.
  *

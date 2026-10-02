@@ -35,7 +35,6 @@
 /**
  * ============================================================================
  * MODULE: Cache (io/cache.c)
- * LEVEL: L4 — Storage Subsystem (Persistent On-Disk Key-Value Cache)
  * ============================================================================
  * High-performance on-disk content cache with cryptographic SHA-256 keys,
  * TTL validation, atomic filesystem writes, and zero-redownload caching.

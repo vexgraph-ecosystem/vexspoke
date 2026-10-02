@@ -25,7 +25,6 @@
 /**
  * ============================================================================
  * CLASS: Logcommands (cli/logcommands.c)
- * LEVEL: L2 — Behavior (CLI behavior API)
  * ============================================================================
  * the LogCommands class, ported from cli/LogCommands.java.
  *

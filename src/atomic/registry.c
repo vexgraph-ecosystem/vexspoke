@@ -37,7 +37,6 @@
 /**
  * ============================================================================
  * MODULE: Registry (atomic/registry.c)
- * LEVEL: L4 — Self-Management (atomic thread-identity table)
  * ============================================================================
  * thread identity & roles (Legacy: thread/ThreadRegistry.java).
  *

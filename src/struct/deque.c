@@ -28,7 +28,6 @@
 /**
  * ============================================================================
  * CLASS: Deque (struct/deque.c)
- * LEVEL: L2 — Behavior (container behavior API)
  * ============================================================================
  * the Deque class, ported from struct/Deque.java.
  *
