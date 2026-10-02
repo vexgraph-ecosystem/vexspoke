@@ -17,12 +17,12 @@
 //
 //   Textbook OOP binds names at COMPILE time (identifiers vanish into addresses)
 //     and hides state behind encapsulation. At runtime nothing is findable
-//     except by walking graphs you must already hold. Query cost: O(graph).
+//     except by walking graph you must already hold. Query cost: O(graph).
 //
 //   Textbook DOD answers "process everything fast" (sweeps over flat
 //     arrays). It never answers "find one thing now" — you rebuild that per
 //     case, usually as a shadow naming system that drifts. The engine does
-//     not compete: hot iteration stays DOD (scene graphs, SoA physics);
+//     not compete: hot iteration stays DOD (scene graph, SoA physics);
 //     cold rendezvous comes here. Complementary axes.
 //
 //   Textbook ECS answers "all entities with [A,B,C]" — sets by signature,
@@ -57,7 +57,7 @@
 //     constructor refuses silent resurrection.
 //   - No overclaim: gather-by-name is O(log n), not O(1) end to end; class
 //     filters are O(n) integer scans for cold sweeps only. Hot per-frame
-//     typed iteration belongs to scene graphs, never here.
+//     typed iteration belongs to scene graph, never here.
 //
 // Two SymbolTable tables are the scopes: global and local. Every symbol is a row
 // name => (classId, targetPointer). The pointer is the value — a string block,

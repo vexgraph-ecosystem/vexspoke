@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "atomic/spin.h"
-#include "c23/constructor.h"
 
 // MPSC mailbox: producers post; one designated consumer drains on its own
 // thread (the UI host chooses Thread 0). No worker, wakeup or scheduler here.
@@ -39,7 +38,7 @@ typedef struct Dispatch {
 } Dispatch;
 
 Dispatch *Dispatch_0(void);
-#define Dispatch(...) CONSTRUCTOR_DISPATCH(Dispatch, __VA_ARGS__)
+#define Dispatch() Dispatch_0()
 
 // Stop producers and exclude other callers BEFORE free; also never free from
 // a handler. Returns false on null or active drain. Dropped jobs are not invoked

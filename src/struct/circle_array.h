@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "struct/collection.h"
-#include "c23/constructor.h"
 
 // struct/circle_array.h — 2D Circular Matrix evaluated via the Pythagorean Theorem.
 //
@@ -20,8 +19,7 @@ typedef struct CircleArray {
 } CircleArray;
 
 // Allocation: creates a CircleArray with radius and element class.
-CircleArray *CircleArray_2(int32_t radius, uint32_t elementClass);
-#define CircleArray(...) CONSTRUCTOR_DISPATCH(CircleArray, __VA_ARGS__)
+CircleArray *CircleArray_create(int32_t radius, uint32_t elementClass);
 CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass, size_t stride);
 void CircleArray_free(CircleArray *self);
 

@@ -59,7 +59,7 @@ static void deliverToReactiveThread(Reactive *box); // the default delivery hook
 
 static Map *queued(void) {
     if (s_queued == nullptr)
-        s_queued = Map(ID_LONG, ID_LONG, 64);
+        s_queued = Map_3(ID_LONG, ID_LONG, 64);
     return s_queued;
 }
 
@@ -80,12 +80,12 @@ static void reactive_job(Thread *self, void *task) {
 }
 
 Thread *ReactiveThread_invoke(void) {
-    return Thread(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
+    return Thread_new(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
 }
 
 Thread *ReactiveThread_core(void) {
     if (s_core == nullptr) {
-        s_core = Thread(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
+        s_core = Thread_new(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
         if (s_core != nullptr)
             Thread_run(s_core);              // the default owner is live on first use
     }

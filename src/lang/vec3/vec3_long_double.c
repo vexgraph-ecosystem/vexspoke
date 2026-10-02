@@ -43,7 +43,7 @@
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
  *   - Vec3LongDouble_0(void)
- *   - Vec3LongDouble(sH, lH, sV, lV, sD, lD, frame)
+ *   - Vec3LongDouble_create(sH, lH, sV, lV, sD, lD, frame)
  * Public Core Functions: (.h)
  *   - Vec3LongDouble_free(v)
  *   - Vec3LongDouble_rebalance(v, sectorSize)
@@ -72,7 +72,7 @@ Vec3LongDouble *Vec3LongDouble_0(void) {
     return v;
 }
 
-Vec3LongDouble *Vec3LongDouble_7(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame) {
+Vec3LongDouble *Vec3LongDouble_create(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame) {
     Vec3LongDouble *v = (Vec3LongDouble*) Memory_alloc(ID_VEC3, sizeof(Vec3LongDouble));
     if (!v) return nullptr;
     (*v).horizontal.sector = sH;

@@ -1,7 +1,7 @@
 #ifndef ANNOTATION_INTENTION_H
 #define ANNOTATION_INTENTION_H
 
-// src/annotation/intention.h — C mirror of _legacy-java/src/annotation/Intention.java.
+// src/annotation/intention.h — C mirror of legacy-java/src/annotation/Intention.java.
 //
 // Intention(text): state the reason a file/function exists, annotated on top
 // of a header/class for a reason. The text is a string literal.

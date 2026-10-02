@@ -1,7 +1,7 @@
 #ifndef ANNOTATION_DRAFT_H
 #define ANNOTATION_DRAFT_H
 
-// src/annotation/draft.h — C mirror of _legacy-java/src/annotation/Draft.java.
+// src/annotation/draft.h — C mirror of legacy-java/src/annotation/Draft.java.
 //
 // C has no language-level annotations, so each legacy annotation becomes a
 // header defining a zero-cost marker macro. The macros expand to a static

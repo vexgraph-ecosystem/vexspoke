@@ -106,7 +106,7 @@ static ShelfNode *nodeAt(const Shelf *shelf, uint32_t index) {
 bool Shelf_init(Shelf *shelf) {
     if (!shelf)
         return false;
-    ChunkedList *nodes = ChunkedList(ID_SHELF_NODE, (uint32_t) sizeof(ShelfNode), VEX_CHUNKED_BYTES_DEFAULT);
+    ChunkedList *nodes = ChunkedList_3(ID_SHELF_NODE, (uint32_t) sizeof(ShelfNode), VEX_CHUNKED_BYTES_DEFAULT);
     if (!nodes)
         return false;
     (*shelf).active = true;
@@ -170,7 +170,7 @@ uint32_t Shelf_addNode(Shelf *shelf, uintptr_t cell) {
 }
 
 uint32_t Shelf_addCell(Shelf *shelf, uint64_t typeId, uintptr_t value) {
-    Cell *cell = Cell(typeId, value);
+    Cell *cell = Cell_2(typeId, value);
     if (!cell)
         return SHELF_INDEX_NONE;
     uint32_t index = Shelf_addNode(shelf, (uintptr_t) cell);

@@ -6,7 +6,6 @@
 
 #include "annotation/draft.h"
 #include "annotation/intention.h"
-#include "c23/constructor.h"
 
 // input/key_map.h — input binding registry (combo → fn pointer).
 //
@@ -84,8 +83,7 @@ typedef struct KeyMap {
            "mask) planned for any-modifier/any-key binds; do not harden the "
            "public surface until a real Frame consumer proves it")
 
-KeyMap *KeyMap_1(void *arena);
-#define KeyMap(...) CONSTRUCTOR_DISPATCH(KeyMap, __VA_ARGS__)
+KeyMap *KeyMap_create(void *arena);
 void    KeyMap_destroy(KeyMap *map);
 
 // ── Binding ───────────────────────────────────────────────

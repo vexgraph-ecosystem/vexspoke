@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 #include "math/coord_frame.h"
-#include "c23/constructor.h"
 
 // lang/vec3/vec3d.h — 32-byte SIMD Double-Precision 3D Spatial Vector.
 //
@@ -29,7 +28,6 @@ typedef struct Vec3d {
 Vec3d *Vec3d_0(void);
 Vec3d *Vec3d_3(double horizontal, double vertical, double depth);
 Vec3d *Vec3d_4(double horizontal, double vertical, double depth, CoordFrame frame);
-#define Vec3d(...) CONSTRUCTOR_DISPATCH(Vec3d, __VA_ARGS__)
 void Vec3d_free(Vec3d *v);
 
 // Spatial Directional Getters & Setters

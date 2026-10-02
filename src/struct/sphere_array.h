@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "struct/collection.h"
-#include "c23/constructor.h"
 
 // struct/sphere_array.h — 3D Spherical Voxel Matrix evaluated via 3D Pythagorean Theorem.
 //
@@ -20,8 +19,7 @@ typedef struct SphereArray {
 } SphereArray;
 
 // Allocation
-SphereArray *SphereArray_2(int32_t radius, uint32_t elementClass);
-#define SphereArray(...) CONSTRUCTOR_DISPATCH(SphereArray, __VA_ARGS__)
+SphereArray *SphereArray_create(int32_t radius, uint32_t elementClass);
 SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass, size_t stride);
 void SphereArray_free(SphereArray *self);
 

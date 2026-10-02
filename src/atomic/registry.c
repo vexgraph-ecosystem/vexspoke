@@ -93,7 +93,7 @@ int ThreadRegistry_role(int index) {
 
 const char *ThreadRegistry_roleName(int role) {
     switch (role) {
-        case THREAD_ROLE_MAIN:       return "main";
+        case THREAD_ROLE_MAIN:       return "_main";
         case THREAD_ROLE_ENGINE:     return "engine";
         case THREAD_ROLE_DRAW:       return "draw";
         case THREAD_ROLE_PRESENT:    return "present";

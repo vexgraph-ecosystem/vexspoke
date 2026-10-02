@@ -82,7 +82,7 @@ Thread *DrawThread_invokeRole(int role) {
     for (int i = 0; i < DRAW_ROLE_SLOTS; i++) {
         if (!s_roles[i].worker) {
             bool core = role == DRAW_ROLE_CORE;
-            Thread *w = Thread(TYPE_THREAD_DRAW_SINGLETON, draw_job,
+            Thread *w = Thread_new(TYPE_THREAD_DRAW_SINGLETON, draw_job,
                                    1024, false, core);
             if (!w)
                 return nullptr;

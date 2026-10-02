@@ -13,7 +13,7 @@
  * DEFINITION: Dijkstra
  * ============================================================================
  * Single-source shortest-path solver over weighted adjacency lists, used for
- * routing, spatial navigation, and audio node dependency graphs. The graph is
+ * routing, spatial navigation, and audio node dependency graph. The graph is
  * a pair of contiguous off-heap arenas (nodes plus per-node edge arrays) so
  * relaxation walks cache-friendly memory; edge arrays double on demand and
  * are reclaimed with the graph. The priority queue is a private min-heap over
@@ -51,7 +51,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - DijkstraGraph(nodeCount)
+ *   - Dijkstra_create(nodeCount)
  *
  * Public Core Functions: (.h)
  *   - Dijkstra_free(graph)
@@ -65,7 +65,7 @@
  * ============================================================================
  */
 
-DijkstraGraph *DijkstraGraph_1(uint32_t nodeCount) {
+DijkstraGraph *Dijkstra_create(uint32_t nodeCount) {
     if (nodeCount == 0) return nullptr;
 
     DijkstraGraph *graph = (DijkstraGraph*) Memory_alloc(TYPE_BYTE_ARRAY, sizeof(DijkstraGraph));

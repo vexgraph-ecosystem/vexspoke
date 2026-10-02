@@ -37,7 +37,6 @@ typedef struct Vec2 {
 
 Vec2 *Vec2_0(void);
 Vec2 *Vec2_2(float horizontal, float vertical);
-#define Vec2(...) CONSTRUCTOR_DISPATCH(Vec2, __VA_ARGS__)
 void Vec2_free(Vec2 *v);
 
 // Directional Getters & Setters

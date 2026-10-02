@@ -35,7 +35,6 @@ typedef struct Rectangle {
 //   Rectangle(x, y, w, h)       : Rectangle_4(x, y, w, h)
 Rectangle *Rectangle_0(void);
 Rectangle *Rectangle_4(float x, float y, float width, float height);
-#define Rectangle(...) CONSTRUCTOR_DISPATCH(Rectangle, __VA_ARGS__)
 void Rectangle_free(Rectangle *r);
 
 // Setters

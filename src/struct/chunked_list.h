@@ -8,7 +8,6 @@
 
 #include "atomic/spin.h"
 #include "struct/collection.h"
-#include "c23/constructor.h"
 
 // struct/chunked_list.h — the ChunkedList class: a never-moved radix-paged list.
 //
@@ -136,7 +135,6 @@ ChunkedList *ChunkedList_2(uint32_t elementClass, uint32_t chunkBytes);
 // Explicit stride for row layouts the Struct registry does not know
 // (e.g. a graphvex-side row struct holding its own atomics).
 ChunkedList *ChunkedList_3(uint32_t elementClass, uint32_t stride, uint32_t chunkBytes);
-#define ChunkedList(...) CONSTRUCTOR_DISPATCH(ChunkedList, __VA_ARGS__)
 
 // Radix form: build a table of `count` levels from `radices[]` (outer to leaf).
 // radices[0] is the initial root slot count (the root still grows); the LAST

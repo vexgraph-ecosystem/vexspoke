@@ -2,7 +2,7 @@
 #define ANNOTATION_PLATFORM_EXCLUSIVE_H
 
 // src/annotation/platform_exclusive.h — C mirror of
-// _legacy-java/src/annotation/PlatformExclusive.java.
+// legacy-java/src/annotation/PlatformExclusive.java.
 //
 // PlatformExclusive(platform): marks a backend as exclusive to the named
 // platform (e.g. "Windows", "Linux", "Mac"). The platform is a string literal.

@@ -52,7 +52,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - CircleArray(radius, elementClass)
+ *   - CircleArray_create(radius, elementClass)
  *   - CircleArray_createWithStride(radius, elementClass, stride)
  *
  * Public Core Functions: (.h)
@@ -120,7 +120,7 @@ CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-CircleArray *CircleArray_2(int32_t radius, uint32_t elementClass) {
+CircleArray *CircleArray_create(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;

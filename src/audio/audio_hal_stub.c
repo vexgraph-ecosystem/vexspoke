@@ -45,7 +45,7 @@
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
  *   - AudioHalConfig_default(void)
- *   - AudioHal_open(config, hal_out)
+ *   - AudioHal_create(config, hal_out)
  *   - AudioHal_start(hal)
  *   - AudioHal_stop(hal)
  *   - AudioHal_destroy(hal)
@@ -74,7 +74,7 @@ AudioHalConfig AudioHalConfig_default(void) {
     return cfg;
 }
 
-bool AudioHal_open(const AudioHalConfig *config, AudioHal **hal_out) {
+bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
     (void) config;
     if (hal_out) {
         *hal_out = NULL;

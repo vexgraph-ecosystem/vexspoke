@@ -220,7 +220,7 @@ Vec4_add(dest, a, b);        // no
 #### Definition:
 Every class across the ecosystem ships a **uniform, arity-based convenience surface**, so an object is instantiated, extended, zeroed, and named with canonical constants — never with ad-hoc literals or per-class bespoke spellings. It binds **every framework**, because every part speaks arity.
 
-1. **Macro arity constructor — the one public spelling.** Every public class provides `Class_0()`, `Class_1(a)`, `Class_2(a, b)`, … (the Vec4 chooser idiom) plus a `Class(...)` dispatch macro that selects by argument count. The numbered forms are the macro's **internal expansion targets, not a public surface**. The only construction spelling at any call site — production, test, or consumer — is `Class(...)`: `Frame *f = Frame();`, `Window *w = Window("main", 800, 600);`. A direct `Class_0()` / `Class_1(a)` / … call outside the owning file pair is a defect, and a bespoke `make_*` / `new_*` / `create_*` / `*_new` / `*_create` / `*_make` factory is forbidden everywhere.
+1. **Arity constructors — every single time.** Every public class provides `Class_0()`, `Class_1(a)`, `Class_2(a, b)`, … (the Vec4 chooser idiom) plus a `Class(...)` dispatch macro that selects by argument count. Construction is always `Class(...)` — never a bespoke `make_*` / `new_*` / `create_*`.
 2. **`Class_add(...)`.** Every additive or collection class provides `Class_add(...)` — the class's natural additive/append verb (list add, vector add, set union, string append, …).
 3. **`Class_zero()`.** Every class provides `Class_zero()` (or a `ZERO` constant) — the additive identity / empty element.
 4. **Canonical named constants.** Numeric magnitudes and extremes are named once, canonically: `ZERO`, `ONE`, `ONE_MILLION`, `ONE_BILLION`, `ONE_TRILLION`, `FLOAT_POS_INF`, `FLOAT_NEG_INF`, `DOUBLE_POS_INF`, `DOUBLE_NEG_INF`, `INT_MAX_VALUE`, `INT_MIN_VALUE`, `TYPE_MAX_VALUE`, `TYPE_MIN_VALUE`, and many more — so a call site writes `-ONE` and reads -1, never a bare `-1` literal.
@@ -228,17 +228,14 @@ Every class across the ecosystem ships a **uniform, arity-based convenience surf
 #### The Why:
 **Tesler's Law (the Law of Conservation of Complexity):** *"Every application has an inherent amount of complexity that cannot be removed or hidden. Instead, it must be dealt with, either in product development or in user interaction."* — Larry Tesler.
 
-The complexity of *"how do I instantiate this / extend it / zero it / name its extremes"* cannot be deleted — it has to live somewhere. This law pays that complexity **once**, in the library (product development), and hands every developer a uniform, arity-based, constructive surface (the user-interaction side) — so a call site never invents a spelling, and the convenience sits with the developer because the library already absorbed the cost. It is a **universal** law: every framework ships the same arity surface, so the whole ecosystem reads as one language. The numbered `Class_N(...)` functions are that macro's plumbing; promoting them to a call-site spelling would fork the one constructor back into per-class bespoke spellings and defeat the whole surface.
+The complexity of *"how do I instantiate this / extend it / zero it / name its extremes"* cannot be deleted — it has to live somewhere. This law pays that complexity **once**, in the library (product development), and hands every developer a uniform, arity-based, constructive surface (the user-interaction side) — so a call site never invents a spelling, and the convenience sits with the developer because the library already absorbed the cost. It is a **universal** law: every framework ships the same arity surface, so the whole ecosystem reads as one language.
 
 #### The Rule:
-1. **Every public class ships `Class_0()`, `Class_1()`, … plus the `Class(...)` arity chooser, and the chooser is the constructor.** The `Class(...)` macro is the public surface; the numbered `Class_N(...)` forms exist only so the chooser resolves and are internal to the owning file pair. No class is constructible only through a bespoke factory name.
-2. **Call sites use only the macro form.** No `Class_0()`, `Class_1(a)`, … and no `make_*` / `new_*` / `create_*` / `*_new` / `*_create` / `*_make` spelling may appear outside the class's own `.h`/`.c` pair — including in `tests/<subsystem>/` harnesses, which are ordinary call sites and construct with `Class(...)`.
-3. **The numbered forms may name each other only inside the owning implementation.** The `.c` definitions of `Class_0`, `Class_1`, … may delegate to one another; nothing else may call them.
-4. **Every additive/collection class ships `Class_add(...)`.**
-5. **Every class ships `Class_zero()` (or `ZERO`).**
-6. **Canonical numeric constants live in one header.** No bare `-1`, `1000000`, or `INFINITY` literals at a call site — the name is the contract.
-7. **Uniform across repos.** Same names, same shapes everywhere — the convenience surface is identical in every framework (the Per-Repo Preferences Extension Law restates it, never forks it).
-8. **Managed exception — generic-family tokens.** A class whose bare name is already a generic-family macro cannot also carry a variadic chooser under the same token: `reactive/generic.h` defines `#define Reactive(T) VEX_CAT(Reactive, T)`, so `Reactive(int)` / `Reactive(Vec4)` are the typed constructors and `Reactive(...)` cannot coexist (one macro name). Such a family keeps its numbered bare-engine constructors (`Reactive_1`, `Reactive_2`) as the sanctioned spelling and is exempt from rule 2 by explicit `;;INTENTION` — never by silence (the Conflict Triage Law). `Reactive` is the only such token in the ecosystem; a new one requires an amendment here.
+1. **Every public class ships `Class_0()`, `Class_1()`, … and the `Class(...)` arity chooser.** No class is constructible only through a bespoke factory name.
+2. **Every additive/collection class ships `Class_add(...)`.**
+3. **Every class ships `Class_zero()` (or `ZERO`).**
+4. **Canonical numeric constants live in one header.** No bare `-1`, `1000000`, or `INFINITY` literals at a call site — the name is the contract.
+5. **Uniform across repos.** Same names, same shapes everywhere — the convenience surface is identical in every framework (the Per-Repo Preferences Extension Law restates it, never forks it).
 
 ### Legacy title map
 
@@ -565,7 +562,7 @@ first.
      `consoles` (sessions).
 
 6. **`vexgraph` (Top-Level Integrator & Application Root)**:
-   - The umbrella project that nests the repositories in `../` and builds unified binaries, probes (`../../trash/main/vk_test.c`), and tooling.
+   - The umbrella project that nests the repositories in `../` and builds unified binaries, probes (`../../_trash/main/vk_test.c`), and tooling.
 
 ### Teardown (top-down; arena last)
 
@@ -886,7 +883,7 @@ they are complementary halves of a modern C23 collection design.
 ## 16. Test Segregation Law (Zero Source Pollution — No Tests in Source Trees)
 
 ### Definition:
-Test code and harnesses NEVER reside inside production source directories (`src/`, `darling/`, `render/`, `../../trash/main/`, `app/`, etc.). Tracked test sources live in the independent workspace `tests/<subsystem>/` repository, or an owning repository's top-level `tests/` when built standalone. Production source trees contain only production classes, headers, and build scripts.
+Test code and harnesses NEVER reside inside production source directories (`src/`, `darling/`, `render/`, `../../_trash/main/`, `app/`, etc.). Tracked test sources live in the independent workspace `tests/<subsystem>/` repository, or an owning repository's top-level `tests/` when built standalone. Production source trees contain only production classes, headers, and build scripts.
 
 ### The Why:
 Colocating tests alongside production source files pollutes the clean 1:1 class-to-file architecture (the Single Class Per File Law), confuses directory-based build tools and file watchers, muddles static analysis, degrades search/grep ergonomics, and creates risks of circular dependencies or accidental linkage of test helpers into production shared libraries. A source directory must be purely production code; test suites are clients of the subsystems they test and must sit in segregated test directories.

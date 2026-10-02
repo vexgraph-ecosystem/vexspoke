@@ -92,7 +92,7 @@
  *   - Memory_findAll(typeId, outArray, maxCount)
  *
  * Arena Functions (Phase-4):
- *   - MemoryArena(totalBytes)
+ *   - MemoryArena_create(totalBytes)
  *   - MemoryArena_destroy(a)
  *   - MemoryArena_alloc(a, typeId, numBytes)
  *   - MemoryArena_realloc(a, userPtr, newBytes)
@@ -676,7 +676,7 @@ size_t Memory_findAll(uint64_t typeId, void **outArray, size_t maxCount) {
     return MemoryArena_findAll(&s_default, typeId, outArray, maxCount);
 }
 
-MemoryArena *MemoryArena_1(size_t totalBytes) {
+MemoryArena *MemoryArena_create(size_t totalBytes) {
     MemoryArena *a = (MemoryArena*) calloc(1, sizeof(MemoryArena));
     if (!a)
         return nullptr;

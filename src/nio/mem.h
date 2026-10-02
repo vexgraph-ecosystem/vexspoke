@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "c23/constructor.h"
 
 // nio/mem.h — the ForeignMemory API (Legacy: nio/ForeignMemory.java).
 //
@@ -92,8 +91,7 @@ typedef struct MemoryArena MemoryArena;
 // threading arena handles through every caller.
 MemoryArena *Memory_defaultArena(void);
 
-MemoryArena *MemoryArena_1(size_t totalBytes);
-#define MemoryArena(...) CONSTRUCTOR_DISPATCH(MemoryArena, __VA_ARGS__)
+MemoryArena *MemoryArena_create(size_t totalBytes);
 void MemoryArena_destroy(MemoryArena *a);
 void *MemoryArena_alloc(MemoryArena *a, uint64_t typeId, size_t numBytes);
 void *MemoryArena_realloc(MemoryArena *a, void *userPtr, size_t newBytes);

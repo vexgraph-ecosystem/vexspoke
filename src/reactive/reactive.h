@@ -6,8 +6,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "annotation/intention.h"
-
 // reactive/reactive.h — the one reactive engine.
 //
 // A reactive is ONE atomic word — a scalar (<= 8 bytes) or a pointer to an
@@ -68,14 +66,12 @@ typedef void (*ReactiveNullptrFn)(Reactive *self, void *userdata);
 // Embedded init: seed the word (its own shadow starts equal, so the first drain
 // is silent). The typed reactives call this from their constructors.
 bool Reactive_init(Reactive *self, uintptr_t initialWord);
-// Arena-allocated conveniences (the Semantic Consistency Law (Construction and arity)).
+// Arena-allocated conveniences (the Arity and Constructive Convenience Law).
 Reactive *Reactive_1(uintptr_t initialWord);
 Reactive *Reactive_2(const Reactive *init, size_t count);
 // The bare `Reactive(...)` arity chooser is retired: the token is promoted to the
 // generic family constructor `Reactive(T)` (reactive/generic.h), so a bare engine
 // is built through Reactive_1/Reactive_2, and typed reactives through Reactive(T).
-// This is the one managed exception to the macro arity constructor rule.
-;;INTENTION("Reactive(T) owns the token, so a bare variadic chooser cannot coexist; Reactive_1/_2 are the sanctioned bare-engine constructors. Per the Conflict Triage Law.")
 // Release the observer lists, WITHOUT freeing the block (embedded engines live
 // inside a typed facade, which frees itself). Freeing is just freeing.
 void Reactive_shutdown(Reactive *self);

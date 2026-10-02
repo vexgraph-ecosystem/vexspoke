@@ -47,7 +47,7 @@
  * ----------------------------------------------------------------------------
  * Constructors:
  *   - Vec3IntFloat_0()
- *   - Vec3IntFloat(sH, lH, sV, lV, sD, lD, frame)
+ *   - Vec3IntFloat_create(sH, lH, sV, lV, sD, lD, frame)
  *
  * Core Functions:
  *   - Vec3IntFloat_free(v)
@@ -79,7 +79,7 @@ Vec3IntFloat *Vec3IntFloat_0(void) {
     return v;
 }
 
-Vec3IntFloat *Vec3IntFloat_7(int32_t sH, float lH, int32_t sV, float lV, int32_t sD, float lD, CoordFrame frame) {
+Vec3IntFloat *Vec3IntFloat_create(int32_t sH, float lH, int32_t sV, float lV, int32_t sD, float lD, CoordFrame frame) {
     Vec3IntFloat *v = (Vec3IntFloat*) Memory_alloc(ID_VEC3, sizeof(Vec3IntFloat));
     if (!v) return nullptr;
     (*v).horizontal.sector = sH;

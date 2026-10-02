@@ -58,13 +58,13 @@ static void networking_job(Thread *self, void *task) {
 }
 
 Thread *NetworkingThread_invoke(void) {
-    return Thread(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
+    return Thread_new(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
                       2048, false, false);
 }
 
 Thread *NetworkingThread_core(void) {
     if (!s_core)
-        s_core = Thread(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
+        s_core = Thread_new(TYPE_THREAD_NETWORKING_SINGLETON, networking_job,
                             2048, false, true);
     return s_core;
 }

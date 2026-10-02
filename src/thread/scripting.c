@@ -52,7 +52,7 @@ static void scripting_job(Thread *self, void *task) {
 }
 
 Thread *ScriptingThread_invoke(void) {
-    return Thread(TYPE_THREAD_SCRIPTING_SINGLETON, scripting_job,
+    return Thread_new(TYPE_THREAD_SCRIPTING_SINGLETON, scripting_job,
                       1024, false, false);
 }
 

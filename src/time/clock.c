@@ -47,7 +47,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Clock(void)
+ *   - Clock_create(void)
  *
  * Core Functions:
  *   - Clock_tick(clock)
@@ -80,7 +80,7 @@ static uint64_t monoMillis(void) {
     return (uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL;
 }
 
-Clock Clock_0(void) {
+Clock Clock_create(void) {
     Clock c;
     c.timeScale = 1.0;
     c.baseRealMillis = currentTimeMillis();

@@ -46,7 +46,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - SphereArray(radius, elementClass)
+ *   - SphereArray_create(radius, elementClass)
  *   - SphereArray_createWithStride(radius, elementClass, stride)
  *
  * Core Functions:
@@ -125,7 +125,7 @@ SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-SphereArray *SphereArray_2(int32_t radius, uint32_t elementClass) {
+SphereArray *SphereArray_create(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;

@@ -41,7 +41,7 @@
  * ----------------------------------------------------------------------------
  * Lifecycle & Stream Control:
  *   - AudioHalConfig_default()
- *   - AudioHal_open(config, hal_out)
+ *   - AudioHal_create(config, hal_out)
  *   - AudioHal_start(hal)
  *   - AudioHal_stop(hal)
  *   - AudioHal_destroy(hal)
@@ -106,7 +106,7 @@ static OSStatus audio_hal_render_proc(
     return noErr;
 }
 
-bool AudioHal_open(const AudioHalConfig *config, AudioHal **hal_out) {
+bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
     if (!hal_out) {
         return false;
     }

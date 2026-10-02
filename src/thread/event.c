@@ -58,7 +58,7 @@ static void event_job(Thread *self, void *task) {
 }
 
 Thread *EventThread_invoke(void) {
-    return Thread(TYPE_THREAD_EVENT_SINGLETON, event_job, 1024, true, false);
+    return Thread_new(TYPE_THREAD_EVENT_SINGLETON, event_job, 1024, true, false);
 }
 
 bool EventThread_submit(Thread *w, void *packet) {

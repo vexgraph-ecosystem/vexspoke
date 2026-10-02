@@ -55,7 +55,7 @@ static void ui_job(Thread *self, void *task) {
 }
 
 Thread *UIThread_invoke(void) {
-    return Thread(TYPE_THREAD_UI_SINGLETON, ui_job, 1024, true, false);
+    return Thread_new(TYPE_THREAD_UI_SINGLETON, ui_job, 1024, true, false);
 }
 
 bool UIThread_submit(Thread *w, void *packet) {

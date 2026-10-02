@@ -77,7 +77,7 @@ bool ComputeJob_run(void *task) {
 }
 
 Thread *ComputeThread_invoke(void) {
-    Thread *worker = Thread(TYPE_THREAD_COMPUTE_SINGLETON, compute_job, 4096, false, false);
+    Thread *worker = Thread_new(TYPE_THREAD_COMPUTE_SINGLETON, compute_job, 4096, false, false);
     if (worker != nullptr)
         Thread_run(worker);
     return worker;
