@@ -74,6 +74,7 @@ The only authoritative list of universal law names. Each active law has one cano
 | 26 | Capability Gating Law (Runtime Features Above the Floor) |
 | 27 | THROW Law (Loud Cold Rejection) |
 | 28 | Native Pixel Law |
+| 29 | Timestamped Test Checklist Law |
 
 ---
 
@@ -90,7 +91,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
-   - *Laws*: the Semantic Consistency Law, the Single Class Per File Law (Java Law) (symmetric accessors), the Living Documentation Law (blueprints, preferences, readiness), the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the toString Law, the Authorial Intent Law, the No Hardcoding Law, the WHAT Law, the AI-First Architecture Manifesto Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Per-Repo Preferences Extension Law.
+   - *Laws*: the Semantic Consistency Law, the Single Class Per File Law (Java Law) (symmetric accessors), the Living Documentation Law (blueprints, preferences, readiness), the Timestamped Test Checklist Law, the Vertical Integration Law (Supervisor Order R1–R5), the One Type Registry Law, the Canonical Include Paths Law & the Standalone Autonomy Law, the toString Law, the Authorial Intent Law, the No Hardcoding Law, the WHAT Law, the AI-First Architecture Manifesto Law, the Conflict Triage Law, the Cold-Strict hot-minimal contract half (setter validation policy, truncation flag, seam tests), the Data-Oriented Storage Law, the Per-Repo Preferences Extension Law.
    - *The Why*: High-level C code must act as a reliable, predictable class system. Every struct field must have transparent, symmetric access; every class must be fully documented in-place.
 
 3. **Tier 3: Syntactic Aesthetics & Mechanical Determinism**
@@ -1209,3 +1210,21 @@ On Retina and HiDPI displays, abstracting window geometry into logical points ob
 4. **Multi-Monitor Scale Transitions & Revalidation:** When a window transitions across monitors with differing backing scale factors (DPI), `Window_revalidate` recalculates the underlying platform points to preserve the exact physical pixel size and dispatches geometry update events.
 5. **Points-Explicit Escape Hatch:** When logical points are explicitly needed for OS-specific desktop placement, classes provide explicit points accessors (`Window_setSizePoints`, `Window_getSizePoints`, `Window_widthPoints`, `Window_heightPoints`, `Window_getScale`).
 
+---
+
+## 29. Timestamped Test Checklist Law
+
+### Definition:
+`tests/test-checklist.md` is the shared, per-file **automated lab evidence** ledger across **all parts** of the ecosystem: every framework and runtime level, blueprint repositories, shared tests, tools, headers, shaders, configuration, and documentation. Frameworks have separate sections; each directory has a GitHub-friendly Markdown table with filename, lab-tested status (✅ / ❌), actual last-check Unix timestamp, tested content hash, evidence/scope, description, and result. No authors, agent names, or session identifiers are recorded. Visual acceptance is reserved for the user, not this ledger.
+
+### The Why:
+A remembered green suite or an existing test file does not tell another agent what actually ran, when it ran, or whether the file changed afterward. A timestamped, content-specific ledger makes gaps visible and prevents stale or guessed results from becoming proof.
+
+### The Rule:
+1. **Consult before changing any part.** Humans and agents read the affected checklist rows and `tests/test-preferences.md` before work. Missing rows are untested, not an exemption. No framework, directory, or runtime level is exempt.
+2. **Inventory every owned file.** Run `python3 tools/test_checklist.py sync` when files are added, removed, moved, or changed. Every non-ignored file in each ecosystem repository, the workspace, and the shared tests gets its own row, including untracked work; empty frameworks remain visible. Generated/ignored build artifacts and the ledger itself are excluded. Inventories are not proof of execution.
+3. **Only executed lab evidence earns ✅.** Run `python3 tools/test_checklist.py run --file <workspace-relative-file> [--file <other-subject>] --description <explanation> -- <command>`. The command must actually exercise each named subject. Record scope, host/platform and gaps with `--scope`. Compilation or syntax checks prove only those scopes; integration tests do not automatically prove every linked file or satisfy the Per-File Battle Test Law. Automated numeric/pixel assertions are lab evidence, not visual approval. Do not run galleries or interactive demonstrations as verification: the user tests appearance first and reports defects. `--kind visual` is rejected before execution; manual visual results do not earn checklist ✅.
+4. **Use real Unix time.** Last checked is integer seconds since January 1, 1970 UTC, captured at test completion. Never checked is `—`, not a fabricated date or epoch zero. Estimated historical times, when useful, belong in explicitly labelled notes and must never confer ✅ or replace the executed timestamp.
+5. **Keep evidence current and private.** A changed subject invalidates its ✅ even when an older timestamp exists. Failures, skips, missing proof, and stale checks are ❌ with an explicit reason. Record exact content hashes, command, scope, and a useful description, never author identity or session metadata. Avoid private details in commands/descriptions. A pass on one platform is not proof on an untested platform; a lab pass is never visual acceptance.
+6. **Update in the same work cycle.** Run applicable checks and update affected ledger rows before calling work verified or complete. Run `python3 tools/test_checklist.py check` to reject inventory drift and stale greens. This check validates the ledger, not the entire ecosystem's behavior. Never bulk-promote files based on test presence, recollection, a neighboring result, or an unrelated successful command.
+7. **Preserve the stronger proof laws.** This ledger supplements the Test Segregation Law, Living Documentation Law, Per-File Battle Test Law, and Executable Evidence and Readiness Law; it does not weaken their requirements or replace readiness matrices. Test implementations remain in `tests/`, not production trees.
