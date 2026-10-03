@@ -495,14 +495,15 @@ first.
      `Hot`/`Manifest`/`VkLoader`/`SpvWatch`.
    - **Process taxonomy (classify by the first matching question):**
      1. Presents pixels through a Window/board composite chain
-        (`CAMetalLayer` + swapchain)? → **Application** — a pure *manifest*:
+         (`CAMetalLayer` + swapchain)? → **Application** — a lifetime *supervisor*:
         identity (name/author/version/icon), window registry,
         and a hot-module slot. It NEVER owns a tick, a present worker, a
-        frame scheduler, or an event router — `Application_start/stop` flip
-        the `running` flag, and `Application_run` is the keep-alive parked
-        loop (hotcwap's own, graphvex-independent): it BLOCKS until every
+         frame scheduler, or an event router — `Application_start` is the
+         blocking lifetime entry, `Application_close/stop` request all-window
+         closure, and `Application_run` is the keep-alive parked loop
+         (hotcwap's own, graphvex-independent): it BLOCKS until every
         registered window is closed, letting the Window pump its own events
-        in 25ms slices and asking closed-state at a 250ms cadence — so an
+         in 5ms parked slices and supervising cancellable worker start events — so an
         empty window lives on its own and `Kernel_run(kernel, app)` returns
         only once the user closed all windows. The Kernel (R1) dispatches the
         Application into graphvex's `GfxLoop` (R3),
