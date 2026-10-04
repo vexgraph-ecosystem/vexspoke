@@ -659,7 +659,7 @@ if(NOT TARGET vexspoke)
     include(FetchContent)
     FetchContent_Declare(
         vexspoke
-        GIT_REPOSITORY https://github.com/vexgraph-dev/vexspoke.git
+        GIT_REPOSITORY https://github.com/vexgraph-ecosystem/vexspoke.git
         GIT_TAG spoke
     )
     FetchContent_MakeAvailable(vexspoke)

@@ -12,63 +12,30 @@ The result is a lock-free, cache-coherent core with predictable, microsecond-lev
 
 ## Workspace Integration & How to Use It
 
-`vexspoke` is the R1 Spoke in the supervisor order (Rule 17: `R0 hotcwap > R1 vexspoke > R1.5 graphvex > R2 features > R3 engines`) — the pure leaf shapes the R0 Kernel borrows (`MemoryArena`, events, math). Supervised by `hotcwap` at runtime, dependency of everything at compile-time. It is designed to be consumed as the foundational bedrock library within a vertically integrated ecosystem (such as `vexgraph`) or embedded standalone into custom applications:
+`vexspoke` is the **R2 behavior** layer in the supervisor order (the Vertical Integration Law) — the pure leaf shapes the R1 Kernel borrows (`MemoryArena`, events, math). Supervised by `hotcwap` at runtime, dependency of everything at compile-time. It is designed to be consumed as the foundational bedrock library within a vertically integrated ecosystem (such as `vexgraph`) or embedded standalone into custom applications.
 
-```
-workspace/
-├── cmake-build-debug/           # Out-of-tree CMake build artifacts & staged SPVs
-├── projects/                    # Vertically integrated subsystem repositories
-│   ├── vexspoke/                # Bedrock C23 platform runtime (this library)
-│   │   └── src/                 # Memory pools, BitPacked OOP, atomics, math, loop
-│   ├── hotcwap/                 # Dynamic hot-reloading & native OS windowing
-│   │   └── src/                 # Window abstraction, AppKit Cocoa bridge, loader
-│   ├── darling/                 # Retained-mode UI nodes & Vulkan render passes
-│   │   └── src/                 # Canvas, panels, labels, font baking, CoreText, SDF
-│   ├── api-haven/               # Telemetry schemas, webhooks, and transmitters.
-│   │
-│   └── [other projects connecting to each other go here]
-│
-├── CMakeLists.txt               # Umbrella workspace orchestrator
-└── preferences.md               # Engine architectural style preferences (Rules 1–n)
+`vexspoke` depends on nothing else in the stack; it never includes a consumer's headers. The full ecosystem map lives in the workspace root `README.md` and the ecosystem wiki, not here.
+
+### Build
+
+```sh
+./tools/b build          # inside the worktree: builds this repo with its graph
+b/b build c .            # standalone: the bundled build system, C adapter
 ```
 
-### Ecosystem Dependency Tree (Where `vexspoke` is Used)
-
-`vexspoke` is the foundational root of the [@vexgraph-dev](https://github.com/vexgraph-dev) vertical integration stack. Downstream repositories in the ecosystem import and dogfood `vexspoke` directly:
-
-| Downstream Repository                                         | Role in Ecosystem | How it Uses `vexspoke` |
-|:--------------------------------------------------------------| :--- | :--- |
-| [**`hotcwap`**](https://github.com/vexgraph-dev/hotcwap)      | Dynamic library hot-reloader & native OS windowing | Consumes `event/`, `input/`, and `time/` for zero-allocation event pumps and persistent OS display surfaces (raster `buffer/` types now come via `graphvex`). |
-| [**`darling`**](https://github.com/vexgraph-dev/darling)      | Retained-mode UI nodes & Vulkan UI pipelines | Consumes `nio/mem`, `bit/bit`, `oop/type`, `lang/math`, and base `vulkan/` contexts to build off-heap UI nodes (`Panel`, `Picture`, `Label`), font baking, and GPU distance-field passes. |
-| [**`api-haven`**](https://github.com/vexgraph-dev/api-haven)  | Zero-allocation network APIs & telemetry | Consumes `net/http`, `net/json`, `net/url`, `nio/mem`, and `primitive/string` for off-heap Discord webhooks and metrics streaming. |
-| A local directory that holds all                              | Local orchestrator & application probes | Vertically links all three downstream layers together into composite binaries (`../../_trash/main/vk_test.c`). |
-
-### 1. In-Tree Integration (Subdirectory)
-When nested inside an umbrella workspace, include `vexspoke` directly:
-
-```cmake
-# In your top-level CMakeLists.txt
-add_subdirectory(projects/vexspoke)
-
-add_executable(my_app spoke.c)
-target_link_libraries(my_app PRIVATE vexspoke)
-```
-
-### 2. Standalone Integration (FetchContent Seam)
-When building an independent downstream repository (`hotcwap`, `darling`, or external tools), guard with the target seam:
+### Standalone autonomy (target seam)
+A downstream repository pulls `vexspoke` only when its target is not already in-tree (the Standalone Autonomy Law):
 
 ```cmake
 if(NOT TARGET vexspoke)
     include(FetchContent)
     FetchContent_Declare(
         vexspoke
-        GIT_REPOSITORY https://github.com/vexgraph-dev/vexspoke.git
+        GIT_REPOSITORY https://github.com/vexgraph-ecosystem/vexspoke.git
         GIT_TAG spoke
     )
     FetchContent_MakeAvailable(vexspoke)
 endif()
-
-target_link_libraries(my_app PRIVATE vexspoke)
 ```
 
 ---
@@ -102,11 +69,11 @@ target_link_libraries(my_app PRIVATE vexspoke)
 * **Zero steady-state allocation** — The arena doctrine carves memory once from the OS; pools, rings, and tables recycle memory in-place. Zero `malloc` in the frame loop.
 * **Lockless concurrency** — Inter-thread work is distributed through ABA-tagged atomic slots and compare-and-swap (CAS), never blocking mutexes.
 * **Relational joining** — Symbols resolve to typed addresses directly; relational queries join memory blocks without object graphs.
-* **Strict C23 dialect** — Banned `->` arrow sugar (Rule 1), mandatory two-layer access cap (Rule 10), and destination-last parameter order (Rule 9).
+* **Strict C23 dialect** — banned `->` arrow sugar (the Semantic Consistency Law (Reference form)), the two-layer access cap (the Semantic Consistency Law (Access depth)), and destination-last parameter order (the Semantic Consistency Law (Argument order)).
 
 ---
 
-## Embracing the Pointer & Banning Pointer Chasing (The Java Reference Law)
+## Embracing the Pointer & Banning Pointer Chasing (the Semantic Consistency Law (Access depth))
 
 In high-level languages like Java, developers write:
 ```java
@@ -132,7 +99,7 @@ That is precisely what `(*ptr).field` expresses:
 1. `*ptr` explicitly dereferences the base pointer once to anchor the record.
 2. `.field` applies the compile-time struct byte offset to reach the value.
 
-### The Two-Layer Access Cap (Rule 10)
+### The Two-Layer Access Cap (the Semantic Consistency Law (Access depth))
 To eliminate pointer chasing across the entire ecosystem, `vexspoke` strictly enforces the **Two-Layer Access Cap**:
 ```c
 (*layer1).layer2             // yes — base hop + offset (one level + offset)
@@ -157,21 +124,19 @@ By forcing the intermediate pointer into a local:
 ## Requirements
 
 * A modern C23 compiler (Clang recommended, `-std=gnu23` enabled).
-* Apple Silicon (arm64 macOS) or Linux.
-* CMake $\ge$ 4.3.
+* Apple Silicon (arm64 macOS 14+) or Linux.
 * Vulkan SDK (MoltenVK on macOS).
+* The workspace build system, `b` (bundled at `b/`).
 
 ---
 
 ## Building & Verification
 
-To build and run the standalone verification harness directly within `vexspoke`:
+To build and run the standalone verification harness:
 
-```bash
-mkdir build-debug && cd build-debug
-/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug
-cmake --build . --target vexspoke_demo
-./vexspoke_demo
+```sh
+./tools/b run vexspoke        # inside the worktree: build + run the harness
+# or, standalone:  b build c .   then run the produced binary
 ```
 
 **Expected output:**
@@ -185,4 +150,4 @@ recycled a => c=0x10199ec60 (same=1)
 received=100/100 ticks=1
 ```
 
-Enforced compilation flags: `-Wall -Wextra -Werror -mcpu=native` (Apple Silicon host baseline).
+Enforced compilation flags: `-Wall -Wextra -Werror` with C23 (`-std=gnu23`) and `-mcpu=apple-m1` (the Platform Support Floor Law); `-mcpu=native` is local-dev only, never shipped.
