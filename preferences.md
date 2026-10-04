@@ -404,12 +404,12 @@ The stack has ONE lifecycle order: boot from the bottom up (R1 → R2 → R3 →
 │ R3 — DRIVER (graphvex, api-haven, language, darkbase)                  │
 │ Raw hardware/network/syntax drivers: GPU & WGPU, REST/WS, AST, DB     │
 │ Buffer family / Texture / FontBake / shader/spv / REST core / MCP     │
-│ no window, no UI tree, no services.                                    │
+│ Graphvex owns graphical element trees/composition; no native windows. │
 └──────────────────────────────────┬─────────────────────────────────────┘
      supervises ▼                   │ registers / binds ▲
 ┌──────────────────────────────────┴─────────────────────────────────────┐
 │ R4 — INTERFACES (darling-framework, sesh)                              │
-│ Visual & collaboration substrate: 9-grid UI, compositor, session sync  │
+│ Widget interfaces, layout policy, input/focus, host bridge, session sync│
 │ Panel / Container / Canvas / widgets / IOSurface / event dispatch      │
 └──────────────────────────────────┬─────────────────────────────────────┘
      supervises ▼                   │ consumes / instances ▲
@@ -483,7 +483,7 @@ first.
    - `Reactive` (the per-variable event emitter) carries an **atomic** payload + dirty flag, so `Reactive_set` is safe from ANY thread; notification is **owner-affine** — `Reactive_set` never fires observers, the owner (Thread 0 pump/paint) calls `Reactive_drain`, which coalesces the pending writes into one `onSet`/`onChanged` batch on the owner's thread. This keeps the atomicity in the value (no lock, no unbounded wait — the Bounded Wait Law) while keeping every observer on the owner's thread (the Present-On-Demand Law applied to data); the observer lists themselves stay owner-affine.
 
 2. **R3 Drivers — graphvex | api-haven | language | darkbase**:
-   - `graphvex`: `spv/` blobs, `Buffer` family, `Font`/`FontBake`, `SdfGpu`, `Texture`, `Raster`, `WgpuBackend`.
+    - `graphvex`: shaders, `Buffer` family, `Font`/`FontBake`, `SdfGpu`, `Texture`, `Raster`, `WgpuBackend`, graphical element trees and the widget/image compositor. R3 owns isolation, ordered filters, masks, expanded paint bounds and render synchronization; no R4 headers or widget behavior.
    - `api-haven`: API surface, telemetry, webhooks + connector contracts (AI providers, app detection, database catalog/connector shapes) + the MCP tool/resource server (`McpServer`, `mcp_server` stdio runner) hosting them.
    - `language`: `Language` contract (`Lang_tokenize/parse/highlight/...`), each grammar a hot-swappable dylib.
    - `darkbase`: `Database` interface, native vex store in-budget.
@@ -549,7 +549,7 @@ first.
      (start/stop) jobs, steering through the Window's C callback bridge only.
 
 4. **R4 Interfaces — darling-framework | sesh**:
-   - `darling-framework`: `Canvas`/`Container`/`Panel`/widgets/compositor/`panel_bridge.c`.
+    - `darling-framework`: `Canvas`/`Container`/`Panel` widget interfaces, tree construction, layout policy, input/focus and application/native-window bridges. Widget rendering and filters consume the Graphvex compositor; Darling owns no competing graphics compositor. Scene producers render independently; Graphvex composes their completed images.
    - `sesh`: Session sync, VPS relay, Cloudflare edge, in-engine bug ingestion.
 
 5. **R5 Interactables**:
@@ -575,7 +575,7 @@ surface, layer, and native handle with no record of the leak.
 
 ```
 R5 applications detach and stop using their borrowed resources
-  → R4 frames/compositors detach views, layers, and panel surfaces
+  → R4 widget/frame bridges detach views, layers, and panel surfaces
     → R3 drivers retire GPU/device resources after dependent work stops
       → R2 behavior workers stop and join before their owned state dies
         → R1 host closes windows, releases remaining native handles
