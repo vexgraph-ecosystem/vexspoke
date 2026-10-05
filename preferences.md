@@ -103,6 +103,43 @@ To ensure uncompromising architectural consistency across all repositories and c
 ---
 
 
+### Repository preferences: mandatory reading chain
+
+The tiers above classify universal laws; they do not replace repo-local laws.
+Before proposing or changing work in a repository, every human or AI contributor
+must read the complete constitution first, then the owning repository's complete
+preferences below, then the applicable test laws and current checklist, then the
+existing implementation. This is mandatory under the Per-Repo Preferences
+Extension Law and the Feature Implementation and Adversarial Proof Law.
+For cross-repo work, follow this chain for every repository being changed;
+dependency contracts must also be read when reasoning about their seams. Do not
+apply one repository's exclusive rules to another merely because both are loaded.
+
+Links are relative to the canonical `ecosystem/vexspoke/preferences.md` file.
+When reading the workspace-root `preferences.md` symlink, use the explicit
+workspace paths alongside them. Standalone checkouts read their own root
+`<repo>-preferences.md`; unavailable dependency checkouts or missing local
+preferences must be reported as a reading gap, never treated as an exemption.
+
+| Owning repository | Repo-local preferences (canonical-relative link) | Workspace path |
+| :--- | :--- | :--- |
+| vexspoke | [vexspoke-preferences.md](vexspoke-preferences.md) | `ecosystem/vexspoke/vexspoke-preferences.md` |
+| hotcwap | [hotcwap-preferences.md](../hotcwap/hotcwap-preferences.md) | `ecosystem/hotcwap/hotcwap-preferences.md` |
+| graphvex | [graphvex-preferences.md](../drivers/graphvex/graphvex-preferences.md) | `ecosystem/drivers/graphvex/graphvex-preferences.md` |
+| api-haven | [api-haven-preferences.md](../drivers/api-haven/api-haven-preferences.md) | `ecosystem/drivers/api-haven/api-haven-preferences.md` |
+| language | [language-preferences.md](../drivers/language/language-preferences.md) | `ecosystem/drivers/language/language-preferences.md` |
+| darkbase | [darkbase-preferences.md](../drivers/darkbase/darkbase-preferences.md) | `ecosystem/drivers/darkbase/darkbase-preferences.md` |
+| samplerate | [samplerate-preferences.md](../drivers/samplerate/samplerate-preferences.md) | `ecosystem/drivers/samplerate/samplerate-preferences.md` |
+| sesh | [sesh-preferences.md](../interface/sesh/sesh-preferences.md) | `ecosystem/interface/sesh/sesh-preferences.md` |
+
+`darling-framework` currently has no `darling-framework-preferences.md` in this
+checkout. Its missing local lawbook is an explicit gap; universal and applicable
+test laws still bind. Any repository gaining a local preferences file must add
+its link and workspace path here in the same work cycle. Never invent a link to
+a nonexistent file or silently omit a newly introduced repo-local lawbook.
+
+---
+
 ## 1. Semantic Consistency Law
 
 One canonical dialect makes references, access depth, control flow, spelling, naming, calls, and construction predictable across repositories. These are binding clauses of **one** law, not separately indexed laws. A clause name identifies the specific check; cite `Semantic Consistency Law (Access depth)`, for example. This consolidation changes documentation identity, not the existing C ABI or the requirements below.
@@ -937,6 +974,7 @@ Monolithic constitutions force developers and AI agents working on isolated subs
 4. **Markdown Canonical Link:** Every repo-local preferences document links to the canonical `preferences.md` in its Constitution Link section. No edition or synchronization annotation is required for Markdown preferences documents.
 5. **Zero Drift Same-Cycle Review:** Whenever the universal `preferences.md` changes, review affected repo-local preferences in the same development cycle; update their Markdown indexes or definitions when their local contracts change.
 6. **Law Binding Matrix:** Each per-repo preferences file starts with a repo-local Law Index (Binding Matrix) listing its own rules, scope, and enforcement; universal laws are inherited by reference to this canonical Index and are not duplicated in that table.
+7. **Mandatory chained reading:** Before proposing or editing work in a repository, read the complete universal constitution, its complete owning repo-local preferences, applicable test laws and current checklist, and existing implementation. The Rule Taxonomy's repository reading map is the discovery surface; maintain its links in the same cycle as adding, moving, or removing a repo-local preferences file. Cross-repo work reads each affected owner's rules; missing files are explicit gaps, not permission to ignore local contracts.
 
 ---
 
