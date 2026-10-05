@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vex-graph/vex-graph/main/resources/preferences-dot-md.png" alt="preferences.md" width="800">
+</p>
+
 # vexgraph's vexspoke — C23 Engine & Multi-Repo Preferences
 
 The engine is a relational system where **everything is a pointer**.
