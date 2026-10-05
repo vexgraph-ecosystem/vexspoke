@@ -75,6 +75,7 @@ The only authoritative list of universal law names. Each active law has one cano
 | 27 | THROW Law (Loud Cold Rejection) |
 | 28 | Native Pixel Law |
 | 29 | Timestamped Test Checklist Law |
+| 30 | Feature Implementation and Adversarial Proof Law |
 
 ---
 
@@ -87,7 +88,7 @@ To ensure uncompromising architectural consistency across all repositories and c
 1. **Tier 1: Critical Architectural Invariants & Memory Consistency (Non-Negotiable Core)**
    - *Concern*: Hardware execution safety, zero steady-state allocation, lifetime predictability, thread safety, and crash prevention.
    - *Laws*: the Single Class Per File Law, the Build & Naming Conventions Law (Apple Silicon native), the Platform Support Floor Law (Apple Silicon macOS 14+, Windows 10+), the Capability Gating Law (Runtime Features Above the Floor), the THROW Law (Loud Cold Rejection), the Vertical Integration Law (teardown), the Bounded Wait Law, the Cold-Only Reflection Law, the Cold-Strict hot-minimal contract half (never crash/block/allocate/use-after-free), the Test Segregation Law, the Native Pixel Law.
-   - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, un-bisectable repositories, or codebase pollution.
+   - *The Why*: Violations cause segmentation faults, thread deadlocks, memory leaks, GPU driver crashes, or codebase pollution. Commit granularity is a documentation policy under the Git Workflow Law, not a memory-safety invariant.
 
 2. **Tier 2: Semantics, Object Models & Living Contracts**
    - *Concern*: Relational memory layout, object-oriented encapsulation in pure C23, deterministic constructor dispatch, symmetric introspection, and self-documenting code contracts.
@@ -367,8 +368,8 @@ must establish the claimed hot-path properties.
 
 The Git workflow is document → verify → commit locally in the owning repository → push only on an explicit, one-off instruction. No step implies permission for the next except as stated below.
 
-1. **Document and verify.** Record what changed, why, and the verification actually performed in the code, tests, relevant docs, or commit message. Build applicable targets with `-Wall -Wextra -Werror` and run relevant tests before committing. Keep broken intermediate states uncommitted; do not claim tests that did not run. The Living Documentation Law owns same-cycle updates.
-2. **Commit a cohesive unit in its own repository.** A commit is one independently buildable class pair or cohesive subsystem, including its header, implementation, build wiring, tests, and updated overview when applicable. An isolated docs/manifest-only change may stand alone when it changes no API or behavior. Related class pairs may land together; unrelated changes must not. Never stage unrelated pre-existing edits or treat the local-only umbrella as the owning sub-repository.
+1. **Document and verify the completed work cycle.** Record what changed, why, and the verification actually performed in the code, tests, relevant docs, or commit message. Build applicable targets with `-Wall -Wextra -Werror` and run relevant tests before calling the feature complete. Do not claim tests that did not run. The Living Documentation Law owns same-cycle updates; the Feature Implementation and Adversarial Proof Law owns the implementation-to-proof process.
+2. **Commit per class in its own repository.** Each changed class gets its own local commit containing its `.c`/`.h` pair (and platform implementation where applicable), including its updated blueprint. Do not bundle multiple classes into a subsystem commit merely because they depend on each other. Header-only and implementation-only units get their own records. Tests, shared build wiring, configuration, and documentation are committed as separate owning-file records when they cannot belong to that class in the same repository. Commits record the updates to each class or document; they are not required to form an independently buildable, bisectable stream. A class commit may depend on another class's work-cycle commit; document that dependency and verify the integrated final state before claiming completion. Never stage unrelated pre-existing edits or treat the local-only umbrella as the owning sub-repository.
 3. **Commit dependent work upstream-first.** `vexspoke` → `graphvex`/`api-haven`/`language`/`darkbase` → `hotcwap` → `darling-framework`/`sesh` → R5 applications. Each changed repository gets its own local commit.
 4. **Scope the message locally.** A commit message names its class, subsystem, or seam, not its repository. Use `feat(cursor): ...`, `fix(label): ...`, or `test(mesh): ...`, not `feat(hotcwap): ...` within Hotcwap. The message describes the actual cohesive unit, not an unrelated bundle.
 5. **Never auto-push.** Only an explicit instruction to push authorizes a single push of the requested repository or repositories; afterward return to the no-push default. Documentation, passing tests, and local commits never grant push permission.
@@ -1210,6 +1211,54 @@ On Retina and HiDPI displays, abstracting window geometry into logical points ob
 3. **Presentation Seam & Drawables:** Seam layers (`CAMetalLayer.drawableSize`) and Vulkan/Metal render targets match the native pixel size 1:1.
 4. **Multi-Monitor Scale Transitions & Revalidation:** When a window transitions across monitors with differing backing scale factors (DPI), `Window_revalidate` recalculates the underlying platform points to preserve the exact physical pixel size and dispatches geometry update events.
 5. **Points-Explicit Escape Hatch:** When logical points are explicitly needed for OS-specific desktop placement, classes provide explicit points accessors (`Window_setSizePoints`, `Window_getSizePoints`, `Window_widthPoints`, `Window_heightPoints`, `Window_getScale`).
+
+---
+
+## 30. Feature Implementation and Adversarial Proof Law
+
+### Definition:
+An accepted new feature or proposal follows a complete development cycle:
+inspect and define its contract, create or edit the implementation, build
+aggressive tests around the actual behavior, execute them, repair defects, and
+record the proof before considering the work good or complete. A proposal is
+not an implementation, and compiling is not behavioral proof.
+
+### The Why:
+Plausible explanations and friendly examples can hide broken ownership,
+incompatible layouts, failed recovery, and hostile-input crashes. The feature
+must exist first, then survive tests designed to disprove its promises rather
+than merely demonstrate a happy path.
+
+### The Rule:
+1. **Read before reasoning.** Every agent reads the complete current constitution
+   before proposing or implementing work, then the applicable repo preferences,
+   current test checklist, test laws, and existing implementation. State clearly
+   what exists, what is proposed, and what remains unproved; never infer behavior
+   from a name, comment, remembered result, or intended architecture alone.
+2. **Implement accepted intent.** When implementation is requested or an accepted
+   proposal is authorized for execution, create or edit its owning classes and
+   document the public contract and blueprints. Discussion-only requests remain
+   discussion; this law does not authorize unrelated implementation. Existing
+   tests may guide the work, but test-only scaffolds and stubs do not count as
+   delivering the feature.
+3. **Attack the implemented contract.** After creating or editing the feature,
+   add or strengthen registered owner tests for every applicable public form,
+   normal path, boundary, invalid input, overflow, truncation, wrong identity,
+   stale reference, failure stage, recovery, ownership, teardown, cancellation,
+   timeout, and legal concurrency claim. Test preserved state after rejection.
+   Include growth, sharing, copy-on-write isolation and layout migration when
+   offered. Explain inapplicable cases rather than pretending coverage exists.
+4. **Execute, repair, repeat.** Run the owner and relevant integration tests with
+   assertions active and `-Wall -Wextra -Werror` for C targets. Use applicable
+   sanitizers, fault injection, deterministic inputs and bounded watchdogs.
+   A failure requires a fix and rerun, not removal of the assertion, a weaker
+   contract hidden from the user, or rerunning until a flaky test turns green.
+5. **Close with evidence.** Record actual commands, scope, platform gaps and
+   results in the test checklist and update affected readiness/documentation in
+   the same cycle. Run the checklist consistency check. Missing, skipped or
+   failing proof remains an explicit gap; visual acceptance belongs to the user.
+   Commit each class and separately owned document under the Git Workflow Law;
+   never call a proposal or partially proved feature production-ready.
 
 ---
 
