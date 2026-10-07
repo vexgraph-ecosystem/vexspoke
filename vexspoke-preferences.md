@@ -143,6 +143,14 @@ Conflict Triage Law.")
 
 ;;INTENTION("R2 Relational Memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
 
+The optional `nio/relational_memory.h` includes the engine-owned
+`relational_engine/memory.h` C ABI when the caller supplies that backend's include
+path and resident static library. It does not replace `Memory_*`, share C/Rust
+atomic layouts, or make imported engine C references dependency-closed. R1 keeps
+engine code and owner storage resident during consumer reloads and excludes
+active callers before destruction. Whole-string replacement is not automatic
+record-schema migration; actual Hotcwap reload integration remains unproved.
+
 ---
 
 ## 4. Readiness Cross-Reference (Living Documentation Law)
