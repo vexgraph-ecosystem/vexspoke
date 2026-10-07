@@ -2,7 +2,10 @@
 
 This project is a strictly solo development process conducted in tight pair-programming partnership with an AI coding assistant.
 
-It serves as an architectural manifesto for **Level 4 Relational Memory Substrate**: an uncompromising low-level engine where **everything is a pointer**, every memory block carries a self-describing bit-packed header, and steady-state allocation is zero.
+It serves as an architectural manifesto for **R2 CPU computation and behavior**.
+Relational Engine is the cooperating R2 memory/storage/native C search owner.
+Existing Vexspoke memory/container ABI and default allocator remain during staged
+migration; the split is not a replacement or readiness claim.
 
 ---
 
@@ -37,14 +40,16 @@ This boilerplate is **not** an accident, nor is it a misunderstanding of idiomat
 
 ---
 
-## 3. Supreme Living Document: `preferences.md` & Repo-Local Preferences
+## 3. Supreme Living Document: `../../../preferences.md` & Repo-Local Preferences
 
 All architectural rules and style invariants are governed by the central universal constitution:
 
-- **[preferences.md](preferences.md)** (universal supreme constitution, also accessible locally at `../../preferences.md`)
+- **[preferences.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a)** (one real, Git-ignored workspace-root `../../../preferences.md`, not a tracked Vexspoke file or symlink)
 - **[vexspoke-preferences.md](vexspoke-preferences.md)** (repo-local mirror binding vexspoke)
 
-Whenever preferences or conventions evolve, [`preferences.md`](preferences.md) and [`vexspoke-preferences.md`](vexspoke-preferences.md) are updated and committed locally in the same cycle (the Living Preferences Law / Zero Drift).
+Under the Living Documentation Law, update affected contracts in the same cycle.
+Universal changes are published to the existing Gist and byte-verified; repo-local
+documentation is committed locally under the Git Workflow Law. Never auto-push.
 
 ---
 
@@ -102,4 +107,3 @@ Whenever preferences or conventions evolve, [`preferences.md`](preferences.md) a
 
 Commit history is per-file and granular — "this is what I did" — even if
 intermediate commits don't compile. Pushing happens only on my explicit say-so.
-
