@@ -14,7 +14,7 @@ Vexgraph workspace root: `./tools/b build vexspoke`. A standalone checkout
 must supply its real b build/dependency context; IDE configuration is not proof
 of standalone runtime readiness.
 
-A zero-allocation, relational C23 platform library — everything is a pointer.
+A C23 CPU computation and behavior library — everything is a pointer.
 
 A play on the word **bespoke** — a *bespoken* C platform library tailor-crafted down to the cache line, register, and bit. `vexspoke` serves as the central spoke of the `vexgraph` vertical integration stack.
 
@@ -26,9 +26,23 @@ The result is a lock-free, cache-coherent core with predictable, microsecond-lev
 
 ## Workspace Integration & How to Use It
 
-`vexspoke` is the **R2 behavior** layer in the supervisor order (the Vertical Integration Law) — the pure leaf shapes the R1 Kernel borrows (`MemoryArena`, events, math). Supervised by `hotcwap` at runtime, dependency of everything at compile-time. It is designed to be consumed as the foundational bedrock library within a vertically integrated ecosystem (such as `vexgraph`) or embedded standalone into custom applications.
+`vexspoke` is the **R2 CPU computation and behavior** owner: math, algorithms,
+synchronization and behavior APIs. Its cooperating R2 storage owner is
+[Relational Engine](https://github.com/vexgraph-ecosystem/relational-engine):
+memory allocation/storage, stable row chunks, variable bindings and native C
+search over Rust-owned spans. R1 `hotcwap` supervises their lifetimes.
 
-`vexspoke` depends on nothing else in the stack; it never includes a consumer's headers. The full ecosystem map lives in the workspace root `README.md` and the ecosystem wiki, not here.
+**Migration is staged.** Existing Vexspoke memory/container ABI and its default
+allocator remain until explicit migration and owner proof. Storage-oriented
+files below describe the retained implementation, not competing final ownership.
+The opt-in `src/nio/relational_memory.h` borrows the engine-owned C ABI; ordinary
+builds do not select that backend. No C/Rust atomic-layout compatibility,
+automatic schema migration or live engine reload integration is implied.
+
+Vexspoke includes no consumer or host headers; its optional R2 storage boundary
+does not introduce an R1/R3/R4/R5 dependency. GPU shaders and dispatch remain
+Graphvex R3. The ecosystem map lives in the workspace `../../../README.md` and
+the readiness wiki. The ecosystem, especially its R5 apps, is unfinished.
 
 ### Build
 
@@ -47,20 +61,20 @@ and never fetches dependencies; configure consumers' local header paths instead.
 
 * **`src/annotation/`** — Zero-cost C23 static assert markers (`;;OVERVIEW`, `;;DRAFT`, `;;INTENTION`, `;;PLATFORM_EXCLUSIVE`).
 * **`src/c23/constructor.h`** — Java-style arity constructor overloading (`Class(...)` $\rightarrow$ `Class_0`, `Class_1`) via pure preprocessor dispatch.
-* **`src/nio/mem.h/.c`** — The self-describing memory lens (`Memory`). Every allocation carries `[type_id][length][payload]`. Walking back 16 bytes yields the header; `Memory_type()` and `Memory_length()` are free pointer subtractions.
+* **`src/nio/mem.h/.c`** — Retained Vexspoke `Memory_*` ABI and self-describing header; default allocation is unchanged. Engine C comparison material is not a replacement runtime.
+* **`src/nio/relational_memory.h`** — Opt-in engine C ABI include; supply its include path and resident static library explicitly.
 * **`src/bit/bit.h/.c`** — The lockless width pool (`BitPool`). ABA-tagged freelists recycle slots; freed slots return at the *exact same address*.
 * **`src/oop/type.h`** — Bit-packed type system (`Type`). One 32-bit masked ID encodes form, class, and variant.
 * **`src/oop/class.h/.c`** — Reflection and stride tables for off-heap structs.
 * **`src/atomic/ring.h/.c`** — Lockless MPMC ring buffer (`RingBuffer`), the inter-thread messaging highway.
 * **`src/atomic/spin.h/.c`** — C23 `stdatomic` ticket locks (`SpinLock`) with bounded spin backoff.
-* **`src/relational/variable.h/.c`** — Relational symbol registry (`Variable`). Name $\rightarrow$ `(classId, targetPointer)`.
+* **`src/relational/`** — Retained C relational bindings and symbol operations; migration to the R2 storage owner requires separate proof.
 * **`src/lang/`** — Zero-allocation math primitives: `FastMath`, `Vec2`, `Vec3`, `Vec4`, and `Mat4`.
 * **`src/struct/`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
-* **`src/io/vexhome.h/.c`** — Canonical `VexHome` user storage layouts (`~/vex`).
-* **`src/io/file.h/.c`** & **`src/io/log.h/.c`** — Zero-allocation file operations and binary event logging.
+* **`src/io/`** — Current VexHome, File and logging surfaces; imported engine comparison files do not prove migrated callers or dependency closure.
 * **`src/net/`** — Zero-allocation HTTP client, URL parser, JSON serializer, and TLS streaming abstractions.
 * **`src/engine/loop.h/.c`** — Fixed-timestep engine loop (`Loop`).
-* **`src/vulkan/`** — Core Vulkan instance, MoltenVK loader, swapchain management, and baseline SPIR-V shaders (`hello_triangle`, `solid_quad`).
+* **Graphvex R3** — GPU resources, Vulkan pipelines, shaders and dispatch belong to the graphics owner, not this CPU library.
 * **`src/objc/`** — Hardware platform bridges: TouchID biometric authentication, Apple SecureTransport TLS, and CoreAudio.
 * **`src/main/main.c`** — Standalone headless harness: 4 concurrent producer threads racing into a shared ring, verified at `received=100/100 ticks=1`.
 
@@ -129,7 +143,7 @@ By forcing the intermediate pointer into a local:
 * A modern C23 compiler (Clang recommended, `-std=gnu23` enabled).
 * Apple Silicon (arm64 macOS 14+) or Linux.
 * Vulkan SDK (MoltenVK on macOS).
-* The workspace build system, `b` (bundled at `b/`).
+* The workspace build system, `b` (bundled at `../../../personal/b`).
 
 ---
 
