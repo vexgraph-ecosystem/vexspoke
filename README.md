@@ -1,5 +1,19 @@
 # vexspoke, by Vex, truly.
 
+## CLion: CMake is IDE metadata only
+
+Open this repository root as a CMake project. `CMakeLists.txt` provides C23
+source targets, include paths and compiler flags for navigation, diagnostics
+and inlay hints. Its object target is excluded from the default build; no
+dependency downloads, linking or application runner are wired into it.
+Optional `VULKAN_INCLUDE_DIR` supplies local SDK headers. Missing headers stay
+real IDE errors; no fake declarations are generated. IDE appearance is user-verified.
+
+Build with [b](https://github.com/vex-graph/b), not this adapter. From the
+Vexgraph workspace root: `./tools/b build vexspoke`. A standalone checkout
+must supply its real b build/dependency context; IDE configuration is not proof
+of standalone runtime readiness.
+
 A zero-allocation, relational C23 platform library — everything is a pointer.
 
 A play on the word **bespoke** — a *bespoken* C platform library tailor-crafted down to the cache line, register, and bit. `vexspoke` serves as the central spoke of the `vexgraph` vertical integration stack.
@@ -19,24 +33,13 @@ The result is a lock-free, cache-coherent core with predictable, microsecond-lev
 ### Build
 
 ```sh
-./tools/b build          # inside the worktree: builds this repo with its graph
-b/b build c .            # standalone: the bundled build system, C adapter
+./tools/b build vexspoke # from the Vexgraph workspace root
 ```
 
-### Standalone autonomy (target seam)
-A downstream repository pulls `vexspoke` only when its target is not already in-tree (the Standalone Autonomy Law):
-
-```cmake
-if(NOT TARGET vexspoke)
-    include(FetchContent)
-    FetchContent_Declare(
-        vexspoke
-        GIT_REPOSITORY https://github.com/vexgraph-ecosystem/vexspoke.git
-        GIT_TAG spoke
-    )
-    FetchContent_MakeAvailable(vexspoke)
-endif()
-```
+### Standalone autonomy
+The Standalone Autonomy Law still requires real dependency closure for runtime
+builds. This IDE-only CMake adapter does not export a runtime `vexspoke` target
+and never fetches dependencies; configure consumers' local header paths instead.
 
 ---
 
