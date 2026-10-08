@@ -14,6 +14,35 @@ Vexgraph workspace root: `./tools/b build vexspoke`. A standalone checkout
 must supply its real b build/dependency context; IDE configuration is not proof
 of standalone runtime readiness.
 
+## Current State
+
+**Role:** R2 CPU computation and behavior — math, algorithms, synchronization,
+containers, reflection, reactive behavior, net, and the engine loop. Its
+cooperating R2 storage owner is Relational Engine; R1 `hotcwap` supervises
+lifetimes. An unfinished ecosystem library, not a finished product.
+
+**Implemented and proven (macOS arm64):** the CPU/behavior surface with owner
+tests under `tests/vexspoke/` — math (`FastMath`/`Vec*`/`Mat*`), algorithms
+(sort/BVH/path), lockless `BitPool`/`RingBuffer`/`SpinLock`, collections
+(`List`/`Map`/`Set`/`Heap`/…), the reflection hierarchy (`Variable`/`Field`/
+`Struct`/`Class`/`Method`, with `Field` carrying physical layout), reactive
+bindings, `net` (URL/JSON/HTTP/TLS), and the fixed-timestep `Loop`.
+
+**Ownership moved out of this repository:** the default allocator and all
+`io/*`/`nio/*` implementations live in Relational Engine; there are no `src/io`
+or `src/nio` copies here. The shared **type algebra** (`MASK_*`/`PROJ_*`/
+`ARCH_*`, `Type_make`, the parent resolver) now lives in Relational Engine
+`type/type.h`: `src/oop/type.h` is the vexspoke registry plus that include, and
+`src/oop/type.c` was removed.
+
+**Stubbed, draft, or planned:** staged migration of the retained containers and
+`src/relational` bindings to R2 storage; live engine reload integration (R1).
+
+**Platforms proven:** macOS arm64 only; Windows is unproven.
+
+**Evidence:** `tests/vexspoke/` owners and `tests/test-checklist.md`; the
+`type_test` owner pins the registry + algebra mapping.
+
 A C23 CPU computation and behavior library — everything is a pointer.
 
 A play on the word **bespoke** — a *bespoken* C platform library tailor-crafted down to the cache line, register, and bit. `vexspoke` serves as the central spoke of the `vexgraph` vertical integration stack.
@@ -68,14 +97,14 @@ and never fetches dependencies; configure consumers' local header paths instead.
 * **Engine `src/nio/mem.h/.c`** — Production `Memory_*` ABI and self-describing header, implemented and linked from Relational Engine. No Vexspoke IO/NIO source remains.
 * **Engine `src/nio/relational_memory.h`** — Separate Rust byte/string ABI include, not a silent replacement for native arena semantics.
 * **`src/bit/bit.h/.c`** — The lockless width pool (`BitPool`). ABA-tagged freelists recycle slots; freed slots return at the *exact same address*.
-* **`src/oop/type.h`** — Bit-packed type system (`Type`). One 32-bit masked ID encodes form, class, and variant.
-* **`src/oop/class.h/.c`** — Reflection and stride tables for off-heap structs.
+* **`src/oop/type.h`** — the vexspoke class registry plus the shared 64-bit type-id algebra (Relational Engine `type/type.h`); one 64-bit id encodes project, form, modifier, wrappers, sugar and class.
+* **`src/reflection/`** — the reflection hierarchy (`Variable`/`Field`/`Struct`/`Class`/`Method`); `src/oop/stride.h` holds the class → byte-width table.
 * **`src/atomic/ring.h/.c`** — Lockless MPMC ring buffer (`RingBuffer`), the inter-thread messaging highway.
 * **`src/atomic/spin.h/.c`** — C23 `stdatomic` ticket locks (`SpinLock`) with bounded spin backoff.
 * **`src/relational/`** — Retained C relational bindings and symbol operations; migration to the R2 storage owner requires separate proof.
 * **`src/lang`** — Zero-allocation math primitives: `FastMath`, `Vec2`, `Vec3`, `Vec4`, and `Mat4`.
 * **`src/struct`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
-* **`src/io/`** — Current VexHome, File and logging surfaces; imported engine comparison files do not prove migrated callers or dependency closure.
+* **IO/NIO** — implemented in Relational Engine; this repository keeps no `src/io` or `src/nio` sources.
 * **`src/net`** — Zero-allocation HTTP client, URL parser, JSON serializer, and TLS streaming abstractions.
 * **`src/engine/loop.h/.c`** — Fixed-timestep engine loop (`Loop`).
 * **Graphvex R3** — GPU resources, Vulkan pipelines, shaders and dispatch belong to the graphics owner, not this CPU library.
@@ -172,3 +201,24 @@ received=100/100 ticks=1
 ```
 
 Enforced compilation flags: `-Wall -Wextra -Werror` with C23 (`-std=gnu23`) and `-mcpu=apple-m1` (the Platform Support Floor Law); `-mcpu=native` is local-dev only, never shipped.
+
+---
+
+## Scope and Limitations
+
+**Scope:** R2 CPU computation and behavior: math, algorithms, synchronization,
+collections, reflection, reactive behavior, the networking client and the engine
+loop. It provides the CPU contract the higher tiers build on.
+
+**Deliberately not covered:**
+- No memory/IO implementation: the allocator and `io/*`/`nio/*` live in
+  Relational Engine; no `src/io`/`src/nio` copies remain here.
+- No GPU work (Graphvex R3), no host/window (hotcwap R1), no UI (darling R4).
+- No type-algebra ownership: masks/`PROJ_*`/`ARCH_*` and the parent resolver live
+  in Relational Engine `type/type.h`.
+
+**Known limits and gaps:**
+- Collection/relational migration to R2 storage is staged; retained C surfaces
+  remain until migrated with owner proof.
+- Proven only on macOS arm64; Windows is untested.
+- No live engine reload integration.
