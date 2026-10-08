@@ -18,6 +18,12 @@ endif()
 list(FILTER sources EXCLUDE REGEX "/(attic|vendor|third_party|_old)/")
 add_library(vexspoke_ide OBJECT EXCLUDE_FROM_ALL ${sources})
 target_include_directories(vexspoke_ide PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+# R2 split: canonical nio/io headers now live in the Relational Engine checkout.
+# Optional local path keeps IDE navigation honest; missing headers stay real errors.
+set(RELATIONAL_ENGINE_SOURCE_DIR "" CACHE PATH "Optional local Relational Engine src for canonical nio/io headers")
+if(RELATIONAL_ENGINE_SOURCE_DIR)
+    target_include_directories(vexspoke_ide PRIVATE "${RELATIONAL_ENGINE_SOURCE_DIR}")
+endif()
 find_path(VULKAN_INCLUDE_DIR vulkan/vulkan.h DOC "Optional local Vulkan headers; never downloaded")
 if(VULKAN_INCLUDE_DIR)
     target_include_directories(vexspoke_ide PRIVATE "${VULKAN_INCLUDE_DIR}")
