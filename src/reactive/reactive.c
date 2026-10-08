@@ -86,7 +86,7 @@ struct ReactiveObserverList {
     size_t cap;
 };
 
-#define REACTIVE_ARRAY_TYPE (PROJ_VEXSPOKE | FORM_SINGLETON | WRAP_REACTIVE | ID_REACTIVE)
+#define REACTIVE_ARRAY_TYPE (SUGAR_VEX | PROJ_VEXSPOKE | FORM_SINGLETON | WRAP_REACTIVE | ID_REACTIVE)
 
 // Mint a list on first bind (an unwatched reactive costs no list).
 static ReactiveObserverList *listEnsure(ReactiveObserverList **slot) {
