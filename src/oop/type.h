@@ -8,14 +8,15 @@
 // Every allocated object in vexspoke carries a 64-bit type id in its
 // header. Proposed successor layout (not implemented by the masks below):
 //
-//     0x F PRPR M W1 W2 BE6C CCCC
-//        4  8  4  4  4  16   16 bits = 64 bits total
+//     0x F PRPR M W1 W2 BE6C CCCCCC
+//        4  8  4  4  4  16    24 bits = 64 bits total
 //
 // INTENTIONAL(vex): BE6C is the author's stylized Cyrillic "векс" / vex
 // signature, embedded as recognizable sugar rather than an extra field.
 // It is a fixed format marker, not a checksum or stale-generation check.
-// The proposal expands padding from 8 to 16 bits and reduces the per-project
-// class number from 32 to 16 bits; project/form/modifier/wrappers survive.
+// BE replaces the old PDPD padding byte; 6C replaces the highest byte of the
+// old class field. The remaining CCCCCC is a 24-bit per-project class number
+// (up to 16,777,215 nonzero classes); project/form/modifier/wrappers survive.
 // A proposed [typeId:8][pointer-or-inline-value:8] slot therefore stays 16 Bytes.
 // Changing the active encoding requires coordinated masks, constructors,
 // consumers and ABI tests; comments alone do not migrate existing allocations.
