@@ -8,8 +8,9 @@
 // Every allocated object in vexspoke carries a 64-bit type id in its
 // header. Proposed successor layout (not implemented by the masks below):
 //
-//     0x F PRPR M W1 W2 BE6C CCCCCC
-//        4  8  4  4  4  16    24 bits = 64 bits total
+//     0xF'PRPR'M'W1'W2'BE6C'CCCCCC
+// Bits: 4 + 8 + 4 + 4 + 4 + 16 + 24 = 64.
+// Proposed grouped spelling: 0x0'00'0'0'0'BE6C'000000ULL.
 //
 // INTENTIONAL(vex): BE6C is the author's stylized Cyrillic "векс" / vex
 // signature, embedded as recognizable sugar rather than an extra field.
@@ -23,16 +24,15 @@
 //
 // Current implemented layout (the constants below still use this encoding):
 //
-//     0x F PRPR M W1 W2 PDPD CCCCCCCC
-//        | |    | |  |  |          `-------- class        (32 bits: which struct this is, per-project)
+//     0x F PRPR M W1 W2 BE6C CCCCCC
+//        | |    | |  |  |    `-------- class        (32 bits: which struct this is, per-project)
 //        | |    | |  |  |
-//        | |    | |  |  `------------- padding      (8 bits, reserved 0)
+//        | |    | |  |  `------------- sugar        ("векс" / vex)
 //        | |    | |  `---------------- wrapper 2    (probable/future/choice)
 //        | |    | `------------------- wrapper 1    (proactive/reactive)
-//        | |    `---------------------- modifier     (global/locale/transient)
-//        | `--------------------------- project      (8 bits: owning repo;
-//        |                                            256 projects per stack)
-//        `------------------------------ form         (singleton/array/...,
+//        | |    `--------------------- modifier     (global/locale/transient)
+//        | `-------------------------- project      (8 bits: owning repo; 256 projects per stack)
+//        `--------------------------- form          (singleton/array/...,
 //                                                      struct layouts)
 //
 // Written with C23 digit separators grouping each field, e.g.
@@ -59,7 +59,7 @@
 #define MASK_MODIFIER   0x0'00'F'0'0'00'00000000ULL
 #define MASK_WRAPPER_1  0x0'00'0'F'0'00'00000000ULL
 #define MASK_WRAPPER_2  0x0'00'0'0'F'00'00000000ULL
-#define MASK_PAD        0x0'00'0'0'0'FF'00000000ULL
+#define MASK_PAD        0x0'00'0'0'0'BE'6C000000ULL // 0xBE6C
 #define MASK_CLASS      0x0'00'0'0'0'00'FFFFFFFFULL
 
 #define FORM_SINGLETON          0x1'00'0'0'0'00'00000000ULL
