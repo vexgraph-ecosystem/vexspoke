@@ -18,7 +18,7 @@ A C23 CPU computation and behavior library — everything is a pointer.
 
 A play on the word **bespoke** — a *bespoken* C platform library tailor-crafted down to the cache line, register, and bit. `vexspoke` serves as the central spoke of the `vexgraph` vertical integration stack.
 
-`vexspoke` is an absolute rejection of the traditional engine paradigm. There are no object graphs, no garbage collectors, and no hidden heap allocations. Memory is a relational table: every block knows its own type and length via a negative-offset header, every pool is a column store of equal-stride slots, and every registered symbol is a row whose value is the address of another typed block. Pointers are first-class, self-describing values — joinable without registry lookups.
+`vexspoke` is an absolute rejection of the traditional engine paradigm. There are no object graphs, no garbage collectors, and no hidden heap allocations. memory is a relational table: every block knows its own type and length via a negative-offset header, every pool is a column store of equal-stride slots, and every registered symbol is a row whose value is the address of another typed block. Pointers are first-class, self-describing values — joinable without registry lookups.
 
 The result is a lock-free, cache-coherent core with predictable, microsecond-level latency: C stripped of its comfort abstractions, rebuilt for raw, bare-metal performance.
 
@@ -32,14 +32,18 @@ synchronization and behavior APIs. Its cooperating R2 storage owner is
 memory allocation/storage, stable row chunks, variable bindings and native C
 search over Rust-owned spans. R1 `hotcwap` supervises their lifetimes.
 
-**Migration is staged.** Existing Vexspoke memory/container ABI and its default
-allocator remain until explicit migration and owner proof. Storage-oriented
-files below describe the retained implementation, not competing final ownership.
-The opt-in `src/nio/relational_memory.h` borrows the engine-owned C ABI; ordinary
-builds do not select that backend. No C/Rust atomic-layout compatibility,
+**IO/NIO ownership has migrated.** The default allocator implementation and all
+`io/*` / `nio/*` headers now live in Relational Engine. Vexspoke contains no copies;
+the default workspace build consumes RE. The native Memory ABI is preserved,
+not rewritten into Rust. Broader collection migration remains staged.
+The separate engine `nio/relational_memory.h` exposes the Rust byte/string ABI.
+No C/Rust atomic-layout compatibility,
 automatic schema migration or live engine reload integration is implied.
 
-Vexspoke includes no consumer or host headers; its optional R2 storage boundary
+For the IDE adapter, set `-DRELATIONAL_ENGINE_SOURCE_DIR=<relational-engine>/src`.
+Canonical IO/NIO headers come from that checkout; missing headers remain errors.
+
+Vexspoke includes no consumer or host headers; its production R2 storage boundary
 does not introduce an R1/R3/R4/R5 dependency. GPU shaders and dispatch remain
 Graphvex R3. The ecosystem map lives in the workspace `../../../README.md` and
 the readiness wiki. The ecosystem, especially its R5 apps, is unfinished.
@@ -59,23 +63,23 @@ and never fetches dependencies; configure consumers' local header paths instead.
 
 ## What's in this repo
 
-* **`src/annotation/`** — Zero-cost C23 static assert markers (`;;OVERVIEW`, `;;DRAFT`, `;;INTENTION`, `;;PLATFORM_EXCLUSIVE`).
+* **`src/annotation`** — Zero-cost C23 static assert markers (`;;OVERVIEW`, `;;DRAFT`, `;;INTENTION`, `;;PLATFORM_EXCLUSIVE`).
 * **`src/c23/constructor.h`** — Java-style arity constructor overloading (`Class(...)` $\rightarrow$ `Class_0`, `Class_1`) via pure preprocessor dispatch.
-* **`src/nio/mem.h/.c`** — Retained Vexspoke `Memory_*` ABI and self-describing header; default allocation is unchanged. Engine C comparison material is not a replacement runtime.
-* **`src/nio/relational_memory.h`** — Opt-in engine C ABI include; supply its include path and resident static library explicitly.
+* **Engine `src/nio/mem.h/.c`** — Production `Memory_*` ABI and self-describing header, implemented and linked from Relational Engine. No Vexspoke IO/NIO source remains.
+* **Engine `src/nio/relational_memory.h`** — Separate Rust byte/string ABI include, not a silent replacement for native arena semantics.
 * **`src/bit/bit.h/.c`** — The lockless width pool (`BitPool`). ABA-tagged freelists recycle slots; freed slots return at the *exact same address*.
 * **`src/oop/type.h`** — Bit-packed type system (`Type`). One 32-bit masked ID encodes form, class, and variant.
 * **`src/oop/class.h/.c`** — Reflection and stride tables for off-heap structs.
 * **`src/atomic/ring.h/.c`** — Lockless MPMC ring buffer (`RingBuffer`), the inter-thread messaging highway.
 * **`src/atomic/spin.h/.c`** — C23 `stdatomic` ticket locks (`SpinLock`) with bounded spin backoff.
 * **`src/relational/`** — Retained C relational bindings and symbol operations; migration to the R2 storage owner requires separate proof.
-* **`src/lang/`** — Zero-allocation math primitives: `FastMath`, `Vec2`, `Vec3`, `Vec4`, and `Mat4`.
-* **`src/struct/`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
+* **`src/lang`** — Zero-allocation math primitives: `FastMath`, `Vec2`, `Vec3`, `Vec4`, and `Mat4`.
+* **`src/struct`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
 * **`src/io/`** — Current VexHome, File and logging surfaces; imported engine comparison files do not prove migrated callers or dependency closure.
-* **`src/net/`** — Zero-allocation HTTP client, URL parser, JSON serializer, and TLS streaming abstractions.
+* **`src/net`** — Zero-allocation HTTP client, URL parser, JSON serializer, and TLS streaming abstractions.
 * **`src/engine/loop.h/.c`** — Fixed-timestep engine loop (`Loop`).
 * **Graphvex R3** — GPU resources, Vulkan pipelines, shaders and dispatch belong to the graphics owner, not this CPU library.
-* **`src/objc/`** — Hardware platform bridges: TouchID biometric authentication, Apple SecureTransport TLS, and CoreAudio.
+* **`src/objc`** — Hardware platform bridges: TouchID biometric authentication, Apple SecureTransport TLS, and CoreAudio.
 * **`src/main/main.c`** — Standalone headless harness: 4 concurrent producer threads racing into a shared ring, verified at `received=100/100 ticks=1`.
 
 ---
