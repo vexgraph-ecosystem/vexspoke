@@ -37,7 +37,7 @@
  *   Struct {
  *     char name[24];     // folded name (atom grammar)
  *     uint32_t count;    // live fields (== row count)
- *     uint32_t pad;      // explicit padding
+ *     uint32_t size;     // entity row byte stride (0 = unknown)
  *     ChunkedList *fields; // never-moved Field rows
  *   }
  *
@@ -48,8 +48,8 @@
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h) Struct_0(), Struct_1(name), _init, _free
  * Public Core Functions: (.h) Struct_kind, _check, _add, _get, _forEach
- * Public Setters: (.h) Struct_setName
- * Public Getters: (.h) Struct_getName, _count, _isEmpty
+ * Public Setters: (.h) Struct_setName, Struct_setSize
+ * Public Getters: (.h) Struct_getName, _count, _getSize, _isEmpty
  * Public String Projections: (.h) Struct_toString / _toStringStruct
  * ============================================================================
  */
@@ -166,6 +166,11 @@ bool Struct_setName(Struct *self, const char *name) {
     return true;
 }
 
+void Struct_setSize(Struct *self, uint32_t size) {
+    if (self != nullptr)
+        (*self).size = size;
+}
+
 // GETTERS
 
 int Struct_getName(const Struct *self, char *out, size_t outCap) {
@@ -181,6 +186,10 @@ int Struct_getName(const Struct *self, char *out, size_t outCap) {
 
 uint32_t Struct_count(const Struct *self) {
     return self ? (*self).count : 0u;
+}
+
+uint32_t Struct_getSize(const Struct *self) {
+    return self ? (*self).size : 0u;
 }
 
 bool Struct_isEmpty(const Struct *self) {
@@ -217,8 +226,8 @@ void Struct_toStringStruct(const Struct *self, char *dest, size_t cap, bool *out
         snprintf(dest, cap, "nullptr");
         return;
     }
-    int written = snprintf(dest, cap, "Struct { name=\"%s\", count=%u, fields=0x%llx }",
-                           (*self).name, (*self).count,
+    int written = snprintf(dest, cap, "Struct { name=\"%s\", count=%u, size=%u, fields=0x%llx }",
+                           (*self).name, (*self).count, (*self).size,
                            (unsigned long long) (uintptr_t) (*self).fields);
     if (written < 0 || (size_t) written >= cap) {
         if (outTruncated)
