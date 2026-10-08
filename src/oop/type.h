@@ -6,10 +6,24 @@
 // oop/type.h — the TypeRegister, ported from oop/TypeRegister.java.
 //
 // Every allocated object in vexspoke carries a 64-bit type id in its
-// header. The id is bit-packed thus:
+// header. Proposed successor layout (not implemented by the masks below):
+//
+//     0x F PRPR M W1 W2 BE6C CCCC
+//        4  8  4  4  4  16   16 bits = 64 bits total
+//
+// INTENTIONAL(vex): BE6C is the author's stylized Cyrillic "векс" / vex
+// signature, embedded as recognizable sugar rather than an extra field.
+// It is a fixed format marker, not a checksum or stale-generation check.
+// The proposal expands padding from 8 to 16 bits and reduces the per-project
+// class number from 32 to 16 bits; project/form/modifier/wrappers survive.
+// A proposed [typeId:8][pointer-or-inline-value:8] slot therefore stays 16 Bytes.
+// Changing the active encoding requires coordinated masks, constructors,
+// consumers and ABI tests; comments alone do not migrate existing allocations.
+//
+// Current implemented layout (the constants below still use this encoding):
 //
 //     0x F PRPR M W1 W2 PDPD CCCCCCCC
-//        | |    | |  |  |    `-------- class        (32 bits: which struct this is, per-project)
+//        | |    | |  |  |          `-------- class        (32 bits: which struct this is, per-project)
 //        | |    | |  |  |
 //        | |    | |  |  `------------- padding      (8 bits, reserved 0)
 //        | |    | |  `---------------- wrapper 2    (probable/future/choice)
@@ -368,14 +382,14 @@
 #define TYPE_RING_BUFFER  (PROJ_VEXSPOKE | FORM_ARRAY     | ID_RING_BUFFER)
 
 // The header prefixing every allocated block: [typeId][length].
-// 16 bytes keeps payloads 8-byte aligned, so doubles/pointers sit naturally.
+// 16 Bytes keeps payloads 8-byte aligned, so doubles/pointers sit naturally.
 typedef struct TypeHeader {
     uint64_t typeId;
     uint32_t length;
     uint32_t pad;
 } TypeHeader;
 
-_Static_assert(sizeof(TypeHeader) == 16, "TypeHeader must stay 16 bytes");
+_Static_assert(sizeof(TypeHeader) == 16, "TypeHeader must stay 16 Bytes");
 
 // Compose a full type id from project + form + class id. Project owns
 // the high byte, shape the top nibble, identity the low 32 bits.
@@ -480,7 +494,7 @@ static inline int Type_isChoice(uint64_t typeId) {
 }
 
 // Growable registration slate for per-project parent tables (Rule 36: flat
-// index-keyed storage). Downstream repos register their class chains here
+// index-keyed storage). Downstream personal register their class chains here
 // once; vexspoke resolves them without ever including their headers. The
 // slate starts empty and doubles exponentially on demand, arena-backed (the
 // Dynamic Scalability & Anti-Hardcoding Law).
