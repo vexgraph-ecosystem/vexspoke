@@ -5,7 +5,7 @@
 ## 0. Constitution Link (supreme)
 - [preferences.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a) — real, Git-ignored workspace-root file at ../../../preferences.md, not a tracked Vexspoke file or symlink.
 - All universal laws in `../../../preferences.md` are mandatory and binding across the ecosystem.
-- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation and behavior). Relational Engine owns R2 memory/storage and native C search; existing Vexspoke memory/container ABI and default allocation remain during staged migration. No migration is inferred from the responsibility split.
+- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation and behavior). Relational Engine now owns production IO/NIO, including the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke consumes those contracts and contains no IO/NIO implementation copies. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
 
 ## 1. Repo-Local Law Index (Binding Matrix)
 
@@ -13,10 +13,10 @@ Universal laws are inherited from the canonical `../../../preferences.md` Index;
 
 | Law Title | Scope | Enforcement |
 | :--- | :--- | :--- |
-| **Coordinate-Agnostic Vector Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
-| **Self-Describing Memory Block Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
-| **BitPool Slot Segregation Law** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
-| **24-Byte Variable Slot Law (The 23+1 Rule)** | R2 Relational Memory Substrate | Mandatory for `vexspoke` |
+| **Coordinate-Agnostic Vector Law** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
+| **Self-Describing memory Block Law** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
+| **BitPool Slot Segregation Law** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
+| **24-Byte Variable Slot Law (The 23+1 Rule)** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
 | **Reactive Generics Law** | R2 behavior (the reactive engine + the generic family) | Mandatory for `vexspoke` |
 
 ## 2. Exclusive Repo-Local Laws (FULL PROSE RESTATEMENT)
@@ -40,16 +40,19 @@ In `vexspoke`, spatial vector representations (`Vec2`, `Vec3`, `Vec4`) must not 
 
 ---
 
-### Self-Describing Memory Block Law
+### Self-Describing memory Block Law
 
 #### Definition:
-Every memory block managed by `vexspoke` carries a self-describing bit-packed 16-byte header prepended before its payload pointer. The header encodes `type_id`, `length`, and allocation generation flags. Functions such as `Memory_type()` and `Memory_length()` decode these bits instantaneously with zero dictionary lookups.
+Every block obtained by Vexspoke consumers through the engine-owned `Memory_*`
+ABI carries the existing 16-byte header (`typeId`, `length`, `sugar`) prepended
+before its payload pointer. The owner moved to Relational Engine; the ABI did
+not change. `Memory_type()` and `Memory_length()` retain their existing behavior.
 
 #### The Why:
 In a relational substrate where everything is a pointer, an opaque `void*` is hazardous unless the runtime can instantly discover its type, size, and validity. Bit-packed headers give every raw pointer self-describing introspection without requiring separate wrapper structs or runtime type dictionaries.
 
 #### The Rule:
-1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 16 bytes for header bits.
+1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 16 Bytes for header bits.
 2. **Zero Secondary Storage:** Never store redundant length or class IDs in secondary hash maps when the pointer carries its own metadata.
 
 ---
@@ -71,14 +74,14 @@ Dynamic general-purpose `malloc` degrades cache coherence and introduces non-det
 ### 24-Byte Variable Slot Law (The 23+1 Rule)
 
 #### Definition:
-Every interned variable name in `vexspoke` is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 bytes total). Variable names are paired with an 8-byte intrusive self-pointer (`uint64_t self`) to form a cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`). Two slots pack with byte-level perfection into a single 64-byte CPU cache line with zero padding waste.
+Every interned variable name in `vexspoke` is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 Bytes total). Variable names are paired with an 8-byte intrusive self-pointer (`uint64_t self`) to form a cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`). Two slots pack with byte-level perfection into a single 64-byte CPU cache line with zero padding waste.
 
 #### The Why:
-In a relational memory substrate where symbols resolve to addresses, string allocation must never cause heap fragmentation, cache-line thrashing, or indeterminate hashing latency. Unbounded string names lead to variable-stride records, secondary pointers, and cache misses. By pinning names to 23 ASCII characters ($3 \times \text{uint64}$ plus $1 \times \text{uint64}$ pointer), slots are strictly uniform (32 bytes), identity is stated once per process, and lookups execute via branchless binary search with direct 24-byte scalar compares. Names longer than 23 characters are rejected cold at the gate, because silent truncation would corrupt identity.
+In a relational memory substrate where symbols resolve to addresses, string allocation must never cause heap fragmentation, cache-line thrashing, or indeterminate hashing latency. Unbounded string names lead to variable-stride records, secondary pointers, and cache misses. By pinning names to 23 ASCII characters ($3 \times \text{uint64}$ plus $1 \times \text{uint64}$ pointer), slots are strictly uniform (32 Bytes), identity is stated once per process, and lookups execute via branchless binary search with direct 24-byte scalar compares. Names longer than 23 characters are rejected cold at the gate, because silent truncation would corrupt identity.
 
 #### The Rule:
 1. **Name Character Limit:** Variable and string pool names must be between 1 and 23 characters (`STRING_POOL_NAME_MAX = 23u`). Overlong names are rejected immediately.
-2. **Exact 24-Byte Buffer:** The name buffer is exactly 24 bytes, NUL-terminated, and zero-padded.
+2. **Exact 24-Byte Buffer:** The name buffer is exactly 24 Bytes, NUL-terminated, and zero-padded.
 3. **8-Byte Self Link:** Every slot reserves an 8-byte `self` pointer for $O(1)$ intrusive address validity checks.
 4. **Zero Dynamic Allocation in Lookups:** Name resolution yields permanent slot indices (`int32_t`) that remain valid across table rehashes.
 
@@ -141,12 +144,14 @@ Conflict Triage Law.")
 
 ## 3. Repo-Local Extensions (managed, per the Conflict Triage Law)
 
-;;INTENTION("R2 Relational Memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
+;;INTENTION("R2 Relational memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
 
-The optional `nio/relational_memory.h` includes the engine-owned
-`relational_engine/memory.h` C ABI when the caller supplies that backend's include
-path and resident static library. It does not replace `Memory_*`, share C/Rust
-atomic layouts, or make imported engine C references dependency-closed. R1 keeps
+`nio/mem.h`, `io/*` and `nio/relational_memory.h` resolve from Relational Engine,
+not Vexspoke. The default production build links the native engine implementation
+of `Memory_*`; the Rust byte/string ABI in `relational_engine/memory.h` remains
+a separate surface. No C/Rust
+atomic layouts are shared and other imported comparison directories remain
+outside production dependency closure. R1 keeps
 engine code and owner storage resident during consumer reloads and excludes
 active callers before destruction. Whole-string replacement is not automatic
 record-schema migration; actual Hotcwap reload integration remains unproved.
