@@ -4,8 +4,9 @@ This project is a strictly solo development process conducted in tight pair-prog
 
 It serves as an architectural manifesto for **R2 CPU computation and behavior**.
 Relational Engine is the cooperating R2 memory/storage/native C search owner.
-Existing Vexspoke memory/container ABI and default allocator remain during staged
-migration; the split is not a replacement or readiness claim.
+Production IO/NIO has migrated to Relational Engine; Vexspoke has no implementation
+copies. The default build links RE's native Memory ABI with preserved semantics.
+Broader container/Rust allocator migration remains staged and separately proved.
 
 ---
 
@@ -86,7 +87,7 @@ documentation is committed locally under the Git Workflow Law. Never auto-push.
 
 ---
 
-## 6. Memory Tier Architecture
+## 6. memory Tier Architecture
 
 | Pool | Slot Size | Managed Types |
 | :--- | :--- | :--- |
