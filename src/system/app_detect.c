@@ -201,38 +201,38 @@ uint32_t AppDetect_count(const AppDetect *self) {
 
 const AppSlot *AppDetect_at(const AppDetect *self, uint32_t i) {
     if (!self || i >= kKnownAppCount)
-        return NULL;
+        return nullptr;
     return &kKnownApps[i];
 }
 
 const AppSlot *AppDetect_get(const AppDetect *self, const char *name) {
     if (!self || !name || (*name) == '\0')
-        return NULL;
+        return nullptr;
     for (uint32_t i = 0; i < kKnownAppCount; i++) {
         if (strcmp(kKnownApps[i].name, name) == 0)
             return &kKnownApps[i];
     }
-    return NULL;
+    return nullptr;
 }
 
 // GETTERS
 
 const char *AppDetect_getName(const AppDetect *self, const AppSlot *slot) {
     (void)self;
-    return slot ? (*slot).name : NULL;
+    return slot ? (*slot).name : nullptr;
 }
 
 const char *AppDetect_getAltProcs(const AppDetect *self, const AppSlot *slot) {
     (void)self;
-    return slot ? (*slot).altProcs : NULL;
+    return slot ? (*slot).altProcs : nullptr;
 }
 
 const char *AppDetect_getDisplayName(const AppDetect *self, const AppSlot *slot) {
     (void)self;
-    return slot ? (*slot).displayName : NULL;
+    return slot ? (*slot).displayName : nullptr;
 }
 
 const char *AppDetect_getNote(const AppDetect *self, const AppSlot *slot) {
     (void)self;
-    return slot ? (*slot).note : NULL;
+    return slot ? (*slot).note : nullptr;
 }

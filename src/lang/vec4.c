@@ -12,7 +12,7 @@
  * lang/vec4/vec4.h and lang/vec4/vec4d.h so consumers include one header and
  * reach both the single- and double-precision 4D vector classes. Exists
  * purely for include ergonomics — the Single Class Per File Law keeps the
- * real implementations in lang/vec4/vec4.c and lang/vec4/vec4d.c. Memory:
+ * real implementations in lang/vec4/vec4.c and lang/vec4/vec4d.c. memory:
  * none — this file owns no structs, no functions, no state. Lifetime:
  * compile-time only.
  * ============================================================================

@@ -7,7 +7,7 @@
 // oop/stride.h — the Stride utility, ported from oop/Stride.java.
 //
 // Maps a class id to the byte width of one slot of that class. Collections ask
-// Stride_get(element_class) when they allocate so they know how many bytes each
+// Stride_get(element_class) when they allocate so they know how many Bytes each
 // element occupies. Unknown ids answer 8 (pointer-sized).
 
 // Byte width of one element of the given class. Returns 8 for anything it does

@@ -36,7 +36,7 @@
  * ----------------------------------------------------------------------------
  *   char *dest;       // borrowed destination buffer
  *   size_t cap;       // total capacity (including the terminator)
- *   size_t len;       // bytes written so far (excluding the terminator)
+ *   size_t len;       // Bytes written so far (excluding the terminator)
  *   bool truncated;   // a write was cut
  *
  * PRIVATE HELPERS:
@@ -56,7 +56,7 @@
  * ============================================================================
  */
 
-// Remaining writable bytes (excluding the reserved terminator).
+// Remaining writable Bytes (excluding the reserved terminator).
 static size_t room(const Str *s) {
     if (s == nullptr || (*s).dest == nullptr || (*s).cap == 0)
         return 0;
@@ -142,7 +142,7 @@ void Str_printf(Str *s, const char *fmt, ...) {
     size_t w = (size_t) written;
     size_t r = room(s);
     if (w > r) {
-        (*s).len = (*s).cap - 1u;   // vsnprintf wrote r bytes + terminator
+        (*s).len = (*s).cap - 1u;   // vsnprintf wrote r Bytes + terminator
         (*s).truncated = true;
     } else {
         (*s).len += w;

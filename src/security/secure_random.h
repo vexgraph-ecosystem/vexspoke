@@ -28,7 +28,7 @@ typedef struct SecureRandom SecureRandom;
 SecureRandom *SecureRandom_0(void);
 void SecureRandom_free(SecureRandom *self);
 
-// Fill dest[0..len) with cryptographically secure bytes. Returns false when the
+// Fill dest[0..len) with cryptographically secure Bytes. Returns false when the
 // OS source is unavailable (dest untouched). len 0 is a successful no-op.
 bool SecureRandom_bytes(SecureRandom *self, void *dest, size_t len);
 

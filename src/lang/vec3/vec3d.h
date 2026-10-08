@@ -12,7 +12,7 @@
 // Single Class Per File Law: Vec3d.
 //
 // Ultra-precision 3D vector for celestial physics, gravitational simulations,
-// and orbital integration. Aligned to 32 bytes for AVX2 / Apple NEON pair.
+// and orbital integration. Aligned to 32 Bytes for AVX2 / Apple NEON pair.
 
 typedef struct Vec3d {
     alignas(32) union {

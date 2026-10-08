@@ -27,6 +27,6 @@ intptr_t Arrays_binarySearchLong(const int64_t *data, size_t length, int64_t key
 void Arrays_fill(uint8_t *data, size_t length, uint8_t value);
 
 // Copy a byte block (non-overlapping, like memcpy).
-void Arrays_copy(const uint8_t *src, uint8_t *dest, size_t bytes);
+void Arrays_copy(const uint8_t *src, uint8_t *dest, size_t Bytes);
 
 #endif

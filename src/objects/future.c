@@ -18,7 +18,7 @@
  * via a CAS on the flag (acq_rel publish), so the first writer wins and later
  * writers are rejected; readers observe the payload with acquire ordering.
  * Future_2 builds arrays of futures from an init sample or zeroed memory.
- * Instances are Memory-arena allocated with the WRAP2_FUTURE type id.
+ * Instances are memory-arena allocated with the WRAP2_FUTURE type id.
  * ============================================================================
  */
 

@@ -20,7 +20,7 @@
  * trust roots: wraps nw_connection_t in an AppleTlsContext (connection,
  * dispatch queue, ready/failed flags) behind the opaque TlsConn handle.
  * Exists because the engine needs TLS without vendoring OpenSSL —
- * Network.framework provides system-managed trust and ALPN. Memory: context
+ * Network.framework provides system-managed trust and ALPN. memory: context
  * is malloc'd per connection, freed in Tls_close; callbacks hop onto the
  * caller's queue. Lifetime: the Tls_connect/Tls_close pair; bounded by the
  * Bounded Wait Law via nw_connection state callbacks.
@@ -59,7 +59,7 @@ typedef struct AppleTlsContext {
 bool Tls_connect(const char *host, int port, TlsConn **connOut) {
     if (!host || !connOut || port <= 0 || port > 65535) {
         if (connOut) {
-            *connOut = NULL;
+            *connOut = nullptr;
         }
         return false;
     }
@@ -69,7 +69,7 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
 
     nw_endpoint_t endpoint = nw_endpoint_create_host(host, port_str);
     if (!endpoint) {
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
@@ -79,19 +79,19 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
         NW_PARAMETERS_DEFAULT_CONFIGURATION
     );
     if (!params) {
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
     nw_connection_t connection = nw_connection_create(endpoint, params);
     if (!connection) {
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
     AppleTlsContext *ctx = (AppleTlsContext*) malloc(sizeof(AppleTlsContext));
     if (!ctx) {
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
@@ -124,7 +124,7 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
     if (waited != 0 || !ready) {
         nw_connection_cancel(connection);
         free(ctx);
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
@@ -133,7 +133,7 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
     if (!conn) {
         nw_connection_cancel(connection);
         free(ctx);
-        *connOut = NULL;
+        *connOut = nullptr;
         return false;
     }
 
@@ -197,7 +197,7 @@ bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut) {
         (void) context;
         (void) is_complete;
         if (!error && content) {
-            const void *src_buf = NULL;
+            const void *src_buf = nullptr;
             size_t src_size = 0;
             dispatch_data_t contig = dispatch_data_create_map(content, &src_buf, &src_size);
             (void) contig;
@@ -231,7 +231,7 @@ void Tls_close(TlsConn *conn) {
             nw_connection_cancel((*ctx).nw_conn);
         }
         free(ctx);
-        (*conn).opaque = NULL;
+        (*conn).opaque = nullptr;
     }
     free(conn);
 }

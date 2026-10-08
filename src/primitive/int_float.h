@@ -15,7 +15,7 @@
 // IntFloat — the value: a number as an integer scalar plus a normalized
 // fractional part in [-1, 1). Keeping the magnitude in the integer and the
 // remainder in a bounded fraction holds the value precise and consistent (the
-// integer never loses low bits to float drift). Layout is 8 bytes — exactly one
+// integer never loses low bits to float drift). Layout is 8 Bytes — exactly one
 // engine word, so a reactive over it rides the word by bit-cast.
 typedef struct IntFloat {
     int32_t scalar;   // the integer part

@@ -11,7 +11,7 @@
  * DEFINITION: Tls_curl
  * ============================================================================
  * libcurl TLS backend for non-Apple platforms. Fail-closed: the handshake is
- * not wired yet, so no bytes are ever sent and every operation returns false
+ * not wired yet, so no Bytes are ever sent and every operation returns false
  * (the Cold-Strict, Hot-Minimal Validation Law drop-degrade). TlsConn is an
  * opaque two-word handle (backend + opaque) owned by the caller; Tls_close
  * zeroes both words. Marked ;;DRAFT until the libcurl handshake lands.
@@ -47,7 +47,7 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
         return false;
     if (port <= 0)
         return false;
-    // Fail closed: libcurl handshake not wired yet. No bytes are sent.
+    // Fail closed: libcurl handshake not wired yet. No Bytes are sent.
     (*connOut) = 0;
     return false;
 }

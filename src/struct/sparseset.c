@@ -38,7 +38,7 @@
  *     int32_t stride; // component stride (0 = set only)
  *     int32_t *dense; // dense[i] = entity id
  *     int32_t *sparse; // sparse[entity] = dense index, -1 = absent
- *     uint8_t *data; // component data, capacity * stride bytes
+ *     uint8_t *data; // component data, capacity * stride Bytes
  *   }
  *
  * FUNCTION REGISTRY:
@@ -94,9 +94,9 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
         (*set).sparse[i] = -1;
 
     if (stride > 0) {
-        size_t bytes = capacity * stride;
+        size_t Bytes = capacity * stride;
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SPARSE_SET);
-        (*set).data = (uint8_t*) Memory_alloc(bufType, bytes);
+        (*set).data = (uint8_t*) Memory_alloc(bufType, Bytes);
         if (!(*set).data) {
             Memory_free((*set).dense);
             Memory_free((*set).sparse);

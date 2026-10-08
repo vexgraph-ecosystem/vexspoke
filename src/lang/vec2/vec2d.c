@@ -17,8 +17,8 @@
  * horizontal/vertical, x/y, and right/up aliases over the same two doubles.
  * Exists because spatial math (layout, physics, camera) needs double
  * precision for large-world coordinates while keeping a single canonical
- * storage layout. Memory: arena-allocated via Memory_alloc(ID_VEC2,
- * VEC2D_BYTES), freed via Vec2d_free. Lifetime: Memory arena; dest-last
+ * storage layout. memory: arena-allocated via Memory_alloc(ID_VEC2,
+ * VEC2D_BYTES), freed via Vec2d_free. Lifetime: memory arena; dest-last
  * arithmetic (add/sub/mul) writes into caller-provided dest.
  * ============================================================================
  */

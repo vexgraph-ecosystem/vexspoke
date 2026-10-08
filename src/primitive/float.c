@@ -13,7 +13,7 @@
  * DEFINITION: Float
  * ============================================================================
  * Float primitive (Legacy: primitive/Float.java): a procedural class over a
- * process-wide BitPool (4-byte elements, 1024 fixed slots) with a Memory
+ * process-wide BitPool (4-byte elements, 1024 fixed slots) with a memory
  * arena fallback for large arrays. Float_alloc hands out pool slots typed
  * ID_FLOAT; Float_allocArray switches to the arena when contiguity or size
  * demands it, and Float_free routes to whichever owner holds the pointer.
@@ -29,7 +29,7 @@
  * ============================================================================
  * Float primitive (Legacy: primitive/Float.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of float payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of float payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -72,13 +72,13 @@ void *Float_alloc(void) {
 void *Float_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(float);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(float);
     // For compound types, elem_size 4 already accounts for stride, but sizeof(float) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 4 != sizeof(float))
-        bytes = count * 4;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FLOAT), bytes);
+        Bytes = count * 4;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FLOAT), Bytes);
 }
 
 void Float_free(void *ptr) {

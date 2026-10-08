@@ -9,8 +9,8 @@
 
 // lang/mat4.h — the Mat4 class, ported from lang/Mat4.java.
 //
-// Off-heap 4x4 matrix, column-major, 16 contiguous floats (64 bytes) as a
-// self-describing Memory block. Column-major matches the Vulkan/OpenGL layout:
+// Off-heap 4x4 matrix, column-major, 16 contiguous floats (64 Bytes) as a
+// self-describing memory block. Column-major matches the Vulkan/OpenGL layout:
 //
 //     m[col * 4 + row]
 //     col 0: 0..3, col 1: 4..7, col 2: 8..11, col 3: 12..15

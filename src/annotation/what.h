@@ -13,9 +13,9 @@
 //     ;;WHAT("Reactive")
 //     void *health;
 //
-// The relational engine runs on void* — the same 8 bytes may hold a scalar, a
+// The relational engine runs on void* — the same 8 Bytes may hold a scalar, a
 // struct, a reactive, or a table. This marker is the compile-time twin of the
-// 16-byte self-describing memory header (the Self-Describing Memory Block Law):
+// 16-byte self-describing memory header (the Self-Describing memory Block Law):
 // intent is legible before a single byte is allocated.
 //
 // See intention.h for the macro convention (C has no language-level

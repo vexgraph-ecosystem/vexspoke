@@ -33,7 +33,7 @@
  *   - Arrays_binarySearchInt(data, length, key)
  *   - Arrays_binarySearchLong(data, length, key)
  *   - Arrays_fill(data, length, value)
- *   - Arrays_copy(src, dest, bytes)
+ *   - Arrays_copy(src, dest, Bytes)
  * ============================================================================
  */
 
@@ -146,7 +146,7 @@ void Arrays_fill(uint8_t *data, size_t length, uint8_t value) {
     memset(data, value, length);
 }
 
-void Arrays_copy(const uint8_t *src, uint8_t *dest, size_t bytes) {
-    if (!src || !dest || bytes == 0) return;
-    memcpy(dest, src, bytes);
+void Arrays_copy(const uint8_t *src, uint8_t *dest, size_t Bytes) {
+    if (!src || !dest || Bytes == 0) return;
+    memcpy(dest, src, Bytes);
 }

@@ -13,7 +13,7 @@
  * DEFINITION: Fixed32
  * ============================================================================
  * Fixed32 primitive, ported from primitive/Fixed32.java. A 4-byte int32
- * payload served from a 1024-slot BitPool for singletons and from the Memory
+ * payload served from a 1024-slot BitPool for singletons and from the memory
  * arena for arrays; Fixed32_free routes to whichever pool owns the pointer.
  * compareAndSet is a lock-free __atomic_compare_exchange on the payload, so
  * the primitive doubles as a small atomic counter. Getters return safe
@@ -28,7 +28,7 @@
  * ============================================================================
  * Fixed32 primitive (Legacy: primitive/Fixed32.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of fixed32 payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of fixed32 payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -71,13 +71,13 @@ void *Fixed32_alloc(void) {
 void *Fixed32_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int32_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int32_t);
     // For compound types, elem_size 4 already accounts for stride, but sizeof(int32_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 4 != sizeof(int32_t))
-        bytes = count * 4;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FIXED32), bytes);
+        Bytes = count * 4;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FIXED32), Bytes);
 }
 
 void Fixed32_free(void *ptr) {

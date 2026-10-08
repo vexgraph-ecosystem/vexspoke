@@ -14,7 +14,7 @@
  * DEFINITION: Vec3d
  * ============================================================================
  * 32-byte SIMD double-precision 3D spatial vector for orbital and
- * high-fidelity physics, aligned to 32 bytes for AVX2 / Apple NEON pairs.
+ * high-fidelity physics, aligned to 32 Bytes for AVX2 / Apple NEON pairs.
  * Arena-allocated at VEC3D_BYTES with zero steady-state allocation. The union
  * layout aliases horizontal/vertical/depth, x/y/z, and right/up/front plus a
  * frame tag; frame-mapped getters (getX/getY/getZ) resolve axis sign and

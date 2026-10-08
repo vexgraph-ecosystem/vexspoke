@@ -9,7 +9,7 @@
 // struct/sparseset.h — the SparseSet class, ported from struct/SparseSet.java.
 //
 // ECS sparse set: maps sparse entity ids (int) to a tightly packed dense index.
-// Optionally carries a contiguous component data block (stride bytes per entry)
+// Optionally carries a contiguous component data block (stride Bytes per entry)
 // so each add returns the data pointer to write into.
 
 typedef struct SparseSet {
@@ -19,7 +19,7 @@ typedef struct SparseSet {
     int32_t stride;        // component stride (0 = set only)
     int32_t *dense;        // dense[i] = entity id
     int32_t *sparse;       // sparse[entity] = dense index, -1 = absent
-    uint8_t *data;         // component data, capacity * stride bytes
+    uint8_t *data;         // component data, capacity * stride Bytes
 } SparseSet;
 
 // Set over entity ids [0, maxEntities) with optional component stride.
@@ -47,7 +47,7 @@ uint8_t *SparseSet_get(SparseSet *set, int32_t entityId);
 // Tightly packed entity ids, dense[0..count).
 const int32_t *SparseSet_denseEntities(SparseSet *set);
 
-// Tightly packed component data, first count * stride bytes are live.
+// Tightly packed component data, first count * stride Bytes are live.
 const uint8_t *SparseSet_denseData(SparseSet *set);
 
 

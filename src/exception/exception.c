@@ -23,25 +23,25 @@ void Exception_initV(Exception *self,
                      int line,
                      const char *fmt,
                      va_list args) {
-    if (self == NULL) return;
+    if (self == nullptr) return;
 
     (*self).type = TYPE_EXCEPTION_SINGLETON;
     (*self).category = category;
-    (*self).site = (site != NULL) ? site : "UnknownSite";
-    (*self).file = (file != NULL) ? file : "UnknownFile";
+    (*self).site = (site != nullptr) ? site : "UnknownSite";
+    (*self).file = (file != nullptr) ? file : "UnknownFile";
     (*self).line = line;
-    (*self).message = NULL;
-    (*self).details = NULL;
+    (*self).message = nullptr;
+    (*self).details = nullptr;
 
-    if (fmt != NULL) {
+    if (fmt != nullptr) {
         va_list copy;
         va_copy(copy, args);
-        int needed = vsnprintf(NULL, 0, fmt, copy);
+        int needed = vsnprintf(nullptr, 0, fmt, copy);
         va_end(copy);
 
         if (needed >= 0) {
             char *buf = (char *)malloc((size_t)needed + 1);
-            if (buf != NULL) {
+            if (buf != nullptr) {
                 vsnprintf(buf, (size_t)needed + 1, fmt, args);
                 (*self).message = buf;
             }
@@ -63,19 +63,19 @@ void Exception_init(Exception *self,
 }
 
 void Exception_setDetailsV(Exception *self, const char *fmt, va_list args) {
-    if (self == NULL || fmt == NULL) return;
+    if (self == nullptr || fmt == nullptr) return;
 
     va_list copy;
     va_copy(copy, args);
-    int needed = vsnprintf(NULL, 0, fmt, copy);
+    int needed = vsnprintf(nullptr, 0, fmt, copy);
     va_end(copy);
 
     if (needed < 0) return;
 
     char *buf = (char *)malloc((size_t)needed + 1);
-    if (buf != NULL) {
+    if (buf != nullptr) {
         vsnprintf(buf, (size_t)needed + 1, fmt, args);
-        if ((*self).details != NULL) {
+        if ((*self).details != nullptr) {
             free((*self).details);
         }
         (*self).details = buf;
@@ -90,20 +90,20 @@ void Exception_setDetails(Exception *self, const char *fmt, ...) {
 }
 
 void Exception_free(Exception *self) {
-    if (self == NULL) return;
+    if (self == nullptr) return;
 
-    if ((*self).message != NULL) {
+    if ((*self).message != nullptr) {
         free((*self).message);
-        (*self).message = NULL;
+        (*self).message = nullptr;
     }
-    if ((*self).details != NULL) {
+    if ((*self).details != nullptr) {
         free((*self).details);
-        (*self).details = NULL;
+        (*self).details = nullptr;
     }
 }
 
 void Exception_print(const Exception *self) {
-    if (self == NULL) return;
+    if (self == nullptr) return;
 
     fprintf(stderr, "\n================================================================================\n");
     fprintf(stderr, "RUNTIME EXCEPTION: [%s] at %s\n",
@@ -113,10 +113,10 @@ void Exception_print(const Exception *self) {
             (*self).file ? (*self).file : "unknown",
             (*self).line);
     fprintf(stderr, "--------------------------------------------------------------------------------\n");
-    if ((*self).message != NULL && (*self).message[0] != '\0') {
+    if ((*self).message != nullptr && (*self).message[0] != '\0') {
         fprintf(stderr, "Reason / Probable Causes:\n  %s\n", (*self).message);
     }
-    if ((*self).details != NULL && (*self).details[0] != '\0') {
+    if ((*self).details != nullptr && (*self).details[0] != '\0') {
         fprintf(stderr, "Variable Dump / Context Diagnostics:\n  %s\n", (*self).details);
     }
     fprintf(stderr, "================================================================================\n\n");

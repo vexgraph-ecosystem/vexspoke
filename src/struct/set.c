@@ -17,7 +17,7 @@
  * Hash set over a flat open-addressing slot table, ported from struct/Set.java.
  * Each 24-byte slot holds key, hash, and state (empty/occupied/deleted);
  * reference-class elements (strings, lists) are hashed and compared through
- * their Memory payloads while scalars use Murmur3 mixing. The table rehashes
+ * their memory payloads while scalars use Murmur3 mixing. The table rehashes
  * into a doubled arena buffer past the 0.75 load factor, so capacity grows
  * with no artificial ceiling. The Collection base record is embedded at
  * offset zero, shared with Deque.
@@ -130,11 +130,11 @@ static uint64_t slotState(uint8_t *slot) {
 static void rehash(Collection *c, size_t newCap) {
     size_t oldCap = (*c).capacity;
     uint8_t *oldData = (*c).data;
-    size_t bytes = newCap * SLOT_SIZE;
+    size_t Bytes = newCap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SET);
-    uint8_t *newData = (uint8_t*) Memory_alloc(bufType, bytes);
+    uint8_t *newData = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!newData) return;
-    memset(newData, 0, bytes);
+    memset(newData, 0, Bytes);
 
     size_t mask = newCap - 1;
     for (size_t i = 0; i < oldCap; i++) {
@@ -173,14 +173,14 @@ Set *Set_2(uint32_t elementClass, size_t capacity) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * SLOT_SIZE;
+    size_t Bytes = cap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SET);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(set);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return set;
 }
 

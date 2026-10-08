@@ -26,13 +26,13 @@ typedef struct BitSlot {
 } BitSlot;
 
 typedef struct BitPool {
-    size_t element_size;     // bytes per payload slot
+    size_t element_size;     // Bytes per payload slot
     size_t capacity;         // slot count
     uint8_t *arena;          // one calloc'd arena, never grows
     _Atomic uint64_t free_head;  // tagged head of the free list
 } BitPool;
 
-// Carve capacity slots of element_size bytes. Returns false on bad args/OOM.
+// Carve capacity slots of element_size Bytes. Returns false on bad args/OOM.
 bool BitPool_init(BitPool *pool, size_t element_size, size_t capacity);
 void BitPool_shutdown(BitPool *pool);
 
@@ -43,7 +43,7 @@ void *BitPool_alloc(BitPool *pool, uint64_t type_id);
 // Push a slot back onto the free list. user_ptr must come from this pool.
 void BitPool_free(BitPool *pool, void *user_ptr);
 
-// Helpers for mixed-allocator primitives — Memory vs BitPool dispatch.
+// Helpers for mixed-allocator primitives — memory vs BitPool dispatch.
 // These let primitive *_free/_type/_length safely handle both arenas.
 bool BitPool_contains(const BitPool *pool, const void *user_ptr);
 uint64_t BitPool_type(const BitPool *pool, const void *user_ptr);

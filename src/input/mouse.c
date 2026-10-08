@@ -140,7 +140,7 @@ typedef struct {
     uint32_t pad;
 } InputEvent;
 
-_Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 bytes");
+_Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 Bytes");
 
 typedef struct {
     uint64_t pressTime;
@@ -153,7 +153,7 @@ typedef struct {
     uint8_t pad[2];            // alignment padding
 } ButtonSlot;
 
-_Static_assert(sizeof(ButtonSlot) == 40, "button slot must stay 40 bytes");
+_Static_assert(sizeof(ButtonSlot) == 40, "button slot must stay 40 Bytes");
 
 static ButtonSlot s_slots[BUTTON_COUNT];
 static double s_posX = 0.0;
@@ -173,11 +173,11 @@ typedef struct WinRow {
     int cap;
 } WinRow;
 
-static const MouseHandler **s_listeners = NULL;  // global listener segment
+static const MouseHandler **s_listeners = nullptr;  // global listener segment
 static int s_listenerCount = 0;
 static int s_listenerCap = 0;
 
-static WinRow *s_rows = NULL;  // growable window-row table
+static WinRow *s_rows = nullptr;  // growable window-row table
 static int s_rowCount = 0;
 static int s_rowCap = 0;
 
@@ -192,8 +192,8 @@ static bool growSegment(const MouseHandler ***items, int *cap, int needed) {
     while (newCap < needed) newCap *= 2;
     const MouseHandler **nb = (const MouseHandler**) Memory_alloc(
         TYPE_INT_POINTER, (size_t) newCap * sizeof(MouseHandler *));
-    if (nb == NULL) return false;
-    if (*items != NULL && *cap > 0)
+    if (nb == nullptr) return false;
+    if (*items != nullptr && *cap > 0)
         memcpy(nb, *items, (size_t) *cap * sizeof(MouseHandler *));
     *items = nb;
     *cap = newCap;
@@ -207,8 +207,8 @@ static bool growRows(int needed) {
     while (newCap < needed) newCap *= 2;
     WinRow *nb = (WinRow*) Memory_alloc(TYPE_INT_POINTER,
         (size_t) newCap * sizeof(WinRow));
-    if (nb == NULL) return false;
-    if (s_rows != NULL && s_rowCap > 0)
+    if (nb == nullptr) return false;
+    if (s_rows != nullptr && s_rowCap > 0)
         memcpy(nb, s_rows, (size_t) s_rowCap * sizeof(WinRow));
     s_rows = nb;
     s_rowCap = newCap;
@@ -220,7 +220,7 @@ static WinRow *rowFor(uint32_t windowId) {
     for (int i = 0; i < s_rowCount; i++)
         if (s_rows[i].windowId == windowId)
             return &s_rows[i];
-    return NULL;
+    return nullptr;
 }
 
 void Mouse_init(void) {
@@ -238,7 +238,7 @@ void Mouse_shutdown(void) {
 }
 
 void Mouse_addListener(const MouseHandler *listener) {
-    if (listener == NULL) return;
+    if (listener == nullptr) return;
     if (!growSegment(&s_listeners, &s_listenerCap, s_listenerCount + 1)) return;
     s_listeners[s_listenerCount++] = listener;
 }
@@ -254,13 +254,13 @@ bool Mouse_removeListener(const MouseHandler *listener) {
 }
 
 void Mouse_attachWindow(uint32_t windowId, const MouseHandler *listener) {
-    if (listener == NULL || windowId == 0) return;
+    if (listener == nullptr || windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) {
+    if (row == nullptr) {
         if (!growRows(s_rowCount + 1)) return;
         row = &s_rows[s_rowCount++];
         (*row).windowId = windowId;
-        (*row).items = NULL;
+        (*row).items = nullptr;
         (*row).count = 0;
         (*row).cap = 0;
     }
@@ -269,9 +269,9 @@ void Mouse_attachWindow(uint32_t windowId, const MouseHandler *listener) {
 }
 
 bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener) {
-    if (listener == NULL || windowId == 0) return false;
+    if (listener == nullptr || windowId == 0) return false;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return false;
+    if (row == nullptr) return false;
     for (int i = 0; i < (*row).count; i++) {
         if ((*row).items[i] == listener) {
             (*row).count--;
@@ -285,7 +285,7 @@ bool Mouse_detachWindow(uint32_t windowId, const MouseHandler *listener) {
 void Mouse_detachWindowAll(uint32_t windowId) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row != NULL)
+    if (row != nullptr)
         (*row).count = 0;
 }
 
@@ -424,7 +424,7 @@ static void deliverMotion(uint32_t windowId, int action8, int button,
                           double a, double b) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return;
+    if (row == nullptr) return;
     for (int i = 0; i < (*row).count; i++) {
         const MouseHandler *l = (*row).items[i];
         void *self = (*l).self;
@@ -443,7 +443,7 @@ static void deliverMotion(uint32_t windowId, int action8, int button,
 static void deliverZoom(uint32_t windowId, double magnification) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return;
+    if (row == nullptr) return;
     for (int i = 0; i < (*row).count; i++) {
         const MouseHandler *l = (*row).items[i];
         if ((*l).onMouseZoom)
@@ -455,7 +455,7 @@ static void deliverZoom(uint32_t windowId, double magnification) {
 static void deliverButton(uint32_t windowId, int action, int mouseEvent, uint64_t exactNanos) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return;
+    if (row == nullptr) return;
     for (int i = 0; i < (*row).count; i++) {
         const MouseHandler *l = (*row).items[i];
         void *self = (*l).self;
@@ -477,7 +477,7 @@ void Mouse_dispatchEvents(void) {
         int action8 = (int)(packed & 0xFF);
         int marker = (int)((packed >> 8) & 0xFF);
 
-        // --- Motion class: marker bytes 254/255 ---
+        // --- Motion class: marker Bytes 254/255 ---
         if (marker == 255) {
             if (action8 == 5) { // move
                 s_posX = coordA(packed);

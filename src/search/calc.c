@@ -100,7 +100,7 @@ static double parse_primary(CalcParser *cp) {
 
     // Number literal
     if (isdigit((unsigned char)*(*cp).p) || *(*cp).p == '.') {
-        char *endptr = NULL;
+        char *endptr = nullptr;
         double val = strtod((*cp).p, &endptr);
         if (endptr == (*cp).p) {
             (*cp).hasError = true;

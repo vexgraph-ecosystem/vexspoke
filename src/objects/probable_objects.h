@@ -20,7 +20,7 @@ typedef struct ProbableObjects {
     uint32_t totalWeight;   // sum of all weights
     uint32_t capacity;      // maximum choices
     uint32_t pad;
-    // capacity slots of 16 bytes: object(8) + cumulativeWeight(4) + weight(4)
+    // capacity slots of 16 Bytes: object(8) + cumulativeWeight(4) + weight(4)
     uint8_t slots[];
 } ProbableObjects;
 

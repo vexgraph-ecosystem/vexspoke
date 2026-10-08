@@ -21,7 +21,8 @@
 // nonzero classes); project/form/modifier/wrappers survive. A
 // [typeId:8][pointer-or-inline-value:8] slot therefore stays 16 Bytes.
 //
-// Field map:
+//      Field map:
+//      0xF PRPR M W1 W2 BE6C CCCCCC
 //        | |    | |  |  |    `-------- class        (24 bits: which struct this is, per-project)
 //        | |    | |  |  |
 //        | |    | |  |  `------------- sugar        ("векс" / vex)
@@ -57,7 +58,7 @@
 #define MASK_WRAPPER_1  0x0'00'0'F'0'0000'000000ULL
 #define MASK_WRAPPER_2  0x0'00'0'0'F'0000'000000ULL
 #define MASK_SUGAR      0x0'00'0'0'0'FFFF'000000ULL
-#define SUGAR_VEX      0x0'00'0'0'0'BE6C'000000ULL // INTENTIONAL(vex) "векс"
+#define SUGAR_VEX       0x0'00'0'0'0'BE6C'000000ULL // INTENTIONAL(vex) "векс"
 #define MASK_CLASS      0x0'00'0'0'0'0000'FFFFFFULL
 
 #define FORM_SINGLETON          0x1'00'0'0'0'0000'000000ULL
@@ -79,6 +80,8 @@
 #define PROJ_HOTCWAP    0x0'03'0'0'0'0000'000000ULL
 #define PROJ_DARLING    0x0'04'0'0'0'0000'000000ULL
 #define PROJ_API_HAVEN  0x0'05'0'0'0'0000'000000ULL
+#define PROJ_DARKBASE   0x0'06'0'0'0'0000'000000ULL
+#define PROJ_RELATIONAL_ENGINE   0x0'07'0'0'0'0000'000000ULL
 
 #define MOD_GLOBAL     0x0'00'1'0'0'0000'000000ULL
 #define MOD_LOCALE     0x0'00'2'0'0'0000'000000ULL
@@ -318,6 +321,7 @@
 #define ARCH_DARLING   3u
 #define ARCH_GRAPHVEX  4u
 #define ARCH_APIHAVEN  5u
+#define ARCH_DARKBASE  6u
 
 #define TYPE_INT_SINGLETON  (SUGAR_VEX | PROJ_VEXSPOKE | FORM_SINGLETON | ID_INT)
 #define TYPE_INT_ARRAY      (SUGAR_VEX | PROJ_VEXSPOKE | FORM_ARRAY     | ID_INT)
@@ -536,6 +540,10 @@ static inline int Type_isHotcwap(uint64_t classId) {
 
 static inline int Type_isDarling(uint64_t classId) {
     return Type_arch(classId) == ARCH_DARLING;
+}
+
+static inline int Type_isDarkbase(uint64_t classId) {
+    return Type_arch(classId) == ARCH_DARKBASE;
 }
 
 // True if classId is ancestorId or any descendant of it. Walks the parent

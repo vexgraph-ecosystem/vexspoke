@@ -13,8 +13,8 @@
  * DEFINITION: Long_double
  * ============================================================================
  * LongDouble primitive over a global 16-byte-slot BitPool (1024 slots) with
- * Memory-arena fallback for arrays: alloc/free route through BitPool when the
- * pointer is pool-owned, otherwise through Memory. The payload is an int64
+ * memory-arena fallback for arrays: alloc/free route through BitPool when the
+ * pointer is pool-owned, otherwise through memory. The payload is an int64
  * plus a double in the second 8-byte half (allocWithValues writes both);
  * get/set address the int64 half, and compareAndSet is a seq-cst
  * __atomic_compare_exchange_n. type/length dispatch through the owning
@@ -29,7 +29,7 @@
  * ============================================================================
  * LongDouble primitive (Legacy: primitive/LongDouble.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of long_double payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of long_double payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -72,13 +72,13 @@ void *LongDouble_alloc(void) {
 void *LongDouble_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 16 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 16 != sizeof(int64_t))
-        bytes = count * 16;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG_DOUBLE), bytes);
+        Bytes = count * 16;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG_DOUBLE), Bytes);
 }
 
 void LongDouble_free(void *ptr) {

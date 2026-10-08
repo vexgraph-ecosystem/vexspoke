@@ -11,7 +11,7 @@
 
 // struct/set.h — the Set class, ported from struct/Set.java.
 //
-// Open-addressing hash set of unique elements. Each slot is 24 bytes:
+// Open-addressing hash set of unique elements. Each slot is 24 Bytes:
 // element(8) + hash(8) + state(8); state is 0=empty, 1=occupied, 2=deleted.
 // element_class lives in the embedded Collection; stride is unused.
 

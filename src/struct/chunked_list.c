@@ -234,7 +234,7 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
     return leaf + (size_t)(index & (*self).rowMask) * stride;
 }
 
-// Byte offset of a leaf's tail link: the row bytes rounded UP to 8 bytes so the
+// Byte offset of a leaf's tail link: the row Bytes rounded UP to 8 Bytes so the
 // link is naturally aligned. The link is written once (when the next leaf is
 // created) and read with acquire/release.
 static size_t leafLinkOffset(const ChunkedList *self) {
@@ -247,17 +247,17 @@ static size_t leafLinkOffset(const ChunkedList *self) {
 static uint8_t *nodeAlloc(const ChunkedList *self, uint32_t depth) {
     uint32_t radix = (*self).radices[depth];
     if (depth == (*self).levels - 1u) {
-        size_t bytes = leafLinkOffset(self) + (size_t)VEX_CHUNKED_LINK_BYTES;
+        size_t Bytes = leafLinkOffset(self) + (size_t)VEX_CHUNKED_LINK_BYTES;
         uint64_t chunkType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*self).collection.elementClass);
-        uint8_t *leaf = (uint8_t*) Memory_alloc(chunkType, bytes);
+        uint8_t *leaf = (uint8_t*) Memory_alloc(chunkType, Bytes);
         if (leaf)
-            memset(leaf, 0, bytes);
+            memset(leaf, 0, Bytes);
         return leaf;
     }
-    size_t bytes = (size_t)radix * sizeof(_Atomic(uint8_t*));
-    uint8_t *node = (uint8_t*) Memory_alloc(TYPE_CHUNKED_LIST, bytes);
+    size_t Bytes = (size_t)radix * sizeof(_Atomic(uint8_t*));
+    uint8_t *node = (uint8_t*) Memory_alloc(TYPE_CHUNKED_LIST, Bytes);
     if (node)
-        memset(node, 0, bytes);
+        memset(node, 0, Bytes);
     return node;
 }
 
@@ -270,8 +270,8 @@ static bool dirGrow(ChunkedList *self) {
     if (oldCap > (UINT32_MAX / 2u))
         return false;
     uint32_t newCap = oldCap == 0u ? VEX_CHUNKED_DIR_INIT : oldCap * 2u;
-    size_t bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(_Atomic(uint8_t*));
-    ChunkDir *next = (ChunkDir*) Memory_alloc(TYPE_CHUNKED_LIST, bytes);
+    size_t Bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(_Atomic(uint8_t*));
+    ChunkDir *next = (ChunkDir*) Memory_alloc(TYPE_CHUNKED_LIST, Bytes);
     if (!next)
         return false;
 

@@ -21,7 +21,7 @@
  * The Array class, ported from struct/Array.java: a typed contiguous buffer
  * under a Collection header. Construction resolves the element stride from
  * the class registry, allocates the header and the data buffer from the
- * Memory arena, and zero-fills the payload. Array_get/set read and write
+ * memory arena, and zero-fills the payload. Array_get/set read and write
  * slots as uint64 through the Collection slot machinery with bounds checks;
  * Array_slot returns a typed pointer for direct access. Free releases the
  * data buffer before the header.
@@ -87,14 +87,14 @@ Array *Array_2(uint32_t elementClass, size_t length) {
     (*c).capacity = (uint32_t)length;
     (*c).head = 0;
 
-    size_t bytes = length * stride;
+    size_t Bytes = length * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(array);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return array;
 }
 

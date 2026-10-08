@@ -15,7 +15,7 @@
  * into an accumulated GestureState for high-precision creative viewports.
  * Exists because raw event deltas are noisy; the engine accumulates
  * scale/rotation with clamping and decays scroll velocity with exponential
- * friction. Memory: caller-owned GestureState value struct, zero allocation,
+ * friction. memory: caller-owned GestureState value struct, zero allocation,
  * zero threads. Lifetime: caller-managed via GestureState_init;
  * processEvent/tick mutate the state in place.
  * ============================================================================

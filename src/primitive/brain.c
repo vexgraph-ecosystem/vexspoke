@@ -13,7 +13,7 @@
  * DEFINITION: Brain
  * ============================================================================
  * Brain primitive (Legacy: primitive/Brain.java): 16-bit bfloat16 payloads
- * backed by a fixed 1024-slot BitPool for singletons and the Memory arena for
+ * backed by a fixed 1024-slot BitPool for singletons and the memory arena for
  * arrays. Provides alloc/free, acquire/release get/set, compare-and-set,
  * type/length introspection, and lossy float-to-bfloat16 conversion with
  * round-to-nearest-even bias. Lives at R2 as a leaf primitive behavior.
@@ -27,7 +27,7 @@
  * ============================================================================
  * Brain primitive (Legacy: primitive/Brain.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of brain payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of brain payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -74,13 +74,13 @@ void *Brain_alloc(void) {
 void *Brain_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(uint16_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(uint16_t);
     // For compound types, elem_size 2 already accounts for stride, but sizeof(uint16_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 2 != sizeof(uint16_t))
-        bytes = count * 2;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BRAIN), bytes);
+        Bytes = count * 2;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BRAIN), Bytes);
 }
 
 void Brain_free(void *ptr) {

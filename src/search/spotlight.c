@@ -84,7 +84,7 @@ static int calculate_score(const char *candidate, const char *query) {
     for (size_t i = 0; i < cl; i++) clower[i] = (char) tolower((unsigned char)candidate[i]);
     clower[cl] = '\0';
 
-    if (strstr(clower, qlower) != NULL) {
+    if (strstr(clower, qlower) != nullptr) {
         return 400 - (int)(clen - qlen);
     }
 

@@ -17,7 +17,7 @@ int Url_defaultPort(const char *scheme);
 int64_t Url_build(const char *scheme, const char *host, int port,
                      const char *path, char *out, size_t cap);
 
-// RFC 4648 base64. _out needs 4*ceil(len/3)+1 bytes. Returns length or -1.
+// RFC 4648 base64. _out needs 4*ceil(len/3)+1 Bytes. Returns length or -1.
 int64_t Url_base64(const uint8_t *in, size_t len, char *out, size_t cap);
 
 // "Basic base64(user:pass)" into _out. Returns length or -1.

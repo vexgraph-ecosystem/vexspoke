@@ -14,7 +14,7 @@
  * ============================================================================
  * IntFloat primitive (Legacy: primitive/IntFloat.java): a 64-bit payload
  * holding an int32/float pair, backed by a fixed 1024-slot BitPool for
- * singletons and the Memory arena for arrays. Provides alloc/free,
+ * singletons and the memory arena for arrays. Provides alloc/free,
  * get/set, compare-and-set, type/length introspection, and
  * alloc-with-values convenience. Lives at R2 as a leaf primitive behavior.
  * ============================================================================
@@ -27,7 +27,7 @@
  * ============================================================================
  * IntFloat primitive (Legacy: primitive/IntFloat.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of int_float payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of int_float payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void *IntFloat_alloc(void) {
 void *IntFloat_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 8 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(int64_t))
-        bytes = count * 8;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT_FLOAT), bytes);
+        Bytes = count * 8;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT_FLOAT), Bytes);
 }
 
 void IntFloat_free(void *ptr) {

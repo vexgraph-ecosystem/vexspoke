@@ -102,8 +102,8 @@ typedef struct TypeParentsRow {
 
 // Growable registration slate (the Dynamic Scalability & Anti-Hardcoding
 // Law): starts empty, doubles exponentially on demand, arena-backed. Rows
-// beyond g_typeTableCount are never scanned, so stale bytes are harmless.
-static TypeParentsRow *g_typeTables = NULL;
+// beyond g_typeTableCount are never scanned, so stale Bytes are harmless.
+static TypeParentsRow *g_typeTables = nullptr;
 static size_t g_typeTableCount = 0;
 static size_t g_typeTableCap = 0;
 
@@ -116,7 +116,7 @@ static bool growSlate(size_t needed) {
     TypeParentsRow *nb = (TypeParentsRow*) Memory_alloc(
         TYPE_INT_POINTER, newCap * sizeof(TypeParentsRow));
     if (nb == nullptr) return false;
-    if (g_typeTables != NULL && g_typeTableCap > 0)
+    if (g_typeTables != nullptr && g_typeTableCap > 0)
         memcpy(nb, g_typeTables, g_typeTableCap * sizeof(TypeParentsRow));
     g_typeTables = nb;
     g_typeTableCap = newCap;
@@ -132,6 +132,30 @@ static const TypeParentsRow *findTable(uint64_t proj) {
     return nullptr;
 }
 
+// A parent table must be acyclic. Each class has exactly one parent, so a loop
+// is a walk that never reaches a root (parent 0, a self reference, or a class at
+// or past `count`). Such a table would make Type_isA spin forever; reject it
+// before it is stored, leaving any prior registration untouched.
+static bool parentsAreAcyclic(const uint32_t *parents, uint32_t count) {
+    if (parents == nullptr || count == 0u)
+        return true;
+    for (uint32_t start = 1u; start < count; ++start) {
+        uint32_t current = start;
+        bool rooted = false;
+        for (uint32_t hops = 0u; hops < count; ++hops) {
+            uint32_t parent = parents[current];
+            if (parent == 0u || parent == current || parent >= count) {
+                rooted = true;
+                break;                              // root reached
+            }
+            current = parent;
+        }
+        if (!rooted)
+            return false;                           // looped without a root
+    }
+    return true;
+}
+
 bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count) {
     if (proj == 0u)
         return false;
@@ -140,6 +164,8 @@ bool Type_registerParents(uint64_t proj, const uint32_t *parents, uint32_t count
     if (proj == PROJ_VEXSPOKE)
         return false;
     if (parents == nullptr && count != 0u)
+        return false;
+    if (!parentsAreAcyclic(parents, count))
         return false;
     for (size_t i = 0; i < g_typeTableCount; ++i) {
         TypeParentsRow *row = &g_typeTables[i];
@@ -188,6 +214,8 @@ uint64_t Type_arch(uint64_t classId) {
         return ARCH_DARLING;
     if (proj == PROJ_API_HAVEN)
         return ARCH_APIHAVEN;
+    if (proj == PROJ_DARKBASE)
+        return ARCH_DARKBASE;
     // Bare ids carry no project byte: with per-project numbering they can
     // only mean vexspoke's own class space (see oop/type.h). Cross-project
     // code must pass full TYPE_*_SINGLETON ids.
@@ -198,11 +226,20 @@ int Type_isA(uint64_t classId, uint64_t ancestorId) {
     uint64_t proj = classId & MASK_PROJECT;
     uint64_t target = ancestorId & MASK_CLASS;
     uint64_t current = classId;
-    while ((current & MASK_CLASS) != target) {
+    // Bound the walk so a malformed or adversarial chain can never spin. A
+    // registered table's longest legal chain is `count` hops, so budget on that
+    // (plus a generous sparse/vexspoke default); a legal chain always finishes.
+    uint32_t budget = 64u;
+    const TypeParentsRow *row = (proj != 0u && proj != PROJ_VEXSPOKE) ? findTable(proj) : nullptr;
+    if (row != nullptr && (*row).count + 1u > budget)
+        budget = (*row).count + 1u;
+    for (uint32_t hops = 0u; hops < budget; ++hops) {
+        if ((current & MASK_CLASS) == target)
+            return 1;
         uint64_t parent = Type_getParentClass(current);
         if ((parent & MASK_CLASS) == (current & MASK_CLASS))
             return 0;                              // root reached, not target
         current = (parent & MASK_CLASS) | proj;    // walk stays in-project
     }
-    return 1;
+    return 0;                                      // bounded walk exhausted
 }

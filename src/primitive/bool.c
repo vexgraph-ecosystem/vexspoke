@@ -13,7 +13,7 @@
  * DEFINITION: Bool
  * ============================================================================
  * Bool primitive (Legacy: primitive/Bool.java): a procedural class over a
- * process-wide BitPool (1-byte elements, 1024 fixed slots) with a Memory
+ * process-wide BitPool (1-byte elements, 1024 fixed slots) with a memory
  * arena fallback for large arrays. Bool_alloc hands out pool slots typed
  * ID_BOOL; Bool_allocArray switches to the arena when contiguity or size
  * demands it, and Bool_free routes to whichever owner holds the pointer.
@@ -29,7 +29,7 @@
  * ============================================================================
  * Bool primitive (Legacy: primitive/Bool.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of bool payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of bool payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -72,13 +72,13 @@ void *Bool_alloc(void) {
 void *Bool_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(bool);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(bool);
     // For compound types, elem_size 1 already accounts for stride, but sizeof(bool) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 1 != sizeof(bool))
-        bytes = count * 1;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BOOL), bytes);
+        Bytes = count * 1;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BOOL), Bytes);
 }
 
 void Bool_free(void *ptr) {

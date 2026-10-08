@@ -8,7 +8,7 @@
 
 // reactive/reactive.h — the one reactive engine.
 //
-// A reactive is ONE atomic word — a scalar (<= 8 bytes) or a pointer to an
+// A reactive is ONE atomic word — a scalar (<= 8 Bytes) or a pointer to an
 // immutable block — plus a shadow of the last drained word, a dirty flag, and
 // four observer lists (onSet / onChanged / onGet / onNullptr). Nothing about it is
 // type-specific, so every typed reactive (reactive_int.h, reactive_string.h, …)
@@ -38,7 +38,7 @@ typedef struct Reactive Reactive;
 typedef void (*ReactiveDeliverFn)(Reactive *self);
 
 // The value stringifier: formats the raw word as text FOR ITS TYPE. Bound by each
-// typed reactive (int -> "%d", float -> "%g", string -> the bytes, …) so a
+// typed reactive (int -> "%d", float -> "%g", string -> the Bytes, …) so a
 // type-erased consumer (a Label's [] slot) can render any reactive as text — a
 // valueOf() in the reactive section.
 typedef void (*ReactiveValueFn)(uintptr_t word, char *out, size_t cap);

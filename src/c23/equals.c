@@ -14,7 +14,7 @@
  * ============================================================================
  * Relational equality: the C answer to Java `.equals()`. Identity first, then
  * the block identity header (type plus length must match), then the payload
- * bytes compared directly. Foreign pointers prove identity only. The header
+ * Bytes compared directly. Foreign pointers prove identity only. The header
  * check keeps the cold path crash-free on mismatched or foreign blocks that
  * happen to collide on content.
  * ============================================================================
@@ -25,9 +25,9 @@
  * ============================================================================
  * MODULE: Equals (c23/equals.c)
  * ============================================================================
- * relational equality: identity, then block header, then payload bytes.
+ * relational equality: identity, then block header, then payload Bytes.
  *
- * STRUCT FIELDS: none — procedural (operates on generic Memory blocks)
+ * STRUCT FIELDS: none — procedural (operates on generic memory blocks)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------

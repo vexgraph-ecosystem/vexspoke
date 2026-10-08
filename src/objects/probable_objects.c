@@ -70,15 +70,15 @@ static const size_t SLOT_SIZE = 16;
 
 ProbableObjects *ProbableObjects_1(size_t capacity) {
     // The allocator records payload lengths in 32 bits, as does this pool's
-    // capacity. Reject before computing bytes or narrowing the capacity.
+    // capacity. Reject before computing Bytes or narrowing the capacity.
     if (capacity > (UINT32_MAX - sizeof(ProbableObjects)) / SLOT_SIZE) {
         THROW("probable objects capacity is not representable");
         return nullptr;
     }
-    size_t bytes = sizeof(ProbableObjects) + capacity * SLOT_SIZE;
-    ProbableObjects *po = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS, bytes);
+    size_t Bytes = sizeof(ProbableObjects) + capacity * SLOT_SIZE;
+    ProbableObjects *po = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS, Bytes);
     if (!po) return nullptr;
-    memset(po, 0, bytes);
+    memset(po, 0, Bytes);
     (*po).capacity = (uint32_t)capacity;
     return po;
 }
@@ -96,15 +96,15 @@ ProbableObjects *ProbableObjects_2(const ProbableObjects *init, size_t count) {
         THROW("probable objects array size is not representable");
         return nullptr;
     }
-    size_t bytes = sizeof(ProbableObjects) * count;
+    size_t Bytes = sizeof(ProbableObjects) * count;
     if (init && (*init).capacity)
-        bytes += (size_t) (*init).capacity * SLOT_SIZE;
-    ProbableObjects *p = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS_ARRAY, bytes);
+        Bytes += (size_t) (*init).capacity * SLOT_SIZE;
+    ProbableObjects *p = (ProbableObjects*) Memory_alloc(TYPE_PROBABLE_OBJECTS_ARRAY, Bytes);
     if (!p) return nullptr;
     if (init && (*init).capacity)
-        memcpy(p, init, bytes);
+        memcpy(p, init, Bytes);
     else
-        memset(p, 0, bytes);
+        memset(p, 0, Bytes);
     return p;
 }
 void ProbableObjects_free(ProbableObjects *po) {

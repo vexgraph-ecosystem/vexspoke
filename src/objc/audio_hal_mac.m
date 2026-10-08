@@ -71,8 +71,8 @@ AudioHalConfig AudioHalConfig_default(void) {
     cfg.sample_rate = 48000.0;
     cfg.channels = 2;
     cfg.buffer_frames = 256;
-    cfg.callback = NULL;
-    cfg.user_data = NULL;
+    cfg.callback = nullptr;
+    cfg.user_data = nullptr;
     return cfg;
 }
 
@@ -99,8 +99,8 @@ static OSStatus audio_hal_render_proc(
     if ((*hal).callback) {
         (*hal).callback(out_buf, (uint32_t) inNumberFrames, channels, (*hal).user_data);
     } else {
-        size_t bytes = (size_t) inNumberFrames * channels * sizeof(float);
-        memset(out_buf, 0, bytes);
+        size_t Bytes = (size_t) inNumberFrames * channels * sizeof(float);
+        memset(out_buf, 0, Bytes);
     }
 
     return noErr;
@@ -110,7 +110,7 @@ bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
     if (!hal_out) {
         return false;
     }
-    *hal_out = NULL;
+    *hal_out = nullptr;
 
     AudioHalConfig cfg = config ? (*config) : AudioHalConfig_default();
     if (cfg.channels == 0 || cfg.sample_rate <= 0.0 || cfg.buffer_frames == 0) {
@@ -124,12 +124,12 @@ bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
-    AudioComponent comp = AudioComponentFindNext(NULL, &desc);
+    AudioComponent comp = AudioComponentFindNext(nullptr, &desc);
     if (!comp) {
         return false;
     }
 
-    AudioComponentInstance au = NULL;
+    AudioComponentInstance au = nullptr;
     OSStatus err = AudioComponentInstanceNew(comp, &au);
     if (err != noErr || !au) {
         return false;
@@ -244,7 +244,7 @@ void AudioHal_destroy(AudioHal *hal) {
     if ((*hal).audio_unit) {
         AudioUnitUninitialize((*hal).audio_unit);
         AudioComponentInstanceDispose((*hal).audio_unit);
-        (*hal).audio_unit = NULL;
+        (*hal).audio_unit = nullptr;
     }
     free(hal);
 }

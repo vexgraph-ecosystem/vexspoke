@@ -16,7 +16,7 @@
  * Double-ended queue over a circular buffer, ported from struct/Deque.java.
  * Logical index i maps to physical (head + i) % capacity; addFirst/addLast
  * and removeFirst/removeLast touch both ends in O(1), and the buffer grows
- * by DEFAULT_CAPACITY chunks through the Memory arena when full. The
+ * by DEFAULT_CAPACITY chunks through the memory arena when full. The
  * Collection base record (typeId, activeCount, elementClass, stride,
  * capacity, head, data) is embedded at offset zero so asCollection casts are
  * layout-safe. All storage is arena-backed; the deque never allocates in
@@ -92,14 +92,14 @@ static Deque *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * stride;
+    size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(deque);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return deque;
 }
 
@@ -107,9 +107,9 @@ static int ensureCapacity(Collection *c) {
     if ((*c).activeCount < (*c).capacity)
         return 1;
     size_t newCap = (*c).capacity * 2;
-    size_t bytes = newCap * (*c).stride;
+    size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
-    uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);
+    uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!next)
         return 0;
 

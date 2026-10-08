@@ -16,8 +16,8 @@
  * getter/setter callbacks and opaque userdata, so a value can be computed on
  * first access and written back through the setter. Exists because the
  * relational object model needs computed properties that behave like plain
- * fields. Memory: arena-allocated via Memory_alloc with the PASSIVE type id;
- * Passive_2 builds arrays of count copies. Lifetime: Memory arena;
+ * fields. memory: arena-allocated via Memory_alloc with the PASSIVE type id;
+ * Passive_2 builds arrays of count copies. Lifetime: memory arena;
  * Passive_free returns the block.
  * ============================================================================
  */

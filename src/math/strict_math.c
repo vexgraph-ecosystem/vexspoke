@@ -15,7 +15,7 @@
  * round, clamp, lerp, radians/degrees) with guaranteed bit-level conformance
  * for physics, trajectory integration, and orbital mechanics. Exists because
  * FastMath's approximations are unacceptable where error bounds must be
- * exact. Memory: zero state, zero allocation; pure functions over scalar
+ * exact. memory: zero state, zero allocation; pure functions over scalar
  * float/double values. Lifetime: stateless; the D-suffixed twins cover
  * double precision for celestial/large-world coordinates.
  * ============================================================================

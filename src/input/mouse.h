@@ -26,7 +26,7 @@
 // Button-event wire format (identical to legacy):
 //   [63:18] micros since engine start | [17:14] modifiers
 //   [13: 2] button | [1:0] action (0 up | 1 down | 2 repeat)
-// Motion events use the legacy marker bytes in bits [15:8]:
+// Motion events use the legacy marker Bytes in bits [15:8]:
 //   move: 255/5, delta: 255/9, zoom: 255/8, scroll: 254/6 — coords/float in
 //   bits [47:16]; drag: real button in [15:8] with action 7.
 

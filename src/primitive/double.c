@@ -15,10 +15,10 @@
  * Double primitive (Legacy: primitive/Double.java): a 1024-slot BitPool of
  * 8-byte payloads plus arena-backed arrays for larger allocations. Exists
  * because the relational type system needs typed double blocks with
- * lock-free alloc/free and CAS. Memory: single blocks come from the fixed
- * BitPool; arrays go through the Memory arena with FORM_ARRAY type ids.
+ * lock-free alloc/free and CAS. memory: single blocks come from the fixed
+ * BitPool; arrays go through the memory arena with FORM_ARRAY type ids.
  * Lifetime: the Double_init/Double_shutdown pair; Double_free routes to
- * BitPool or Memory by containment.
+ * BitPool or memory by containment.
  * ============================================================================
  */
 
@@ -29,7 +29,7 @@
  * ============================================================================
  * Double primitive (Legacy: primitive/Double.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of double payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of double payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -72,13 +72,13 @@ void *Double_alloc(void) {
 void *Double_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(double);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(double);
     // For compound types, elem_size 8 already accounts for stride, but sizeof(double) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(double))
-        bytes = count * 8;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_DOUBLE), bytes);
+        Bytes = count * 8;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_DOUBLE), Bytes);
 }
 
 void Double_free(void *ptr) {

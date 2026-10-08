@@ -11,7 +11,7 @@
 // struct/list.h — the List class, ported from struct/List.java.
 //
 // Dynamic stride-based list. Elements live in a contiguous buffer of
-// stride(element_class) bytes each; the buffer grows by List grow chunks when
+// stride(element_class) Bytes each; the buffer grows by List grow chunks when
 // full. Because the embedded Collection is the first member, a List pointer is
 // also a Collection pointer — Collection_* accessors work on it directly.
 
@@ -44,7 +44,7 @@ uint8_t *List_slot(List *list, size_t index);
 // Remove the element at index, shifting the tail left.
 void List_remove(List *list, size_t index);
 
-// Element-wise equality (stride + bytes must match).
+// Element-wise equality (stride + Bytes must match).
 bool List_compare(List *a, List *b);
 
 bool List_isEmpty(List *list);

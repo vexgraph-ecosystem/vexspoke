@@ -12,7 +12,7 @@
  * Class byte-width metadata utility (Legacy: oop/Stride.java): answers the
  * stride of any class id by a static switch over the built-in class registry.
  * Exists because containers (Queue, Collection, arrays) must compute element
- * strides from class ids without per-instance metadata. Memory: zero state,
+ * strides from class ids without per-instance metadata. memory: zero state,
  * zero allocation; pure lookup. Lifetime: stateless.
  * ============================================================================
  */

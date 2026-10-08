@@ -17,7 +17,7 @@
  * byte/row-col span, enabling pre-order, post-order, and span-based queries
  * without pointer chasing. Exists because language grammars (R3) and editors
  * (R4/R5) need a stable, allocation-friendly syntax tree that hot-reloadable
- * modules can build and walk. Memory: the node array doubles exponentially
+ * modules can build and walk. memory: the node array doubles exponentially
  * (the Dynamic Scalability & Anti-Hardcoding Law); the root is a signed index
  * (-1 when empty). Lifetime: the TreeSitTree_init/TreeSitTree_destroy pair;
  * symbol names are borrowed, never owned.
@@ -77,7 +77,7 @@ void TreeSitTree_destroy(TreeSitTree *tree) {
     }
     if ((*tree).nodes) {
         free((*tree).nodes);
-        (*tree).nodes = NULL;
+        (*tree).nodes = nullptr;
     }
     (*tree).node_count = 0;
     (*tree).node_capacity = 0;
@@ -117,7 +117,7 @@ int32_t TreeSitTree_add_node(
     (*node).next_sibling = -1;
     (*node).prev_sibling = -1;
     (*node).child_count = 0;
-    (*node).payload = NULL;
+    (*node).payload = nullptr;
 
     if (parent_idx < 0) {
         if ((*tree).root < 0) {

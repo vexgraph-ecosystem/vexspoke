@@ -15,7 +15,7 @@
  * microsecond timestamp. The fixed layout keeps events cache-friendly and
  * trivially copyable across thread boundaries — the event pump hands whole
  * packets to consumers with no per-type allocation. Factory constructors
- * zero the packet first so unused union members never leak stale bytes.
+ * zero the packet first so unused union members never leak stale Bytes.
  * ============================================================================
  */
 

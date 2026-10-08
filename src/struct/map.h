@@ -11,7 +11,7 @@
 
 // struct/map.h — the Map class, ported from struct/Map.java.
 //
-// Open-addressing hash map. Each slot is 32 bytes: key(8) + val(8) + hash(8) +
+// Open-addressing hash map. Each slot is 32 Bytes: key(8) + val(8) + hash(8) +
 // state(8); state is 0=empty, 1=occupied, 2=deleted. The embedded Collection
 // stores key_class in element_class and val_class in stride. Reference keys
 // (strings, collections, structs) are hashed/compared via their block headers.

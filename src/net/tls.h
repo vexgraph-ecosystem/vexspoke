@@ -20,10 +20,10 @@ typedef struct TlsConn {
 // Returns false when scheme is unsupported or handshake fails.
 bool Tls_connect(const char *host, int port, TlsConn **connOut);
 
-// Send bytes over an established TLS connection.
+// Send Bytes over an established TLS connection.
 bool Tls_send(TlsConn *conn, const char *buf, size_t len);
 
-// Receive up to cap bytes. gotOut receives the count.
+// Receive up to cap Bytes. gotOut receives the count.
 bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut);
 
 // Close and release. Safe with nullptr.

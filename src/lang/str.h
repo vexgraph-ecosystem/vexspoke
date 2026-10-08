@@ -16,7 +16,7 @@
 typedef struct Str {
     char  *dest;       // borrowed destination buffer
     size_t cap;        // total capacity (including the terminator)
-    size_t len;        // bytes written so far (excluding the terminator)
+    size_t len;        // Bytes written so far (excluding the terminator)
     bool   truncated;  // a write was cut
 } Str;
 

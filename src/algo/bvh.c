@@ -1,9 +1,7 @@
 #include "algo/bvh.h"
 
 #include <float.h>
-#include <math.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "annotation/definition.h"
 #include "annotation/overview.h"
@@ -63,7 +61,7 @@ static inline float fmaxf_local(float a, float b) {
     return (a > b) ? a : b;
 }
 
-BvhAabb BvhAabb_empty(void) {
+BvhAabb BvhAabb_empty() {
     BvhAabb box;
     box.min_point[0] = FLT_MAX;
     box.min_point[1] = FLT_MAX;
@@ -145,11 +143,11 @@ bool BvhTree_init(uint32_t primitive_count, BvhTree *tree) {
     }
     (*tree).primitive_count = primitive_count;
     (*tree).node_count = 0;
-    (*tree).primitives = NULL;
+    (*tree).primitives = nullptr;
 
     if (primitive_count == 0) {
-        (*tree).nodes = NULL;
-        (*tree).primitive_indices = NULL;
+        (*tree).nodes = nullptr;
+        (*tree).primitive_indices = nullptr;
         (*tree).node_capacity = 0;
         return true;
     }
@@ -160,8 +158,8 @@ bool BvhTree_init(uint32_t primitive_count, BvhTree *tree) {
     if (!(*tree).nodes || !(*tree).primitive_indices) {
         free((*tree).nodes);
         free((*tree).primitive_indices);
-        (*tree).nodes = NULL;
-        (*tree).primitive_indices = NULL;
+        (*tree).nodes = nullptr;
+        (*tree).primitive_indices = nullptr;
         return false;
     }
     (*tree).node_capacity = max_nodes;
@@ -177,16 +175,16 @@ void BvhTree_destroy(BvhTree *tree) {
     }
     if ((*tree).nodes) {
         free((*tree).nodes);
-        (*tree).nodes = NULL;
+        (*tree).nodes = nullptr;
     }
     if ((*tree).primitive_indices) {
         free((*tree).primitive_indices);
-        (*tree).primitive_indices = NULL;
+        (*tree).primitive_indices = nullptr;
     }
     (*tree).node_count = 0;
     (*tree).node_capacity = 0;
     (*tree).primitive_count = 0;
-    (*tree).primitives = NULL;
+    (*tree).primitives = nullptr;
 }
 
 static int32_t bvh_build_recursive(

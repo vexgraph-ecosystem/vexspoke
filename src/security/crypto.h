@@ -8,7 +8,7 @@
 // security/crypto.h — Zero-Allocation Cryptographic & Hashing Engine.
 //
 // Features:
-// 1. SHA-256 (NIST FIPS 180-4): Standard cryptographic digest (32 bytes).
+// 1. SHA-256 (NIST FIPS 180-4): Standard cryptographic digest (32 Bytes).
 // 2. Relational Fast Hash: 64-bit and 32-bit non-cryptographic symbol hashing.
 // 3. Constant-Time Verification: Side-channel-safe equality check.
 // 4. PRNG Engine: XorShift128+ pseudo-random byte and integer generator.
@@ -63,7 +63,7 @@ uint64_t Crypto_randomU64(void);
 void     Crypto_randomBytes(void *dest, size_t len);
 
 // Hex helpers (Dest-last order)
-void   Crypto_toHex(const uint8_t *bytes, size_t len, char *outHex);
+void   Crypto_toHex(const uint8_t *Bytes, size_t len, char *outHex);
 size_t Crypto_fromHex(const char *hex, uint8_t *outBytes, size_t maxBytes);
 
 #endif

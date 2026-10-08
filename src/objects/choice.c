@@ -72,8 +72,8 @@ typedef struct Choice {
 Choice *Choice_3(const uint64_t *objectPtrs, const ChoiceCallback *callbacks, size_t count) {
     if (count == 0) return nullptr;
     uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_CHOICE) | WRAP2_CHOICE;
-    size_t bytes = sizeof(Choice) + count * sizeof(ChoiceSlot);
-    Choice *choice = (Choice*) Memory_alloc(type, bytes);
+    size_t Bytes = sizeof(Choice) + count * sizeof(ChoiceSlot);
+    Choice *choice = (Choice*) Memory_alloc(type, Bytes);
     if (!choice)
         return nullptr;
     (*choice).count = count;

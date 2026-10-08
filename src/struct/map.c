@@ -18,7 +18,7 @@
  * Capacity rounds up to a power of two and rehashes at a 0.75 load factor,
  * doubling the slot array; deleted slots are tombstones reused by later
  * inserts. Reference-class keys (strings and lists) hash and compare by
- * content through the Memory type/length introspection; scalar keys use a
+ * content through the memory type/length introspection; scalar keys use a
  * murmur3 mix. Map_keys materializes the live keys as an Array.
  * ============================================================================
  */
@@ -132,11 +132,11 @@ static uint64_t slotState(const uint8_t *slot) {
 static void rehash(Collection *c, size_t newCap) {
     size_t oldCap = (*c).capacity;
     uint8_t *oldData = (*c).data;
-    size_t bytes = newCap * SLOT_SIZE;
+    size_t Bytes = newCap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
-    uint8_t *newData = (uint8_t*) Memory_alloc(bufType, bytes);
+    uint8_t *newData = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!newData) return;
-    memset(newData, 0, bytes);
+    memset(newData, 0, Bytes);
 
     size_t mask = newCap - 1;
     for (size_t i = 0; i < oldCap; i++) {
@@ -177,14 +177,14 @@ Map *Map_3(uint32_t keyClass, uint32_t valClass, size_t capacity) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * SLOT_SIZE;
+    size_t Bytes = cap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(map);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return map;
 }
 

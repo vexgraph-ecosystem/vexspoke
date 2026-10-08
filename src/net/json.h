@@ -90,7 +90,7 @@ bool Json_getString(const JsonDoc *doc, JsonRef ref, char *dest, size_t cap);
 
 // --- Writer ---
 // Appends a JSON rendering of value into _out (NUL-terminated). Strings are
-// escaped. Returns bytes written (excluding NUL) or -1 when _out ran _out.
+// escaped. Returns Bytes written (excluding NUL) or -1 when _out ran _out.
 int64_t Json_writeNumber(char *out, size_t cap, double v);
 int64_t Json_writeString(char *out, size_t cap, const char *s);
 int64_t Json_writeBool(char *out, size_t cap, bool v);

@@ -15,7 +15,7 @@
  * transforms (translation, scale, rotation, perspective, orthographic,
  * lookAt) write dest-last into caller-provided matrices; the single float
  * array m[16] keeps the struct trivially copyable and SIMD-friendly.
- * Mat4_0 allocates through the Memory arena with the TYPE_MAT4_SINGLETON
+ * Mat4_0 allocates through the memory arena with the TYPE_MAT4_SINGLETON
  * identity; every other function operates on caller-owned storage with zero
  * allocation. Getters/setters index column-major (m[col * 4 + row]).
  * ============================================================================

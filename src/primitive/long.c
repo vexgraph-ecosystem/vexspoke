@@ -13,7 +13,7 @@
  * DEFINITION: Long
  * ============================================================================
  * Long primitive, ported from primitive/Long.java. An 8-byte int64 payload
- * served from a 1024-slot BitPool for singletons and from the Memory arena
+ * served from a 1024-slot BitPool for singletons and from the memory arena
  * for arrays; Long_free routes to whichever pool owns the pointer.
  * compareAndSet is a lock-free __atomic_compare_exchange on the payload, so
  * the primitive doubles as a small atomic counter. Getters return safe
@@ -28,7 +28,7 @@
  * ============================================================================
  * Long primitive (Legacy: primitive/Long.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of long payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of long payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -71,13 +71,13 @@ void *Long_alloc(void) {
 void *Long_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 8 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(int64_t))
-        bytes = count * 8;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG), bytes);
+        Bytes = count * 8;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG), Bytes);
 }
 
 void Long_free(void *ptr) {

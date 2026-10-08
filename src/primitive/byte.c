@@ -13,7 +13,7 @@
  * DEFINITION: Byte
  * ============================================================================
  * Byte primitive (Legacy: primitive/Byte.java). Singleton 1-byte payloads come
- * from a fixed 1024-slot BitPool; arrays fall back to the Memory arena because
+ * from a fixed 1024-slot BitPool; arrays fall back to the memory arena because
  * the pool is not sized for large contiguous blocks. Byte_free routes to the
  * owning allocator via BitPool_contains, and Byte_compareAndSet provides an
  * atomic CAS on the payload.
@@ -27,7 +27,7 @@
  * ============================================================================
  * Byte primitive (Legacy: primitive/Byte.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of byte payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of byte payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void *Byte_alloc(void) {
 void *Byte_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int8_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int8_t);
     // For compound types, elem_size 1 already accounts for stride, but sizeof(int8_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 1 != sizeof(int8_t))
-        bytes = count * 1;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BYTE), bytes);
+        Bytes = count * 1;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_BYTE), Bytes);
 }
 
 void Byte_free(void *ptr) {

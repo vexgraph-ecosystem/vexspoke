@@ -10,7 +10,7 @@
 //   not a log file: <path>        — or —
 //   log: <path>
 //     records: <n>
-//     bytes: <total> (<payload> payload)
+//     Bytes: <total> (<payload> payload)
 void LogCommands_stat(const char *path);
 
 // Print formatted records to stdout, oldest-first (newest last).

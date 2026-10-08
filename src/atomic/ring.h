@@ -17,7 +17,7 @@ typedef struct RingBuffer {
     SpinLock lock;       // serializes the actual copy in/_out
     size_t capacity;        // power of two
     size_t mask;            // capacity - 1, for slot masking
-    size_t elem_size;       // bytes per element
+    size_t elem_size;       // Bytes per element
     _Atomic size_t head;    // consumer index (monotonic, never wraps back)
     _Atomic size_t tail;    // producer index (monotonic, never wraps back)
     uint8_t *slots;         // capacity * elem_size arena

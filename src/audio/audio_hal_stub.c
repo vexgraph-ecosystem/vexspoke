@@ -69,15 +69,15 @@ AudioHalConfig AudioHalConfig_default(void) {
     cfg.sample_rate = 48000.0;
     cfg.channels = 2;
     cfg.buffer_frames = 256;
-    cfg.callback = NULL;
-    cfg.user_data = NULL;
+    cfg.callback = nullptr;
+    cfg.user_data = nullptr;
     return cfg;
 }
 
 bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
     (void) config;
     if (hal_out) {
-        *hal_out = NULL;
+        *hal_out = nullptr;
     }
     return false;
 }

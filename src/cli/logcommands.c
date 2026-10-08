@@ -57,13 +57,13 @@ void LogCommands_stat(const char *path) {
     }
     int64_t records = LogParser_count(path);
     File *f = File_open(path, FILE_MODE_READ);
-    int64_t bytes = f ? File_size(f) : 0;
+    int64_t Bytes = f ? File_size(f) : 0;
     if (f)
         File_close(f);
-    printf("log: %s\n  records: %lld\n  bytes: %lld (%lld payload)\n",
+    printf("log: %s\n  records: %lld\n  Bytes: %lld (%lld payload)\n",
        path, (long long)records,
-       (long long)bytes,
-       (long long)(bytes - LOGPARSER_HEADER_BYTES)
+       (long long)Bytes,
+       (long long)(Bytes - LOGPARSER_HEADER_BYTES)
     );
 }
 

@@ -13,7 +13,7 @@
  * DEFINITION: Short
  * ============================================================================
  * Short primitive (Legacy: primitive/Short.java). Singleton 2-byte payloads
- * come from a fixed 1024-slot BitPool; arrays fall back to the Memory arena
+ * come from a fixed 1024-slot BitPool; arrays fall back to the memory arena
  * because the pool is not sized for large contiguous blocks. Short_free routes
  * to the owning allocator via BitPool_contains, and Short_compareAndSet
  * provides an atomic CAS on the payload.
@@ -27,7 +27,7 @@
  * ============================================================================
  * Short primitive (Legacy: primitive/Short.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of short payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of short payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void *Short_alloc(void) {
 void *Short_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int16_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int16_t);
     // For compound types, elem_size 2 already accounts for stride, but sizeof(int16_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 2 != sizeof(int16_t))
-        bytes = count * 2;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SHORT), bytes);
+        Bytes = count * 2;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SHORT), Bytes);
 }
 
 void Short_free(void *ptr) {

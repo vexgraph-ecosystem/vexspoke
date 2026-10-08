@@ -85,14 +85,14 @@ static Queue *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * stride;
+    size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(queue);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return queue;
 }
 
@@ -100,9 +100,9 @@ static int ensureCapacity(Collection *c) {
     if ((*c).activeCount < (*c).capacity)
         return 1;
     size_t newCap = (*c).capacity * 2;
-    size_t bytes = newCap * (*c).stride;
+    size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
-    uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);
+    uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!next)
         return 0;
 

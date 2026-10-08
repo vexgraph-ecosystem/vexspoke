@@ -92,7 +92,7 @@ bool ProcessProbe_isRunning(const ProcessProbe *self, const char *procName) {
     if (!self || !procName || (*procName) == '\0')
         return false;
 #if defined(__APPLE__)
-    int maxPids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    int maxPids = proc_listpids(PROC_ALL_PIDS, 0, nullptr, 0);
     if (maxPids <= 0)
         return false;
     if (maxPids > kPidScanCap)
@@ -122,7 +122,7 @@ bool ProcessProbe_isDriverLoaded(const ProcessProbe *self,
     const size_t prefixLen = strlen(prefix);
     struct dirent *entry;
     bool found = false;
-    while ((entry = readdir(dir)) != NULL) {
+    while ((entry = readdir(dir)) != nullptr) {
         if (strncasecmp(entry->d_name, prefix, prefixLen) == 0) {
             found = true;
             break;

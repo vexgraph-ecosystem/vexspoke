@@ -617,7 +617,7 @@ static bool writerAppend(JsonWriter *w, const char *s, size_t n) {
 static bool writerStringBody(JsonWriter *w, const char *s) {
     for (const char *p = s; *p; p++) {
         char c = *p;
-        const char *esc = NULL;
+        const char *esc = nullptr;
         switch (c) {
             case '"': esc = "\\\""; break;
             case '\\': esc = "\\\\"; break;
@@ -645,7 +645,7 @@ void JsonWriter_init(JsonWriter *w, char *out, size_t cap) {
     (*w).out = out;
     (*w).cap = cap;
     (*w).used = 0;
-    (*w).ok = (out != NULL && cap > 0);
+    (*w).ok = (out != nullptr && cap > 0);
     (*w).depth = 0;
     for (int i = 0; i < JSON_MAX_DEPTH; i++)
         (*w).needComma[i] = false;

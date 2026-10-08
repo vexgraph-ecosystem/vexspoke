@@ -53,8 +53,8 @@ static inline char normalize_char(char c, bool caseSensitive) {
 static bool match_like(const char *t, const char *p, bool caseSensitive) {
     const char *text = t;
     const char *pattern = p;
-    const char *last_star = NULL;
-    const char *last_match = NULL;
+    const char *last_star = nullptr;
+    const char *last_match = nullptr;
 
     while (*text != '\0') {
         if (*pattern == '%') {
@@ -64,7 +64,7 @@ static bool match_like(const char *t, const char *p, bool caseSensitive) {
         } else if (*pattern == '_' || normalize_char(*text, caseSensitive) == normalize_char(*pattern, caseSensitive)) {
             text++;
             pattern++;
-        } else if (last_star != NULL) {
+        } else if (last_star != nullptr) {
             pattern = last_star + 1;
             last_match++;
             text = last_match;

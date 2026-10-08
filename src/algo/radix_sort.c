@@ -16,7 +16,7 @@
  * radix). Delivers predictable O(k*N) linear sorting time independent of
  * initial ordering, ideal for Morton spatial hashing, particle depth sorting,
  * and ECS entity batches. Procedural: no own state; temp buffers are drawn
- * from the Memory arena and freed before return, so the caller's arrays are
+ * from the memory arena and freed before return, so the caller's arrays are
  * sorted in place with zero steady-state allocation.
  * ============================================================================
  */

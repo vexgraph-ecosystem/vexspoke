@@ -69,7 +69,7 @@ void DownloadResponse_free(DownloadResponse *res) {
     }
     if ((*res).data) {
         free((*res).data);
-        (*res).data = NULL;
+        (*res).data = nullptr;
     }
     (*res).size = 0;
     (*res).http_status = 0;
@@ -105,10 +105,10 @@ bool Download_to_file(const char *url, const char *output_file, const DownloadOp
     argv[argc++] = "-o";
     argv[argc++] = output_file;
     argv[argc++] = url;
-    argv[argc] = NULL;
+    argv[argc] = nullptr;
 
     pid_t pid = 0;
-    int status = posix_spawnp(&pid, "curl", NULL, NULL, (char *const *) argv, environ);
+    int status = posix_spawnp(&pid, "curl", nullptr, nullptr, (char* const*) argv, environ);
     if (status != 0) {
         return false;
     }
@@ -132,7 +132,7 @@ bool Download_to_memory(const char *url, const DownloadOptions *opts, DownloadRe
 
     (*response_out).exit_code = -1;
     (*response_out).http_status = 0;
-    (*response_out).data = NULL;
+    (*response_out).data = nullptr;
     (*response_out).size = 0;
 
     char temp_path[] = "/tmp/vex_dl_XXXXXX";
@@ -196,7 +196,7 @@ bool Download_fetch_cached(
         return false;
     }
 
-    Cache *cache = NULL;
+    Cache *cache = nullptr;
     if (!Cache_open(subsystem, &cache)) {
         return false;
     }

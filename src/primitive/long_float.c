@@ -14,7 +14,7 @@
  * ============================================================================
  * LongFloat primitive (Legacy: primitive/LongFloat.java): a procedural class
  * over a process-wide BitPool (16-byte elements — an int64 plus a float —
- * 1024 fixed slots) with a Memory arena fallback for large arrays.
+ * 1024 fixed slots) with a memory arena fallback for large arrays.
  * LongFloat_alloc hands out pool slots typed ID_LONG_FLOAT;
  * LongFloat_allocArray switches to the arena when contiguity or size demands
  * it, and LongFloat_free routes to whichever owner holds the pointer.
@@ -30,7 +30,7 @@
  * ============================================================================
  * LongFloat primitive (Legacy: primitive/LongFloat.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of long_float payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of long_float payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -73,13 +73,13 @@ void *LongFloat_alloc(void) {
 void *LongFloat_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 16 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 16 != sizeof(int64_t))
-        bytes = count * 16;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG_FLOAT), bytes);
+        Bytes = count * 16;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_LONG_FLOAT), Bytes);
 }
 
 void LongFloat_free(void *ptr) {

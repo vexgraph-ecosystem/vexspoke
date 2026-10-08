@@ -14,7 +14,7 @@
  * DEFINITION: Vec2
  * ============================================================================
  * 2D spatial vector with horizontal and vertical components, arena-allocated
- * at VEC2_BYTES (8 bytes) with zero steady-state allocation. Provides
+ * at VEC2_BYTES (8 Bytes) with zero steady-state allocation. Provides
  * directional getters/setters (right/left/up/down/x/y), frame-aware Y access,
  * and dest-last arithmetic (add/sub/mul/div, normalize, perpendicular,
  * distance, angle, lerp) per the Dest-Last Law. The union layout aliases

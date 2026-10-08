@@ -17,7 +17,7 @@
  * transforms (translate/inflate/inset) and set operations
  * (intersection/merge) are dest-last; predicates (isEmpty, containsPoint,
  * containsRect, intersects, equals) treat touching edges as contained.
- * Instances are Memory-arena allocated with the ID_RECT type and freed via
+ * Instances are memory-arena allocated with the ID_RECT type and freed via
  * Rectangle_free.
  * ============================================================================
  */

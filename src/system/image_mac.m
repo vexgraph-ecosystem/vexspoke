@@ -27,7 +27,7 @@
  * detect format (PNG, JPEG, etc)
  *
  * STRUCT FIELDS: none — procedural (operates on caller-owned encoded image
- * bytes; returns a malloc'd RGBA8 buffer the caller frees)
+ * Bytes; returns a malloc'd RGBA8 buffer the caller frees)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------

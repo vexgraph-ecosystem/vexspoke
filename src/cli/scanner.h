@@ -6,7 +6,7 @@
 
 // cli/scanner.h — the Scanner class, ported from cli/Scanner.java.
 //
-// Zero-allocation replacement for java.util.Scanner. Reads UTF-8 bytes from
+// Zero-allocation replacement for java.util.Scanner. Reads UTF-8 Bytes from
 // stdin into a fixed stack buffer and returns each line/word as a string
 // block, so the console loop never touches the allocator while typing.
 

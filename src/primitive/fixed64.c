@@ -13,8 +13,8 @@
  * DEFINITION: Fixed64
  * ============================================================================
  * Fixed64 primitive over a global 8-byte-slot BitPool (1024 slots) with
- * Memory-arena fallback for arrays: alloc/free route through BitPool when the
- * pointer is pool-owned, otherwise through Memory. get/set are plain int64
+ * memory-arena fallback for arrays: alloc/free route through BitPool when the
+ * pointer is pool-owned, otherwise through memory. get/set are plain int64
  * loads/stores; compareAndSet is a seq-cst __atomic_compare_exchange_n so
  * the primitive doubles as a lock-free counter. type/length dispatch through
  * the owning allocator so callers never pierce the pool/arena split.
@@ -28,7 +28,7 @@
  * ============================================================================
  * Fixed64 primitive (Legacy: primitive/Fixed64.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of fixed64 payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of fixed64 payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -71,13 +71,13 @@ void *Fixed64_alloc(void) {
 void *Fixed64_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 8 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 8 != sizeof(int64_t))
-        bytes = count * 8;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FIXED64), bytes);
+        Bytes = count * 8;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_FIXED64), Bytes);
 }
 
 void Fixed64_free(void *ptr) {

@@ -17,7 +17,7 @@
  * of string blocks that defers printf output until Console_drain, so hot
  * paths never block on the terminal. Exists because R1 hosts and R5 apps need
  * a bounded, allocation-light log path that can be drained on the frame loop.
- * Memory: one static 1024-slot RingBuffer of uint8_t* string handles,
+ * memory: one static 1024-slot RingBuffer of uint8_t* string handles,
  * initialized once by Console_init. Lifetime: process-scoped;
  * Console_shutdown frees the queue. Adjacent: R2 string primitives feed it;
  * R1 Kernel and R5 apps consume it.

@@ -7,7 +7,7 @@
 //
 // Java `.equals()` compares content; C `==` compares addresses. These close the
 // gap the relational way: identity first, then the block identity header (type +
-// length must match), then the payload bytes compared directly. Foreign
+// length must match), then the payload Bytes compared directly. Foreign
 // (non-allocator) pointers can only prove identity.
 
 bool isEqual(const void *a, const void *b);

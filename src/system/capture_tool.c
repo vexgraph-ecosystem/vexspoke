@@ -104,18 +104,18 @@ uint32_t CaptureTool_count(const CaptureTool *self) {
 
 const CaptureSlot *CaptureTool_at(const CaptureTool *self, uint32_t i) {
     if (!self || i >= kCaptureToolCount)
-        return NULL;
+        return nullptr;
     return &kCaptureTools[i];
 }
 
 const CaptureSlot *CaptureTool_get(const CaptureTool *self, const char *slug) {
     if (!self || !slug || (*slug) == '\0')
-        return NULL;
+        return nullptr;
     for (uint32_t i = 0; i < kCaptureToolCount; i++) {
         if (kCaptureTools[i].slug && strcmp(kCaptureTools[i].slug, slug) == 0)
             return &kCaptureTools[i];
     }
-    return NULL;
+    return nullptr;
 }
 
 bool CaptureTool_isInstalled(const CaptureTool *self, const CaptureSlot *slot) {
@@ -170,22 +170,22 @@ uint32_t CaptureTool_countRunningAll(const CaptureTool *self) {
 
 const char *CaptureTool_getSlug(const CaptureTool *self, const CaptureSlot *slot) {
     (void)self;
-    return slot ? (*slot).slug : NULL;
+    return slot ? (*slot).slug : nullptr;
 }
 
 const char *CaptureTool_getDisplayName(const CaptureTool *self, const CaptureSlot *slot) {
     (void)self;
-    return slot ? (*slot).displayName : NULL;
+    return slot ? (*slot).displayName : nullptr;
 }
 
 const char *CaptureTool_getProcKey(const CaptureTool *self, const CaptureSlot *slot) {
     (void)self;
-    return slot ? (*slot).procKey : NULL;
+    return slot ? (*slot).procKey : nullptr;
 }
 
 const char *CaptureTool_getDriverDir(const CaptureTool *self, const CaptureSlot *slot) {
     (void)self;
-    return slot ? (*slot).driverDir : NULL;
+    return slot ? (*slot).driverDir : nullptr;
 }
 
 CaptureKind CaptureTool_getKind(const CaptureTool *self, const CaptureSlot *slot) {
@@ -196,5 +196,5 @@ CaptureKind CaptureTool_getKind(const CaptureTool *self, const CaptureSlot *slot
 
 const char *CaptureTool_getNote(const CaptureTool *self, const CaptureSlot *slot) {
     (void)self;
-    return slot ? (*slot).note : NULL;
+    return slot ? (*slot).note : nullptr;
 }

@@ -31,7 +31,7 @@
  * ----------------------------------------------------------------------------
  *   CryptoSha256 {
  *     uint32_t state[8];  // SHA-256 working state (8 x 32-bit words)
- *     uint64_t count;     // total bytes fed (bit length for the final block)
+ *     uint64_t count;     // total Bytes fed (bit length for the final block)
  *     uint8_t buffer[64]; // pending input block
  *   }
  *   CryptoRng {
@@ -55,7 +55,7 @@
  *   - Crypto_randomSeed(seed)
  *   - Crypto_randomU64(void)
  *   - Crypto_randomBytes(dest, len)
- *   - Crypto_toHex(bytes, len, outHex)
+ *   - Crypto_toHex(Bytes, len, outHex)
  *   - Crypto_fromHex(hex, outBytes, maxBytes)
  *
  * Private Core Functions: (.c static)
@@ -342,15 +342,15 @@ void Crypto_randomBytes(void *dest, size_t len) {
 
 static const char HEX_CHARS[] = "0123456789abcdef";
 
-void Crypto_toHex(const uint8_t *bytes, size_t len, char *outHex) {
+void Crypto_toHex(const uint8_t *Bytes, size_t len, char *outHex) {
     if (outHex == nullptr) return;
-    if (bytes == nullptr || len == 0) {
+    if (Bytes == nullptr || len == 0) {
         outHex[0] = '\0';
         return;
     }
     for (size_t i = 0; i < len; i++) {
-        outHex[i * 2]     = HEX_CHARS[(bytes[i] >> 4) & 0x0F];
-        outHex[i * 2 + 1] = HEX_CHARS[bytes[i] & 0x0F];
+        outHex[i * 2]     = HEX_CHARS[(Bytes[i] >> 4) & 0x0F];
+        outHex[i * 2 + 1] = HEX_CHARS[Bytes[i] & 0x0F];
     }
     outHex[len * 2] = '\0';
 }

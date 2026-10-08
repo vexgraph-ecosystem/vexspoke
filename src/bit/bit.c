@@ -29,7 +29,7 @@
  * of same-sized slots with an ABA-tagged free list, giving zero-allocation
  * steady-state alloc/free for the primitive type system. Exists because
  * primitives (Double, IntFloat, ...) need thread-safe slot recycling without
- * malloc on hot paths. Memory: one calloc'd arena, never grows; each slot is
+ * malloc on hot paths. memory: one calloc'd arena, never grows; each slot is
  * a BitSlot header (type_id, length, tagged next) plus payload. Lifetime:
  * the BitPool_init/BitPool_shutdown pair; the 16-bit tag bump defeats the ABA
  * problem on concurrent push/pop.
@@ -51,7 +51,7 @@
  *     _Atomic uint64_t next; // ABA-tagged freelist next (lower 48 bits ptr, upper 16 tag)
  *   }
  *   BitPool {
- *     size_t element_size; // bytes per payload slot
+ *     size_t element_size; // Bytes per payload slot
  *     size_t capacity; // slot count
  *     uint8_t *arena; // one calloc'd arena, never grows
  *     _Atomic uint64_t free_head; // tagged head of the free list

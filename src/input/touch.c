@@ -1,7 +1,7 @@
 // input/touch.c — trackpad touch state + event stream (Legacy: input/Touch.java port).
 //
-// Ten fixed touch slots, each 32 bytes of state (press/release/hold/taps/action)
-// plus 32 bytes of geometry (x/y/pressure). The backend resolves OS touch
+// Ten fixed touch slots, each 32 Bytes of state (press/release/hold/taps/action)
+// plus 32 Bytes of geometry (x/y/pressure). The backend resolves OS touch
 // identities into slots before pushing; dispatch reconstructs timestamps and
 // fans _out to listeners on the game thread. Listener registries grow
 // exponentially (the Dynamic Scalability & Anti-Hardcoding Law): window scope
@@ -26,11 +26,11 @@
  * DEFINITION: Touch
  * ============================================================================
  * Trackpad touch state + event stream (Legacy: input/Touch.java): ten fixed
- * 32-byte touch slots (press/release/hold/taps/action) plus 32 bytes of
+ * 32-byte touch slots (press/release/hold/taps/action) plus 32 Bytes of
  * geometry (x/y/pressure) per contact, with a listener registry keyed by
  * opaque OS window id. Exists because the backend must resolve OS touch
  * identities into stable slots before dispatch, and dispatch must fan out to
- * listeners on the game thread without allocation. Memory: slot arrays are
+ * listeners on the game thread without allocation. memory: slot arrays are
  * fixed-size; listener registries are arena-backed and double exponentially
  * (the Dynamic Scalability & Anti-Hardcoding Law). Lifetime:
  * Touch_init/Touch_shutdown; window rows attach/detach per window lifecycle.
@@ -113,7 +113,7 @@ typedef struct {
     uint32_t pad;
 } InputEvent;
 
-_Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 bytes");
+_Static_assert(sizeof(InputEvent) == 16, "input event must stay 16 Bytes");
 
 typedef struct {
     uint64_t pressTime;
@@ -123,7 +123,7 @@ typedef struct {
     int32_t action;
 } TouchSlot;
 
-_Static_assert(sizeof(TouchSlot) == 32, "touch slot must stay 32 bytes");
+_Static_assert(sizeof(TouchSlot) == 32, "touch slot must stay 32 Bytes");
 
 typedef struct {
     double x;
@@ -132,7 +132,7 @@ typedef struct {
     uint64_t pad;
 } TouchPos;
 
-_Static_assert(sizeof(TouchPos) == 32, "touch pos must stay 32 bytes");
+_Static_assert(sizeof(TouchPos) == 32, "touch pos must stay 32 Bytes");
 
 static TouchSlot s_slots[TOUCH_MAX];
 ;;INTENTION("fixed TOUCH_MAX: the trackpad touch domain is a hardware bound (contact identities map into slots), not a workload ceiling")
@@ -152,11 +152,11 @@ typedef struct WinRow {
     int cap;
 } WinRow;
 
-static const TouchHandler **s_listeners = NULL;  // global listener segment
+static const TouchHandler **s_listeners = nullptr;  // global listener segment
 static int s_listenerCount = 0;
 static int s_listenerCap = 0;
 
-static WinRow *s_rows = NULL;  // growable window-row table
+static WinRow *s_rows = nullptr;  // growable window-row table
 static int s_rowCount = 0;
 static int s_rowCap = 0;
 
@@ -171,8 +171,8 @@ static bool growSegment(const TouchHandler ***items, int *cap, int needed) {
     while (newCap < needed) newCap *= 2;
     const TouchHandler **nb = (const TouchHandler**) Memory_alloc(
         TYPE_INT_POINTER, (size_t) newCap * sizeof(TouchHandler *));
-    if (nb == NULL) return false;
-    if (*items != NULL && *cap > 0)
+    if (nb == nullptr) return false;
+    if (*items != nullptr && *cap > 0)
         memcpy(nb, *items, (size_t) *cap * sizeof(TouchHandler *));
     *items = nb;
     *cap = newCap;
@@ -186,8 +186,8 @@ static bool growRows(int needed) {
     while (newCap < needed) newCap *= 2;
     WinRow *nb = (WinRow*) Memory_alloc(TYPE_INT_POINTER,
         (size_t) newCap * sizeof(WinRow));
-    if (nb == NULL) return false;
-    if (s_rows != NULL && s_rowCap > 0)
+    if (nb == nullptr) return false;
+    if (s_rows != nullptr && s_rowCap > 0)
         memcpy(nb, s_rows, (size_t) s_rowCap * sizeof(WinRow));
     s_rows = nb;
     s_rowCap = newCap;
@@ -199,7 +199,7 @@ static WinRow *rowFor(uint32_t windowId) {
     for (int i = 0; i < s_rowCount; i++)
         if (s_rows[i].windowId == windowId)
             return &s_rows[i];
-    return NULL;
+    return nullptr;
 }
 
 void Touch_init(void) {
@@ -218,7 +218,7 @@ void Touch_shutdown(void) {
 }
 
 void Touch_addListener(const TouchHandler *listener) {
-    if (listener == NULL) return;
+    if (listener == nullptr) return;
     if (!growSegment(&s_listeners, &s_listenerCap, s_listenerCount + 1)) return;
     s_listeners[s_listenerCount++] = listener;
 }
@@ -234,13 +234,13 @@ bool Touch_removeListener(const TouchHandler *listener) {
 }
 
 void Touch_attachWindow(uint32_t windowId, const TouchHandler *listener) {
-    if (listener == NULL || windowId == 0) return;
+    if (listener == nullptr || windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) {
+    if (row == nullptr) {
         if (!growRows(s_rowCount + 1)) return;
         row = &s_rows[s_rowCount++];
         (*row).windowId = windowId;
-        (*row).items = NULL;
+        (*row).items = nullptr;
         (*row).count = 0;
         (*row).cap = 0;
     }
@@ -249,9 +249,9 @@ void Touch_attachWindow(uint32_t windowId, const TouchHandler *listener) {
 }
 
 bool Touch_detachWindow(uint32_t windowId, const TouchHandler *listener) {
-    if (listener == NULL || windowId == 0) return false;
+    if (listener == nullptr || windowId == 0) return false;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return false;
+    if (row == nullptr) return false;
     for (int i = 0; i < (*row).count; i++) {
         if ((*row).items[i] == listener) {
             (*row).count--;
@@ -265,7 +265,7 @@ bool Touch_detachWindow(uint32_t windowId, const TouchHandler *listener) {
 void Touch_detachWindowAll(uint32_t windowId) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row != NULL)
+    if (row != nullptr)
         (*row).count = 0;
 }
 
@@ -313,7 +313,7 @@ static void deliverTouch(uint32_t windowId, int action, int touchId,
                          double x, double y, double pressure, uint64_t exactNanos) {
     if (windowId == 0) return;
     WinRow *row = rowFor(windowId);
-    if (row == NULL) return;
+    if (row == nullptr) return;
     for (int i = 0; i < (*row).count; i++) {
         const TouchHandler *l = (*row).items[i];
         void *self = (*l).self;

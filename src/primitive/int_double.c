@@ -14,7 +14,7 @@
  * ============================================================================
  * IntDouble primitive (Legacy: primitive/IntDouble.java). 16-byte payload
  * (int32 + double) singletons come from a fixed 1024-slot BitPool; arrays fall
- * back to the Memory arena because the pool is not sized for large contiguous
+ * back to the memory arena because the pool is not sized for large contiguous
  * blocks. IntDouble_free routes to the owning allocator via BitPool_contains,
  * and IntDouble_compareAndSet provides an atomic CAS on the payload.
  * ============================================================================
@@ -27,7 +27,7 @@
  * ============================================================================
  * IntDouble primitive (Legacy: primitive/IntDouble.java).
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of int_double payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of int_double payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
@@ -70,13 +70,13 @@ void *IntDouble_alloc(void) {
 void *IntDouble_allocArray(size_t count) {
     if (count == 0)
         return nullptr;
-    // Use Memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
-    size_t bytes = count * sizeof(int64_t);
+    // Use memory arena for arrays — BitPool is fixed 1024 slots, not for large contiguous
+    size_t Bytes = count * sizeof(int64_t);
     // For compound types, elem_size 16 already accounts for stride, but sizeof(int64_t) is placeholder
     // Use elem_size for true stride where c_type is int64 placeholder
     if (count > 1 && 16 != sizeof(int64_t))
-        bytes = count * 16;
-    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT_DOUBLE), bytes);
+        Bytes = count * 16;
+    return Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_INT_DOUBLE), Bytes);
 }
 
 void IntDouble_free(void *ptr) {

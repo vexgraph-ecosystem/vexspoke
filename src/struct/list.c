@@ -82,9 +82,9 @@ static uint8_t *bufferGrow(Collection *c, size_t needed) {
     size_t newCap = (*c).capacity ? (*c).capacity : DEFAULT_CAPACITY;
     while (newCap < needed)
         newCap *= 2;
-    size_t bytes = newCap * (*c).stride;
+    size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
-    uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);
+    uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!next)
         return nullptr;
     size_t oldBytes = (*c).activeCount * (*c).stride;
@@ -110,14 +110,14 @@ static List *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * stride;
+    size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(list);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return list;
 }
 
@@ -208,8 +208,8 @@ bool List_compare(List *a, List *b) {
         return false;
     if ((*ca).stride != (*cb).stride)
         return false;
-    size_t bytes = (*ca).activeCount * (*ca).stride;
-    return memcmp((*ca).data, (*cb).data, bytes) == 0;
+    size_t Bytes = (*ca).activeCount * (*ca).stride;
+    return memcmp((*ca).data, (*cb).data, Bytes) == 0;
 }
 
 bool List_isEmpty(List *list) {

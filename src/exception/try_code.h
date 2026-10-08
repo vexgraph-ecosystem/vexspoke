@@ -18,7 +18,7 @@ typedef enum TryCode {
     TRY_EMPTY,        // the source held no element
     TRY_NOT_FOUND,    // the named thing is absent
     TRY_IO,           // a file or stream read/write failed
-    TRY_FORMAT,       // bytes were present but malformed
+    TRY_FORMAT,       // Bytes were present but malformed
     TRY_UNSUPPORTED   // the operation is not supported here
 } TryCode;
 

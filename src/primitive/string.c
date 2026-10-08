@@ -13,7 +13,7 @@
  * DEFINITION: String
  * ============================================================================
  * The string class, ported from primitive/string.java: NUL-terminated
- * uint8_t payloads allocated from the Memory arena with a trailing byte
+ * uint8_t payloads allocated from the memory arena with a trailing byte
  * reserved for the terminator. Provides allocate/free, length/type/capacity
  * introspection, copy/equals, and the String_* family of compare, contains,
  * indexOf, substring, and append operations. Appends are dest-last where a
@@ -29,13 +29,13 @@
  * ============================================================================
  * the string class, ported from primitive/string.java.
  *
- * STRUCT FIELDS: none — procedural (operates on BitPool/Memory blocks of string payloads)
+ * STRUCT FIELDS: none — procedural (operates on BitPool/memory blocks of string payloads)
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Core Functions:
  *   - string_allocate(value)
- *   - string_allocateBytes(bytes, len)
+ *   - string_allocateBytes(Bytes, len)
  *   - string_allocateUninitialized(len)
  *   - string_free(ptr)
  *   - string_length(ptr)
@@ -86,14 +86,14 @@ uint8_t *string_allocate(const char *value) {
     return string_allocateBytes((const uint8_t*) value, strlen(value));
 }
 
-uint8_t *string_allocateBytes(const uint8_t *bytes, size_t len) {
-    if (!bytes && len > 0)
+uint8_t *string_allocateBytes(const uint8_t *Bytes, size_t len) {
+    if (!Bytes && len > 0)
         return nullptr;
     uint8_t *ptr = allocate_raw(len);
     if (!ptr)
         return nullptr;
     if (len > 0)
-        memcpy(ptr, bytes, len);
+        memcpy(ptr, Bytes, len);
     ptr[len] = '\0';
     return ptr;
 }

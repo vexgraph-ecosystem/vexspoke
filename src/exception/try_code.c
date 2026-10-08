@@ -68,7 +68,7 @@ const char *TryCode_message(TryCode code) {
         case TRY_EMPTY:       return "source held no element";
         case TRY_NOT_FOUND:   return "named thing is absent";
         case TRY_IO:          return "file or stream operation failed";
-        case TRY_FORMAT:      return "bytes present but malformed";
+        case TRY_FORMAT:      return "Bytes present but malformed";
         case TRY_UNSUPPORTED: return "operation not supported here";
         default:              return "unknown TryCode";
     }

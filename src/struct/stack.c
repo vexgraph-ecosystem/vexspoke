@@ -84,14 +84,14 @@ static Stack *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
 
-    size_t bytes = cap * stride;
+    size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
-    (*c).data = (uint8_t*) Memory_alloc(bufType, bytes);
+    (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
         Memory_free(stack);
         return nullptr;
     }
-    memset((*c).data, 0, bytes);
+    memset((*c).data, 0, Bytes);
     return stack;
 }
 
@@ -116,9 +116,9 @@ void Stack_push(Stack *stack, uint64_t valueOrPointer) {
     Collection *c = asCollection(stack);
     if ((*c).activeCount >= (*c).capacity) {
         size_t newCap = (*c).capacity + DEFAULT_CAPACITY;
-        size_t bytes = newCap * (*c).stride;
+        size_t Bytes = newCap * (*c).stride;
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
-        uint8_t *next = (uint8_t*) Memory_alloc(bufType, bytes);
+        uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
         if (!next)
             return;
         memcpy(next, (*c).data, (*c).activeCount * (*c).stride);

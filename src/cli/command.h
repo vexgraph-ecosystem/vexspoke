@@ -7,7 +7,7 @@
 
 // cli/command.h — the Command class, ported from cli/Command.java.
 //
-// A parsed command is a single Memory block of type TYPE_COMMAND_SINGLETON.
+// A parsed command is a single memory block of type TYPE_COMMAND_SINGLETON.
 // Layout (all offsets relative to the block's payload pointer):
 //
 //   +0   namePtr        (uint8_t *  string block, owned)

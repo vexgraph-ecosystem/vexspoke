@@ -65,7 +65,7 @@
 //     link to the next leaf, so a sequential sweep follows the chain instead of
 //     recomputing the page walk per chunk (see nextChunk).
 //   - chunkBytes is a BYTE budget for the byte-budget form, a page-sized leaf
-//     by default (128 bytes sized one chunk to one Apple Silicon cache line; a
+//     by default (128 Bytes sized one chunk to one Apple Silicon cache line; a
 //     radix-form leaf sizes to one page). A row at or above the leaf budget gets
 //     a leaf to itself.
 //
@@ -80,10 +80,10 @@
 // index access is all that matters.
 
 // Byte budget per chunk for the byte-budget form. 128 sizes one chunk to one
-// Apple Silicon cache line; the arena's alignment guarantee stays 16 bytes.
+// Apple Silicon cache line; the arena's alignment guarantee stays 16 Bytes.
 #define VEX_CHUNKED_BYTES_DEFAULT 128u
 
-// Initial root generation slots (512 bytes, one COW step).
+// Initial root generation slots (512 Bytes, one COW step).
 #define VEX_CHUNKED_DIR_INIT 64u
 
 // Default leaf target for the radix form: one page of rows. The leaf radix is
@@ -96,7 +96,7 @@
 
 // Tail link reserved at the end of every leaf (8-byte aligned): the chunk ->
 // chunk chain a sequential sweep follows without recomputing the page walk.
-// Kept OUT of the row bytes (chunkBytes/getChunkBytes exclude it).
+// Kept OUT of the row Bytes (chunkBytes/getChunkBytes exclude it).
 #define VEX_CHUNKED_LINK_BYTES 8u
 
 // Radix-form shape sentinels. Passed where a fan-out would go, they select a
