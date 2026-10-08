@@ -6,7 +6,7 @@
 // oop/type.h — the TypeRegister, ported from oop/TypeRegister.java.
 //
 // Every allocated object in vexspoke carries a 64-bit type id in its
-// header. Proposed successor layout (not implemented by the masks below):
+// header. Layout (the masks below use this grouping and widths):
 //
 //     0xF'PRPR'M'W1'W2'BE6C'CCCCCC
 // Bits: 4 + 8 + 4 + 4 + 4 + 16 + 24 = 64.
@@ -25,7 +25,7 @@
 // Current implemented layout (the constants below still use this encoding):
 //
 //     0x F PRPR M W1 W2 BE6C CCCCCC
-//        | |    | |  |  |    `-------- class        (32 bits: which struct this is, per-project)
+//        | |    | |  |  |    `-------- class        (24 bits: which struct this is, per-project)
 //        | |    | |  |  |
 //        | |    | |  |  `------------- sugar        ("векс" / vex)
 //        | |    | |  `---------------- wrapper 2    (probable/future/choice)
@@ -36,7 +36,7 @@
 //                                                      struct layouts)
 //
 // Written with C23 digit separators grouping each field, e.g.
-// FORM_SINGLETON is 0x1'00'0'0'0'00'00000000ULL. Reading the fields lets
+// FORM_SINGLETON is 0x1'00'0'0'0'0000'000000ULL. Reading the fields lets
 // code decide *shape* without a switch: is it an array? a struct? The
 // class id then says *what kind*, the project byte says *whose*. This
 // is what lets one allocator serve every type across the whole stack
@@ -54,45 +54,46 @@
 // ids. Runtime parent chains resolve through Type_registerParents, which
 // names a per-project table; the project byte picks the table.
 
-#define MASK_FORM       0xF'00'0'0'0'00'00000000ULL
-#define MASK_PROJECT    0x0'FF'0'0'0'00'00000000ULL
-#define MASK_MODIFIER   0x0'00'F'0'0'00'00000000ULL
-#define MASK_WRAPPER_1  0x0'00'0'F'0'00'00000000ULL
-#define MASK_WRAPPER_2  0x0'00'0'0'F'00'00000000ULL
-#define MASK_PAD        0x0'00'0'0'0'BE'6C000000ULL // 0xBE6C
-#define MASK_CLASS      0x0'00'0'0'0'00'FFFFFFFFULL
+#define MASK_FORM       0xF'00'0'0'0'0000'000000ULL
+#define MASK_PROJECT    0x0'FF'0'0'0'0000'000000ULL
+#define MASK_MODIFIER   0x0'00'F'0'0'0000'000000ULL
+#define MASK_WRAPPER_1  0x0'00'0'F'0'0000'000000ULL
+#define MASK_WRAPPER_2  0x0'00'0'0'F'0000'000000ULL
+#define MASK_SUGAR      0x0'00'0'0'0'FFFF'000000ULL
+#define SUGAR_BE6C      0x0'00'0'0'0'BE6C'000000ULL // INTENTIONAL(vex) "векс"
+#define MASK_CLASS      0x0'00'0'0'0'0000'FFFFFFULL
 
-#define FORM_SINGLETON          0x1'00'0'0'0'00'00000000ULL
-#define FORM_ARRAY              0x2'00'0'0'0'00'00000000ULL
-#define FORM_POINTER            0x3'00'0'0'0'00'00000000ULL
-#define FORM_STRUCT_SINGLETON   0x4'00'0'0'0'00'00000000ULL
-#define FORM_STRUCT_ARRAY       0x5'00'0'0'0'00'00000000ULL
-#define FORM_STRUCT_POINTER     0x6'00'0'0'0'00'00000000ULL
-#define FORM_ARRAY_SOA          0x7'00'0'0'0'00'00000000ULL
-#define FORM_ARRAY_AOS          0x8'00'0'0'0'00'00000000ULL
-#define FORM_STRUCT_COEXISTENT  0x9'00'0'0'0'00'00000000ULL
+#define FORM_SINGLETON          0x1'00'0'0'0'0000'000000ULL
+#define FORM_ARRAY              0x2'00'0'0'0'0000'000000ULL
+#define FORM_POINTER            0x3'00'0'0'0'0000'000000ULL
+#define FORM_STRUCT_SINGLETON   0x4'00'0'0'0'0000'000000ULL
+#define FORM_STRUCT_ARRAY       0x5'00'0'0'0'0000'000000ULL
+#define FORM_STRUCT_POINTER     0x6'00'0'0'0'0000'000000ULL
+#define FORM_ARRAY_SOA          0x7'00'0'0'0'0000'000000ULL
+#define FORM_ARRAY_AOS          0x8'00'0'0'0'0000'000000ULL
+#define FORM_STRUCT_COEXISTENT  0x9'00'0'0'0'0000'000000ULL
 
 // Project byte: which repo owns the class. Matches ARCH_* numbering;
 // 256 projects fit the same stack (relentless dogfooding). Each project
 // numbers its own classes from 1; the byte disambiguates every registry.
-#define PROJ_GENERIC    0x0'00'0'0'0'00'00000000ULL  // zero lol
-#define PROJ_VEXSPOKE   0x0'01'0'0'0'00'00000000ULL
-#define PROJ_GRAPHVEX   0x0'02'0'0'0'00'00000000ULL
-#define PROJ_HOTCWAP    0x0'03'0'0'0'00'00000000ULL
-#define PROJ_DARLING    0x0'04'0'0'0'00'00000000ULL
-#define PROJ_API_HAVEN  0x0'05'0'0'0'00'00000000ULL
+#define PROJ_GENERIC    0x0'00'0'0'0'0000'000000ULL  // zero lol
+#define PROJ_VEXSPOKE   0x0'01'0'0'0'0000'000000ULL
+#define PROJ_GRAPHVEX   0x0'02'0'0'0'0000'000000ULL
+#define PROJ_HOTCWAP    0x0'03'0'0'0'0000'000000ULL
+#define PROJ_DARLING    0x0'04'0'0'0'0000'000000ULL
+#define PROJ_API_HAVEN  0x0'05'0'0'0'0000'000000ULL
 
-#define MOD_GLOBAL     0x0'00'1'0'0'00'00000000ULL
-#define MOD_LOCALE     0x0'00'2'0'0'00'00000000ULL
-#define MOD_TRANSIENT  0x0'00'3'0'0'00'00000000ULL
+#define MOD_GLOBAL     0x0'00'1'0'0'0000'000000ULL
+#define MOD_LOCALE     0x0'00'2'0'0'0000'000000ULL
+#define MOD_TRANSIENT  0x0'00'3'0'0'0000'000000ULL
 
-#define WRAP_PROACTIVE  0x0'00'0'1'0'00'00000000ULL
-#define WRAP_REACTIVE   0x0'00'0'2'0'00'00000000ULL
+#define WRAP_PROACTIVE  0x0'00'0'1'0'0000'000000ULL
+#define WRAP_REACTIVE   0x0'00'0'2'0'0000'000000ULL
 
-#define WRAP2_PROBABLE          0x0'00'0'0'1'00'00000000ULL
-#define WRAP2_PROBABLE_OBJECTS  0x0'00'0'0'2'00'00000000ULL
-#define WRAP2_FUTURE            0x0'00'0'0'3'00'00000000ULL
-#define WRAP2_CHOICE            0x0'00'0'0'4'00'00000000ULL
+#define WRAP2_PROBABLE          0x0'00'0'0'1'0000'000000ULL
+#define WRAP2_PROBABLE_OBJECTS  0x0'00'0'0'2'0000'000000ULL
+#define WRAP2_FUTURE            0x0'00'0'0'3'0000'000000ULL
+#define WRAP2_CHOICE            0x0'00'0'0'4'0000'000000ULL
 
 #define ID_INT          0x0001u
 #define ID_LONG         0x0002u
@@ -393,7 +394,7 @@ typedef struct TypeHeader {
 _Static_assert(sizeof(TypeHeader) == 16, "TypeHeader must stay 16 Bytes");
 
 // Compose a full type id from project + form + class id. Project owns
-// the high byte, shape the top nibble, identity the low 32 bits.
+// the high byte, shape the top nibble, identity the low 24 bits.
 static inline uint64_t Type_make(uint64_t proj, uint64_t form, uint32_t classId) {
     return (proj & MASK_PROJECT) | (form & MASK_FORM) | (classId & MASK_CLASS);
 }
