@@ -46,10 +46,12 @@
  * ============================================================================
  */
 
+// Returns c unchanged or lowercased for case-insensitive matching.
 static inline char normalize_char(char c, bool caseSensitive) {
     return caseSensitive ? c : (char) tolower((unsigned char) c);
 }
 
+// Matches a NUL-terminated string against SQL-style '%' and '_' wildcards.
 static bool match_like(const char *t, const char *p, bool caseSensitive) {
     const char *text = t;
     const char *pattern = p;
@@ -80,10 +82,12 @@ static bool match_like(const char *t, const char *p, bool caseSensitive) {
     return *pattern == '\0';
 }
 
+// Returns whether a character separates words for exact-word matching.
 static bool is_word_boundary(char c) {
     return !isalnum((unsigned char) c) && c != '_';
 }
 
+// Finds the first substring match, optionally requiring word boundaries; returns -1 when absent.
 static int find_substring(const char *text, const char *pattern, bool caseSensitive, bool exactWord) {
     if (!text || !pattern) return -1;
     size_t tlen = strlen(text);
@@ -113,6 +117,7 @@ static int find_substring(const char *text, const char *pattern, bool caseSensit
     return -1;
 }
 
+// Tests text using the requested case, whole-word, and wildcard flags.
 bool Search_match(const char *text, const char *pattern, uint32_t flags) {
     if (!text || !pattern) return false;
     bool caseSensitive = (flags & FIND_CASE_SENSITIVE) != 0;
@@ -128,6 +133,7 @@ bool Search_match(const char *text, const char *pattern, uint32_t flags) {
     return find_substring(text, pattern, caseSensitive, false) >= 0;
 }
 
+// Returns the first matching byte offset, or -1 when inputs or match are absent.
 int Search_findFirst(const char *text, const char *pattern, uint32_t flags) {
     if (!text || !pattern) return -1;
     bool caseSensitive = (flags & FIND_CASE_SENSITIVE) != 0;
@@ -135,11 +141,13 @@ int Search_findFirst(const char *text, const char *pattern, uint32_t flags) {
     return find_substring(text, pattern, caseSensitive, exactWord);
 }
 
+// Tests text against a SQL-style wildcard pattern with optional case folding.
 bool Search_like(const char *text, const char *pattern, bool caseSensitive) {
     if (!text || !pattern) return false;
     return match_like(text, pattern, caseSensitive);
 }
 
+// Tests whether word occurs as a complete word in text.
 bool Search_exactWord(const char *text, const char *word, bool caseSensitive) {
     if (!text || !word) return false;
     return find_substring(text, word, caseSensitive, true) >= 0;

@@ -60,6 +60,7 @@ typedef struct CalcParser {
     bool hasError;
 } CalcParser;
 
+// Advances the parser cursor past ASCII whitespace.
 static void skip_whitespace(CalcParser *cp) {
     while (*(*cp).p != '\0' && isspace((unsigned char)*(*cp).p)) {
         (*cp).p++;
@@ -68,6 +69,7 @@ static void skip_whitespace(CalcParser *cp) {
 
 static double parse_expression(CalcParser *cp);
 
+// Parses a number, parenthesized expression, constant, or supported function call.
 static double parse_primary(CalcParser *cp) {
     skip_whitespace(cp);
     if (*(*cp).p == '\0') {
@@ -186,6 +188,7 @@ static double parse_primary(CalcParser *cp) {
     return 0.0;
 }
 
+// Parses exponentiation with right-associative precedence.
 static double parse_factor(CalcParser *cp) {
     double base = parse_primary(cp);
     skip_whitespace(cp);
@@ -198,6 +201,7 @@ static double parse_factor(CalcParser *cp) {
     return base;
 }
 
+// Parses multiplication, division, and remainder above additive precedence.
 static double parse_term(CalcParser *cp) {
     double left = parse_factor(cp);
     skip_whitespace(cp);
@@ -224,6 +228,7 @@ static double parse_term(CalcParser *cp) {
     return left;
 }
 
+// Parses left-associative addition and subtraction expressions.
 static double parse_expression(CalcParser *cp) {
     double left = parse_term(cp);
     skip_whitespace(cp);
@@ -240,6 +245,7 @@ static double parse_expression(CalcParser *cp) {
     return left;
 }
 
+// Evaluates a complete expression into outValue; leaves output unchanged on failure.
 bool Calc_eval(const char *expr, double *outValue) {
     if (!expr || !outValue) return false;
     CalcParser cp = { .p = expr, .hasError = false };
@@ -255,6 +261,7 @@ bool Calc_eval(const char *expr, double *outValue) {
     return true;
 }
 
+// Evaluates an expression and converts its result to float on success.
 bool Calc_evalFloat(const char *expr, float *outValue) {
     if (!outValue) return false;
     double d = 0.0;
@@ -263,6 +270,7 @@ bool Calc_evalFloat(const char *expr, float *outValue) {
     return true;
 }
 
+// Evaluates an expression, returning fallback when parsing or evaluation fails.
 double Calc_evalWithFallback(const char *expr, double fallback) {
     double d = 0.0;
     if (Calc_eval(expr, &d)) return d;
