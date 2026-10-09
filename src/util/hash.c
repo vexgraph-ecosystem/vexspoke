@@ -40,6 +40,7 @@
 static const uint64_t FNV_OFFSET = 0xcbf29ce484222325ull;
 static const uint64_t FNV_PRIME = 0x100000001b3ull;
 
+// Computes the 64-bit FNV-1a hash of the byte span; empty or null input yields zero.
 uint64_t Hash_fnv1a64(const uint8_t *data, size_t length) {
     if (!data || length == 0)
         return 0;
@@ -52,10 +53,12 @@ uint64_t Hash_fnv1a64(const uint8_t *data, size_t length) {
     return hash;
 }
 
+// Mixes a pointer's integer representation into a 64-bit hash.
 uint64_t Hash_pointer(const void *p) {
     return Hash_murmur3Mix64((uint64_t) (uintptr_t) p);
 }
 
+// Applies the MurmurHash3 64-bit finalizer to one word.
 uint64_t Hash_murmur3Mix64(uint64_t k) {
     k ^= k >> 33;
     k *= 0xff51afd7ed558ccdull;
@@ -65,6 +68,7 @@ uint64_t Hash_murmur3Mix64(uint64_t k) {
     return k;
 }
 
+// Applies the MurmurHash3 32-bit finalizer to one word.
 uint32_t Hash_murmur3Mix32(uint32_t k) {
     k ^= k >> 16;
     k *= 0x85ebca6bul;
