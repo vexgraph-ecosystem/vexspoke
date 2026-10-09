@@ -75,7 +75,7 @@ Canonical IO/NIO headers come from that checkout; missing headers remain errors.
 Vexspoke includes no consumer or host headers; its production R2 storage boundary
 does not introduce an R1/R3/R4/R5 dependency. GPU shaders and dispatch remain
 Graphvex R3. The ecosystem map lives in the workspace `../../../README.md` and
-the readiness wiki. The ecosystem, especially its R5 apps, is unfinished.
+the readiness Gist. The ecosystem, especially its R5 apps, is unfinished.
 
 ### Build
 
