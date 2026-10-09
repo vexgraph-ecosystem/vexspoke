@@ -160,4 +160,5 @@ record-schema migration; actual Hotcwap reload integration remains unproved.
 
 ## 4. Readiness Cross-Reference (Living Documentation Law)
 
-- Feature readiness matrix: [vexspoke](../../ecosystem/vexspoke.md), rendered as `[[vexspoke]]`; the cooperating storage owner is [[relational-engine]].
+- Feature readiness matrix: [vexspoke](https://gist.github.com/vex-graph/6943f92acb931b25dad1073c46da6ce7#file-vexspoke-md).
+- Open blockers and deferred decisions: [ecosystem blockers Gist](https://gist.github.com/vex-graph/e921fa188eebbd0c68c4e59646109887).
