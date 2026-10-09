@@ -43,6 +43,7 @@
 
 // would or should or will support other stuff, and maybe support struct based on field itself and compare...
 
+// Exchanges two positions in an int32 buffer.
 static void swap_int(int32_t *data, size_t i, size_t j) {
     if (i == j) return;
     int32_t temp = data[i];
@@ -50,6 +51,7 @@ static void swap_int(int32_t *data, size_t i, size_t j) {
     data[j] = temp;
 }
 
+// Partitions the inclusive integer range around its final element as pivot.
 static size_t partition_int(int32_t *data, size_t low, size_t high) {
     int32_t pivot = data[high];
     size_t i = low;
@@ -63,6 +65,7 @@ static size_t partition_int(int32_t *data, size_t low, size_t high) {
     return i;
 }
 
+// Recursively sorts an inclusive int32 range in place.
 static void quicksort_int(int32_t *data, size_t low, size_t high) {
     if (low >= high) return;
     size_t pi = partition_int(data, low, high);
@@ -70,6 +73,7 @@ static void quicksort_int(int32_t *data, size_t low, size_t high) {
     if (pi < high) quicksort_int(data, pi + 1, high);
 }
 
+// Exchanges two positions in an int64 buffer.
 static void swap_long(int64_t *data, size_t i, size_t j) {
     if (i == j) return;
     int64_t temp = data[i];
@@ -77,6 +81,7 @@ static void swap_long(int64_t *data, size_t i, size_t j) {
     data[j] = temp;
 }
 
+// Partitions the inclusive long range around its final element as pivot.
 static size_t partition_long(int64_t *data, size_t low, size_t high) {
     int64_t pivot = data[high];
     size_t i = low;
@@ -90,6 +95,7 @@ static size_t partition_long(int64_t *data, size_t low, size_t high) {
     return i;
 }
 
+// Recursively sorts an inclusive int64 range in place.
 static void quicksort_long(int64_t *data, size_t low, size_t high) {
     if (low >= high) return;
     size_t pi = partition_long(data, low, high);
@@ -97,16 +103,19 @@ static void quicksort_long(int64_t *data, size_t low, size_t high) {
     if (pi < high) quicksort_long(data, pi + 1, high);
 }
 
+// Sorts the supplied int32 values in ascending order in place.
 void Arrays_sortInt(int32_t *data, size_t length) {
     if (!data || length <= 1) return;
     quicksort_int(data, 0, length - 1);
 }
 
+// Sorts the supplied int64 values in ascending order in place.
 void Arrays_sortLong(int64_t *data, size_t length) {
     if (!data || length <= 1) return;
     quicksort_long(data, 0, length - 1);
 }
 
+// Searches an ascending int32 array; returns its index or -(insertion point + 1).
 intptr_t Arrays_binarySearchInt(const int32_t *data, size_t length, int32_t key) {
     if (!data) return -1;
     size_t low = 0;
@@ -124,6 +133,7 @@ intptr_t Arrays_binarySearchInt(const int32_t *data, size_t length, int32_t key)
     return -(intptr_t)(low + 1);
 }
 
+// Searches an ascending int64 array; returns its index or -(insertion point + 1).
 intptr_t Arrays_binarySearchLong(const int64_t *data, size_t length, int64_t key) {
     if (!data) return -1;
     size_t low = 0;
@@ -141,11 +151,13 @@ intptr_t Arrays_binarySearchLong(const int64_t *data, size_t length, int64_t key
     return -(intptr_t)(low + 1);
 }
 
+// Fills the byte span with the repeated value.
 void Arrays_fill(uint8_t *data, size_t length, uint8_t value) {
     if (!data || length == 0) return;
     memset(data, value, length);
 }
 
+// Copies Bytes bytes from src to dest; the spans must not overlap.
 void Arrays_copy(const uint8_t *src, uint8_t *dest, size_t Bytes) {
     if (!src || !dest || Bytes == 0) return;
     memcpy(dest, src, Bytes);

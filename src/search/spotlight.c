@@ -49,6 +49,7 @@
  * ============================================================================
  */
 
+// Scores exact, prefix, boundary, substring, then subsequence matches in descending tiers.
 static int calculate_score(const char *candidate, const char *query) {
     if (!candidate || !query) return 0;
     size_t qlen = strlen(query);
@@ -102,12 +103,14 @@ static int calculate_score(const char *candidate, const char *query) {
     return 0;
 }
 
+// Orders SpotlightMatch records by descending score for qsort.
 static int compare_matches(const void *a, const void *b) {
     const SpotlightMatch *ma = (const SpotlightMatch*) a;
     const SpotlightMatch *mb = (const SpotlightMatch*) b;
     return (*mb).score - (*ma).score; // descending
 }
 
+// Writes up to maxCount ranked matches and returns the total number that scored.
 size_t Spotlight_rank(const char *query, const char *const *candidates, const uint32_t *ids,
                       size_t candidateCount, SpotlightMatch *outMatches, size_t maxCount) {
     if (!query || !candidates || !outMatches || maxCount == 0) return 0;
@@ -133,6 +136,7 @@ size_t Spotlight_rank(const char *query, const char *const *candidates, const ui
     return total;   // documented: TOTAL matches found (not capped at maxCount)
 }
 
+// Evaluates query as a calculator expression and writes the result on success.
 bool Spotlight_tryCalculate(const char *query, double *outResult) {
     if (!query || !outResult) return false;
     return Calc_eval(query, outResult);

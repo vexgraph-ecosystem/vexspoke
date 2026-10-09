@@ -48,6 +48,7 @@ typedef struct DestructorEntry {
 static DestructorEntry s_destructors[MAX_CUSTOM_DESTRUCTORS];
 static uint32_t s_destructorCount = 0;
 
+// Registers or replaces a custom destructor for a nonzero type ID when capacity permits.
 void Destructor_register(uint64_t typeId, DestructorFn fn) {
     if (fn == nullptr || typeId == 0) return;
     // Check if already registered to update
@@ -64,6 +65,7 @@ void Destructor_register(uint64_t typeId, DestructorFn fn) {
     }
 }
 
+// Returns the registered destructor for typeId, or nullptr when absent.
 DestructorFn Destructor_lookup(uint64_t typeId) {
     for (uint32_t i = 0; i < s_destructorCount; i++) {
         if (s_destructors[i].typeId == typeId) {
@@ -73,6 +75,7 @@ DestructorFn Destructor_lookup(uint64_t typeId) {
     return nullptr;
 }
 
+// Runs the matching registered destructor, then releases ptr through Memory_free.
 void c23_free(void *ptr) {
     if (!ptr) return;
 

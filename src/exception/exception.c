@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Returns the stable display name for a category, or the unknown-category name.
 const char *Exception_categoryName(ExceptionCategory category) {
     switch (category) {
         case EXCEPTION_RUNTIME:        return "RuntimeException";
@@ -16,6 +17,7 @@ const char *Exception_categoryName(ExceptionCategory category) {
     }
 }
 
+// Initializes exception metadata and formats an optional message using args.
 void Exception_initV(Exception *self,
                      ExceptionCategory category,
                      const char *site,
@@ -49,6 +51,7 @@ void Exception_initV(Exception *self,
     }
 }
 
+// Initializes exception metadata and formats an optional variadic message.
 void Exception_init(Exception *self,
                     ExceptionCategory category,
                     const char *site,
@@ -62,6 +65,7 @@ void Exception_init(Exception *self,
     va_end(args);
 }
 
+// Replaces owned details with formatted args when formatting and allocation succeed.
 void Exception_setDetailsV(Exception *self, const char *fmt, va_list args) {
     if (self == nullptr || fmt == nullptr) return;
 
@@ -82,6 +86,7 @@ void Exception_setDetailsV(Exception *self, const char *fmt, va_list args) {
     }
 }
 
+// Replaces owned details with formatted variadic text.
 void Exception_setDetails(Exception *self, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -89,6 +94,7 @@ void Exception_setDetails(Exception *self, const char *fmt, ...) {
     va_end(args);
 }
 
+// Releases the owned message and details strings and clears their pointers.
 void Exception_free(Exception *self) {
     if (self == nullptr) return;
 
@@ -102,6 +108,7 @@ void Exception_free(Exception *self) {
     }
 }
 
+// Writes category, source location, message, and details to stderr.
 void Exception_print(const Exception *self) {
     if (self == nullptr) return;
 

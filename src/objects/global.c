@@ -59,6 +59,7 @@ typedef struct Global {
     atomic_uint_least64_t value;
 } Global;
 
+// Allocates one atomic global initialized to initialValue, or returns nullptr.
 Global *Global_1(uint64_t initialValue) {
     uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_GLOBAL) | MOD_GLOBAL;
     Global *global = (Global*) Memory_alloc(type, sizeof(Global));
@@ -69,6 +70,7 @@ Global *Global_1(uint64_t initialValue) {
 }
 
 
+// Allocates count globals, copying init when supplied or zeroing otherwise.
 Global *Global_2(const Global *init, size_t count) {
     if (count == 0) return nullptr;
     Global *p = (Global*) Memory_alloc(TYPE_GLOBAL_ARRAY, sizeof(Global) * count);
@@ -80,21 +82,25 @@ Global *Global_2(const Global *init, size_t count) {
     }
     return p;
 }
+// Releases the allocation through the engine-owned Memory ABI.
 void Global_free(Global *global) {
     if (!global) return;
     Memory_free(global);
 }
 
+// Loads the atomic value with acquire ordering, or returns zero for nullptr.
 uint64_t Global_get(const Global *global) {
     if (!global) return 0;
     return atomic_load_explicit(&(*global).value, memory_order_acquire);
 }
 
+// Stores value with release ordering when global is non-null.
 void Global_set(Global *global, uint64_t value) {
     if (!global) return;
     atomic_store_explicit(&(*global).value, value, memory_order_release);
 }
 
+// Atomically replaces expected with value and reports whether the comparison matched.
 bool Global_compareAndSet(Global *global, uint64_t expected, uint64_t value) {
     if (!global) return false;
     uint64_t exp = expected;
