@@ -79,6 +79,7 @@ static size_t nextPow2(size_t value) {
     return value + 1;
 }
 
+// Initializes the ring and allocates zeroed storage with rounded-up capacity.
 bool RingBuffer_init(RingBuffer *ring, size_t elem_size, size_t capacity) {
     if (!ring || elem_size == 0) return false;
 
@@ -95,6 +96,7 @@ bool RingBuffer_init(RingBuffer *ring, size_t elem_size, size_t capacity) {
     return (*ring).slots != nullptr;
 }
 
+// Frees ring storage and clears its storage pointer.
 void RingBuffer_shutdown(RingBuffer *ring) {
     if (ring && (*ring).slots) {
         free((*ring).slots);
@@ -102,7 +104,7 @@ void RingBuffer_shutdown(RingBuffer *ring) {
     }
 }
 
-// Push one item. Locked: the whole copy in must be atomic to readers.
+// Pushes one item under the ring lock; returns false for invalid input or a full ring.
 bool RingBuffer_push(RingBuffer *ring, const void *item) {
     if (!ring || !item) return false;
 
@@ -123,7 +125,7 @@ bool RingBuffer_push(RingBuffer *ring, const void *item) {
     return true;
 }
 
-// Pop the oldest item. Locked: we can't let a reader see a half-written slot.
+// Removes the oldest item under the ring lock; returns false for invalid input or empty ring.
 bool RingBuffer_pop(RingBuffer *ring, void *out) {
     if (!ring || !out) return false;
 
