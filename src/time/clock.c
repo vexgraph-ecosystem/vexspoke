@@ -80,6 +80,7 @@ static uint64_t monoMillis(void) {
     return (uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL;
 }
 
+// Returns a value-initialized clock anchored to current real and monotonic time.
 Clock Clock_create(void) {
     Clock c;
     c.timeScale = 1.0;
@@ -90,6 +91,7 @@ Clock Clock_create(void) {
     return c;
 }
 
+// Accrues monotonic elapsed milliseconds scaled by timeScale unless paused.
 void Clock_tick(Clock *clock) {
     uint64_t now = monoMillis();
     uint64_t lastReal = (*clock).lastTickRealMillis;
@@ -100,26 +102,32 @@ void Clock_tick(Clock *clock) {
         (*clock).virtualTimeMillis += (uint64_t)((double)elapsedReal * (*clock).timeScale);
 }
 
+// Sets the multiplier applied to elapsed real time on subsequent ticks.
 void Clock_setTimeScale(Clock *clock, double scale) {
     (*clock).timeScale = scale;
 }
 
+// Returns the configured elapsed-time multiplier.
 double Clock_timeScale(const Clock *clock) {
     return (*clock).timeScale;
 }
 
+// Enables or disables virtual-time accrual while ticks continue updating the real anchor.
 void Clock_setPaused(Clock *clock, bool paused) {
     (*clock).paused = paused;
 }
 
+// Reports whether virtual-time accrual is paused.
 bool Clock_isPaused(const Clock *clock) {
     return (*clock).paused;
 }
 
+// Returns accumulated scaled virtual time in milliseconds.
 uint64_t Clock_virtualTimeMillis(const Clock *clock) {
     return (*clock).virtualTimeMillis;
 }
 
+// Reanchors real readings and clears accumulated virtual time.
 void Clock_reset(Clock *clock) {
     (*clock).baseRealMillis = currentTimeMillis();
     (*clock).lastTickRealMillis = monoMillis();

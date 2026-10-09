@@ -65,6 +65,7 @@
  */
 
 
+// Stores epoch milliseconds and derives the corresponding UTC calendar fields.
 void setEpochMillis(DateTime *dt, int64_t epochMillis) {
     (*dt).epochMillis = epochMillis;
 
@@ -124,44 +125,54 @@ void setEpochMillis(DateTime *dt, int64_t epochMillis) {
     (*dt).dayOfWeek = dayOfWeek;
 }
 
+// Captures the current realtime clock and decomposes it into UTC fields.
 void DateTime_set(DateTime *dt) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     setEpochMillis(dt, (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
 }
 
+// Returns the stored Unix epoch timestamp in milliseconds.
 int64_t DateTime_epochMillis(const DateTime *dt) {
     return (*dt).epochMillis;
 }
 
+// Returns the UTC calendar year.
 int32_t DateTime_year(const DateTime *dt) {
     return (*dt).year;
 }
 
+// Returns the UTC month number from 1 through 12.
 int32_t DateTime_month(const DateTime *dt) {
     return (*dt).month;
 }
 
+// Returns the UTC day of the month.
 int32_t DateTime_day(const DateTime *dt) {
     return (*dt).day;
 }
 
+// Returns the UTC hour from 0 through 23.
 int32_t DateTime_hour(const DateTime *dt) {
     return (*dt).hour;
 }
 
+// Returns the UTC minute from 0 through 59.
 int32_t DateTime_minute(const DateTime *dt) {
     return (*dt).minute;
 }
 
+// Returns the UTC second from 0 through 59.
 int32_t DateTime_second(const DateTime *dt) {
     return (*dt).second;
 }
 
+// Returns the millisecond component from 0 through 999.
 int32_t DateTime_millisecond(const DateTime *dt) {
     return (*dt).millisecond;
 }
 
+// Returns the ISO weekday number from 1 (Monday) through 7 (Sunday).
 int32_t DateTime_dayOfWeek(const DateTime *dt) {
     return (*dt).dayOfWeek;
 }
