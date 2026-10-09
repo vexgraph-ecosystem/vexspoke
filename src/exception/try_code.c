@@ -40,10 +40,12 @@
  * ============================================================================
  */
 
+// Reports whether code denotes successful completion.
 bool TryCode_isOk(TryCode code) {
     return code == TRY_OK;
 }
 
+// Returns code's stable symbolic name, including an unknown fallback.
 const char *TryCode_name(TryCode code) {
     switch (code) {
         case TRY_OK:          return "TRY_OK";
@@ -59,6 +61,7 @@ const char *TryCode_name(TryCode code) {
     }
 }
 
+// Returns the stable explanatory message associated with code.
 const char *TryCode_message(TryCode code) {
     switch (code) {
         case TRY_OK:          return "ok";
