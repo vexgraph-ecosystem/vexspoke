@@ -49,10 +49,12 @@
  */
 
 
+// Reports whether year has the Gregorian leap-year extra day.
 bool Calendar_isLeapYear(int32_t year) {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
 
+// Returns the month's Gregorian day count, or zero for a month outside 1..12.
 int32_t Calendar_daysInMonth(int32_t year, int32_t month) {
     if (month < 1 || month > 12) return 0;
     if (month == 2) return Calendar_isLeapYear(year) ? 29 : 28;
@@ -60,6 +62,7 @@ int32_t Calendar_daysInMonth(int32_t year, int32_t month) {
     return 31;
 }
 
+// Returns the ISO weekday number (Monday 1 through Sunday 7) for the date.
 int32_t Calendar_dayOfWeek(int32_t year, int32_t month, int32_t day) {
     if (month < 3) {
         month += 12;
@@ -82,6 +85,7 @@ int32_t Calendar_dayOfWeek(int32_t year, int32_t month, int32_t day) {
     }
 }
 
+// Advances the date-time by the requested number of 24-hour days.
 void Calendar_addDays(DateTime *dt, int32_t days) {
     setEpochMillis(dt, DateTime_epochMillis(dt) + (int64_t)days * 86400000LL);
 }
@@ -102,6 +106,7 @@ static int64_t toEpochMillis(int32_t year, int32_t month, int32_t day,
     return totalSecs * 1000 + millisecond;
 }
 
+// Shifts the month while retaining time-of-day and clipping an invalid day to month end.
 void Calendar_addMonths(DateTime *dt, int32_t months) {
     int32_t year = DateTime_year(dt);
     int32_t month = DateTime_month(dt);
@@ -123,6 +128,7 @@ void Calendar_addMonths(DateTime *dt, int32_t months) {
                                               hour, minute, second, millisecond));
 }
 
+// Shifts the year while retaining month and time, clipping the day when needed.
 void Calendar_addYears(DateTime *dt, int32_t years) {
     int32_t year = DateTime_year(dt);
     int32_t month = DateTime_month(dt);
