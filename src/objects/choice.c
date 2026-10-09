@@ -69,6 +69,7 @@ typedef struct Choice {
     ChoiceSlot slots[];
 } Choice;
 
+// Allocates one choice from parallel object and callback arrays.
 Choice *Choice_3(const uint64_t *objectPtrs, const ChoiceCallback *callbacks, size_t count) {
     if (count == 0) return nullptr;
     uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_CHOICE) | WRAP2_CHOICE;
@@ -85,6 +86,7 @@ Choice *Choice_3(const uint64_t *objectPtrs, const ChoiceCallback *callbacks, si
 }
 
 
+// Allocates count choices, copying init when supplied or zeroing otherwise.
 Choice *Choice_2(const Choice *init, size_t count) {
     if (count == 0) return nullptr;
     Choice *p = (Choice*) Memory_alloc(TYPE_CHOICE_ARRAY, sizeof(Choice) * count);
@@ -96,21 +98,25 @@ Choice *Choice_2(const Choice *init, size_t count) {
     }
     return p;
 }
+// Releases the choice allocation through the engine-owned Memory ABI.
 void Choice_free(Choice *choice) {
     if (!choice) return;
     Memory_free(choice);
 }
 
+// Returns the number of options, or zero for a null choice.
 size_t Choice_length(const Choice *choice) {
     return choice ? (*choice).count : 0;
 }
 
+// Returns the indexed object payload, or zero when choice or index is invalid.
 uint64_t Choice_getObject(const Choice *choice, size_t index) {
     if (!choice || index >= (*choice).count)
         return 0;
     return (*choice).slots[index].objectPtr;
 }
 
+// Invokes the selected option callback with its object payload and userdata.
 void Choice_trigger(const Choice *choice, size_t index, void *userdata) {
     if (!choice || index >= (*choice).count)
         return;
