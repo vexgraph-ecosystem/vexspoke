@@ -81,6 +81,7 @@ static bool processMatches(pid_t pid, const char *wanted) {
 
 // CONSTRUCTORS
 
+// Returns the address of the process-wide zero-initialized probe instance.
 ProcessProbe *ProcessProbe_shared(void) {
     static ProcessProbe sProbeShared; // zero-init singleton
     return &sProbeShared;
@@ -88,6 +89,7 @@ ProcessProbe *ProcessProbe_shared(void) {
 
 // CORE FUNCTIONS
 
+// Checks for a matching executable basename; unsupported platforms return false.
 bool ProcessProbe_isRunning(const ProcessProbe *self, const char *procName) {
     if (!self || !procName || (*procName) == '\0')
         return false;
@@ -112,6 +114,7 @@ bool ProcessProbe_isRunning(const ProcessProbe *self, const char *procName) {
 #endif
 }
 
+// Checks whether dirPath contains an entry whose name starts with prefix.
 bool ProcessProbe_isDriverLoaded(const ProcessProbe *self,
                                  const char *dirPath, const char *prefix) {
     if (!self || !dirPath || !prefix || (*prefix) == '\0')
