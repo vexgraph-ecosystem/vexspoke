@@ -37,6 +37,7 @@
  * ============================================================================
  */
 
+// Compares identity first, then matching block type, length, and payload bytes.
 bool isEqual(const void *a, const void *b) {
     if (a == b)
         return true;
@@ -60,6 +61,7 @@ bool isEqual(const void *a, const void *b) {
     return memcmp(pa, pb, la) == 0;
 }
 
+// Resolves both names in the table and compares their referenced values.
 bool isEquallyNamed(SymbolTable *v, const char *nameA, const char *nameB) {
     if (!v || !nameA || !nameB)
         return false;
