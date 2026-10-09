@@ -55,6 +55,7 @@
  * ============================================================================
  */
 
+// Constructs a result containing the scalar payload and status code.
 TryValue TryValue_2(uint64_t value, TryCode code) {
     TryValue self;
     self.value = value;
@@ -62,44 +63,52 @@ TryValue TryValue_2(uint64_t value, TryCode code) {
     return self;
 }
 
+// Constructs a successful result carrying value.
 TryValue TryValue_ok(uint64_t value) {
     return TryValue_2(value, TRY_OK);
 }
 
+// Constructs an error result carrying zero and code.
 TryValue TryValue_error(TryCode code) {
     return TryValue_2(0u, code);
 }
 
+// Returns the stored scalar, or zero when self is nullptr.
 uint64_t TryValue_getValue(const TryValue *self) {
     if (!self)
         return 0u;
     return (*self).value;
 }
 
+// Replaces the scalar payload when self is non-null.
 void TryValue_setValue(TryValue *self, uint64_t value) {
     if (!self)
         return;
     (*self).value = value;
 }
 
+// Returns the stored code, or TRY_NULL_ARG when self is nullptr.
 TryCode TryValue_getCode(const TryValue *self) {
     if (!self)
         return TRY_NULL_ARG;
     return (*self).code;
 }
 
+// Replaces the result code when self is non-null.
 void TryValue_setCode(TryValue *self, TryCode code) {
     if (!self)
         return;
     (*self).code = code;
 }
 
+// Reports whether a non-null result carries TRY_OK.
 bool TryValue_isOk(const TryValue *self) {
     if (!self)
         return false;
     return (*self).code == TRY_OK;
 }
 
+// Formats a value-oriented summary into dest and reports capacity truncation.
 void TryValue_toString(const TryValue *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;
@@ -124,6 +133,7 @@ void TryValue_toString(const TryValue *self, char *dest, size_t cap, bool *outTr
     }
 }
 
+// Formats the result fields into dest and reports capacity truncation.
 void TryValue_toStringStruct(const TryValue *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;

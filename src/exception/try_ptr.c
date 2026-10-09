@@ -55,6 +55,7 @@
  * ============================================================================
  */
 
+// Constructs a result containing the pointer payload and status code.
 TryPtr TryPtr_2(void *value, TryCode code) {
     TryPtr self;
     self.value = value;
@@ -62,44 +63,52 @@ TryPtr TryPtr_2(void *value, TryCode code) {
     return self;
 }
 
+// Constructs a successful result carrying value.
 TryPtr TryPtr_ok(void *value) {
     return TryPtr_2(value, TRY_OK);
 }
 
+// Constructs an error result carrying nullptr and code.
 TryPtr TryPtr_error(TryCode code) {
     return TryPtr_2(nullptr, code);
 }
 
+// Returns the stored pointer, or nullptr when self is nullptr.
 void *TryPtr_getValue(const TryPtr *self) {
     if (!self)
         return nullptr;
     return (*self).value;
 }
 
+// Replaces the pointer payload when self is non-null.
 void TryPtr_setValue(TryPtr *self, void *value) {
     if (!self)
         return;
     (*self).value = value;
 }
 
+// Returns the stored code, or TRY_NULL_ARG when self is nullptr.
 TryCode TryPtr_getCode(const TryPtr *self) {
     if (!self)
         return TRY_NULL_ARG;
     return (*self).code;
 }
 
+// Replaces the result code when self is non-null.
 void TryPtr_setCode(TryPtr *self, TryCode code) {
     if (!self)
         return;
     (*self).code = code;
 }
 
+// Reports whether a non-null result carries TRY_OK.
 bool TryPtr_isOk(const TryPtr *self) {
     if (!self)
         return false;
     return (*self).code == TRY_OK;
 }
 
+// Formats a value-oriented summary into dest and reports capacity truncation.
 void TryPtr_toString(const TryPtr *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;
@@ -123,6 +132,7 @@ void TryPtr_toString(const TryPtr *self, char *dest, size_t cap, bool *outTrunca
     }
 }
 
+// Formats the result fields into dest and reports capacity truncation.
 void TryPtr_toStringStruct(const TryPtr *self, char *dest, size_t cap, bool *outTruncated) {
     if (outTruncated)
         *outTruncated = false;
