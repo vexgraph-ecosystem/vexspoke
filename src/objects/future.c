@@ -61,6 +61,7 @@ typedef struct Future {
     uint64_t    value;
 } Future;
 
+// Allocates one unresolved future with a zero payload.
 Future *Future_0(void) {
     uint64_t type = Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_FUTURE) | WRAP2_FUTURE;
     Future *future = Memory_alloc(type, sizeof(Future));
@@ -72,6 +73,7 @@ Future *Future_0(void) {
 }
 
 
+// Allocates count future records, copying init when supplied or zeroing otherwise.
 Future *Future_2(const Future *init, size_t count) {
     if (count == 0) return nullptr;
     Future *p = (Future*) Memory_alloc(TYPE_FUTURE_ARRAY, sizeof(Future) * count);
@@ -83,21 +85,25 @@ Future *Future_2(const Future *init, size_t count) {
     }
     return p;
 }
+// Releases the allocation through the engine-owned Memory ABI.
 void Future_free(Future *future) {
     if (!future) return;
     Memory_free(future);
 }
 
+// Reports whether the future's atomic fulfillment flag is set.
 bool Future_isGiven(const Future *future) {
     if (!future) return false;
     return atomic_load_explicit(&(*future).isGiven, memory_order_acquire);
 }
 
+// Returns the payload, or zero for a null future.
 uint64_t Future_get(const Future *future) {
     if (!future) return 0;
     return (*future).value;
 }
 
+// Attempts one single-assignment fulfillment; returns false if already fulfilled.
 bool Future_setDesiredValue(Future *future, uint64_t value) {
     if (!future) return false;
     bool expected = false;
