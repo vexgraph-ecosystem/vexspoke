@@ -6,6 +6,7 @@
 
 #include "nio/mem.h"
 #include "exception/throw.h"
+#include "struct/exhaustion.h"
 #include "annotation/debug.h"
 #include "annotation/test.h"
 #include "annotation/definition.h"
@@ -142,13 +143,10 @@ bool Collection_reportExhaustion(Collection *c, size_t requestedBytes) {
         THROW("collection: grow refused on a null collection (%zu bytes)", requestedBytes);
         return false;
     }
-    (*c).exhaustionCount++;
-    if (!(*c).exhaustionReported) {
-        (*c).exhaustionReported = true;
-        THROW("collection: grow refused, requested %zu bytes (capacity %u slots, stride %u)",
-              requestedBytes, (*c).capacity, (*c).stride);
-    }
-    return false;
+    // One implementation for the whole ecosystem: the shared owner-agnostic seam.
+    return Struct_reportExhaustion(&(*c).exhaustionCount, &(*c).exhaustionReported,
+                                   "collection", requestedBytes,
+                                   (size_t) (*c).capacity * (*c).stride);
 }
 
 /** Return the refused-grow count since construction or the last reset. */
@@ -161,8 +159,7 @@ uint64_t Collection_exhaustionCount(const Collection *c) {
 ;;TEST
 void Collection_resetExhaustion(Collection *c) {
     if (!c) return;
-    (*c).exhaustionCount = 0;
-    (*c).exhaustionReported = false;
+    Struct_resetExhaustion(&(*c).exhaustionCount, &(*c).exhaustionReported);
 }
 
 uint32_t Collection_head(Collection *c) {
