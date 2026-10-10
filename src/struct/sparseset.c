@@ -71,7 +71,10 @@ static int32_t *allocateInts(size_t count) {
 
 SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
     SparseSet *set = (SparseSet*) Memory_alloc(Type_make(PROJ_VEXSPOKE, FORM_SINGLETON, ID_SPARSE_SET), sizeof(SparseSet));
-    if (!set) return nullptr;
+    if (!set) {
+        (void) Struct_reportConstructionExhaustion("sparseset", sizeof(SparseSet));
+        return nullptr;
+    }
 
     (*set).capacity = (int32_t)capacity;
     (*set).maxEntities = (int32_t)maxEntities;
@@ -82,12 +85,14 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
 
     (*set).dense = allocateInts(capacity);
     if (!(*set).dense) {
+        (void) Struct_reportConstructionExhaustion("sparseset", capacity * sizeof(int32_t));
         Memory_free(set);
         return nullptr;
     }
 
     (*set).sparse = allocateInts(maxEntities);
     if (!(*set).sparse) {
+        (void) Struct_reportConstructionExhaustion("sparseset", maxEntities * sizeof(int32_t));
         Memory_free((*set).dense);
         Memory_free(set);
         return nullptr;
@@ -100,6 +105,7 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SPARSE_SET);
         (*set).data = (uint8_t*) Memory_alloc(bufType, Bytes);
         if (!(*set).data) {
+            (void) Struct_reportConstructionExhaustion("sparseset", Bytes);
             Memory_free((*set).dense);
             Memory_free((*set).sparse);
             Memory_free(set);
