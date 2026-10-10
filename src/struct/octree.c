@@ -249,6 +249,7 @@ Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPer
 
     Octree *self = (Octree*) Memory_alloc(TYPE_OCTREE, sizeof(Octree));
     if (self == nullptr) {
+        (void) Struct_reportConstructionExhaustion("octree", sizeof(Octree));
         return nullptr;
     }
 
@@ -259,6 +260,7 @@ Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPer
     (*self).exhaustionReported = false;
     (*self).root = OctreeNode_create(bounds, maxItemsPerNode);
     if ((*self).root == nullptr) {
+        (void) Struct_reportConstructionExhaustion("octree", sizeof(OctreeNode));
         Memory_free(self);
         return nullptr;
     }
