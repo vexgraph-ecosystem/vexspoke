@@ -35,6 +35,7 @@ uint8_t *Deque_slot(Deque *deque, size_t index);
 bool Deque_isEmpty(Deque *deque);
 size_t Deque_size(Deque *deque);
 // Refused-grow count since construction (the Exhaustion Loudness Law).
+;;TEST
 uint64_t Deque_exhaustionCount(const Deque *deque);
 size_t Deque_length(Deque *deque);
 size_t Deque_capacity(Deque *deque);

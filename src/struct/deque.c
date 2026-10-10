@@ -243,6 +243,7 @@ size_t Deque_size(Deque *deque) {
     return Collection_size(asCollection(deque));
 }
 
+;;TEST
 uint64_t Deque_exhaustionCount(const Deque *deque) {
     return Collection_exhaustionCount((const Collection*) deque);
 }
