@@ -318,6 +318,7 @@ size_t Set_size(Set *set) {
     return Collection_size(asCollection(set));
 }
 
+;;TEST
 uint64_t Set_exhaustionCount(const Set *set) {
     return Collection_exhaustionCount((const Collection*) set);
 }
