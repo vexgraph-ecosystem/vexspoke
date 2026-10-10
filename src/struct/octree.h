@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "struct/exhaustion.h"
+
 // struct/octree.h — 3D Spatial Partitioning Octree.
 //
 // Recursively partitions 3D space into 8 sub-octants for O(log N) point insertion,
@@ -47,6 +49,10 @@ typedef struct Octree {
     uint32_t    maxDepth;
     uint32_t    maxItemsPerNode;
     size_t      totalItems;
+    // Exhaustion observability (the Exhaustion Loudness Law): a refused leaf
+    // growth is counted, and the epoch's first refusal reports.
+    uint64_t    exhaustionCount;
+    bool        exhaustionReported;
 } Octree;
 
 Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode);
@@ -58,6 +64,9 @@ size_t Octree_querySphere(const Octree *self, OctreePoint center, float radius, 
 
 size_t Octree_count(const Octree *self);
 void Octree_clear(Octree *self);
+// Refused-insertion count since creation (the Exhaustion Loudness Law).
+;;TEST
+uint64_t Octree_exhaustionCount(const Octree *self);
 
 // AABB helper functions
 bool OctreeAABB_containsPoint(OctreeAABB box, OctreePoint p);
