@@ -4,6 +4,7 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "util/hash.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
@@ -170,7 +171,10 @@ Map *Map_3(uint32_t keyClass, uint32_t valClass, size_t capacity) {
     if (cap < 4) cap = 4;
 
     Map *map = (Map*) Memory_alloc(TYPE_MAP, sizeof(Map));
-    if (!map) return nullptr;
+    if (!map) {
+        (void) Struct_reportConstructionExhaustion("map", sizeof(Map));
+        return nullptr;
+    }
 
     Collection *c = asCollection(map);
     (*c).typeId = TYPE_MAP;
@@ -186,6 +190,7 @@ Map *Map_3(uint32_t keyClass, uint32_t valClass, size_t capacity) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("map", Bytes);
         Memory_free(map);
         return nullptr;
     }
