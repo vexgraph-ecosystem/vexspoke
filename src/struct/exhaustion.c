@@ -72,3 +72,35 @@ void Struct_resetExhaustion(uint64_t *count, bool *reported) {
     if (count) (*count) = 0;
     if (reported) (*reported) = false;
 }
+
+// --- Construction refusals (process-wide; no owner instance exists yet) ---
+
+// The epoch's construction accounting. Process-wide because a failed
+// construction has no owner instance to carry a counter.
+static uint64_t s_constructionCount = 0;
+static bool s_constructionReported = false;
+
+/** Count a construction refusal and report the epoch's first one. Always false. */
+;;DEBUG
+bool Struct_reportConstructionExhaustion(const char *owner, size_t requestedBytes) {
+    s_constructionCount++;
+    if (!s_constructionReported) {
+        s_constructionReported = true;
+        THROW("%s: construction refused, could not allocate %zu bytes",
+              owner ? owner : "owner", requestedBytes);
+    }
+    return false;
+}
+
+/** Return the process-wide construction-refusal count for the current epoch. */
+;;TEST
+uint64_t Struct_constructionExhaustionCount(void) {
+    return s_constructionCount;
+}
+
+/** Start a fresh process-wide construction epoch. */
+;;TEST
+void Struct_resetConstructionExhaustion(void) {
+    s_constructionCount = 0;
+    s_constructionReported = false;
+}

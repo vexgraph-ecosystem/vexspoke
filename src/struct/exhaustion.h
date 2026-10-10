@@ -34,4 +34,21 @@ uint64_t Struct_exhaustionCount(const uint64_t *count);
 ;;TEST
 void Struct_resetExhaustion(uint64_t *count, bool *reported);
 
+// --- Construction refusals (no owner instance exists yet) ---
+// A constructor that cannot allocate its struct or backing returns nullptr; the
+// refusal has no per-instance counter, so it is accounted process-wide: counted
+// always, reported once per process epoch. Same loudness contract, one owner.
+
+// Count a construction refusal and report the epoch's first one. Always false.
+;;DEBUG
+bool Struct_reportConstructionExhaustion(const char *owner, size_t requestedBytes);
+
+// The process-wide construction-refusal count for the current epoch.
+;;TEST
+uint64_t Struct_constructionExhaustionCount(void);
+
+// Start a fresh process-wide construction epoch.
+;;TEST
+void Struct_resetConstructionExhaustion(void);
+
 #endif
