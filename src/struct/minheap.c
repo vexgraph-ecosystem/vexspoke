@@ -110,6 +110,8 @@ MinHeap *MinHeap_1(size_t capacity) {
 
     (*heap).size = 0;
     (*heap).capacity = (int32_t)capacity;
+    (*heap).exhaustionCount = 0;
+    (*heap).exhaustionReported = false;
     (*heap).items = (int32_t*) Memory_alloc(TYPE_INT_ARRAY, slots * sizeof(int32_t));
     (*heap).priorities = (float*) Memory_alloc(TYPE_FLOAT_ARRAY, slots * sizeof(float));
     if (!(*heap).items || !(*heap).priorities) {
@@ -142,10 +144,19 @@ bool MinHeap_isEmpty(MinHeap *heap) {
     return MinHeap_size(heap) == 0;
 }
 
+;;TEST
+uint64_t MinHeap_exhaustionCount(const MinHeap *heap) {
+    return heap ? Struct_exhaustionCount(&(*heap).exhaustionCount) : 0;
+}
+
 int MinHeap_push(MinHeap *heap, int32_t item, float priority) {
     if (!heap) return 0;
-    if ((*heap).size >= (*heap).capacity)
+    if ((*heap).size >= (*heap).capacity) {
+        // A full fixed-capacity heap is a refusal, not a silent no-op.
+        (void) Struct_reportExhaustion(&(*heap).exhaustionCount, &(*heap).exhaustionReported,
+                                       "minheap", sizeof(int32_t) * 2u, (size_t) (*heap).capacity);
         return 0;
+    }
     (*heap).size++;
     size_t index = (size_t)(*heap).size;
     (*heap).items[index] = item;

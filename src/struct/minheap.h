@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include "c23/constructor.h"
 
+#include "struct/exhaustion.h"
+
 // struct/minheap.h — the MinHeap class, ported from struct/MinHeap.java.
 //
 // Priority queue over (int item, float priority) pairs. 1-based indexing for
@@ -16,6 +18,10 @@ typedef struct MinHeap {
     int32_t capacity;   // max entries (1-based slots are capacity + 1)
     int32_t *items;     // item at heap index i (i in [1, size])
     float *priorities;  // priority at heap index i
+    // Exhaustion observability (the Exhaustion Loudness Law): a full heap (or a
+    // refused construction) is counted, and the epoch's first refusal reports.
+    uint64_t exhaustionCount;
+    bool exhaustionReported;
 } MinHeap;
 
 // Heap with room for capacity entries.
@@ -26,6 +32,9 @@ void MinHeap_free(MinHeap *heap);
 size_t MinHeap_size(MinHeap *heap);
 size_t MinHeap_capacity(MinHeap *heap);
 bool MinHeap_isEmpty(MinHeap *heap);
+// Refused-insertion count since construction (the Exhaustion Loudness Law).
+;;TEST
+uint64_t MinHeap_exhaustionCount(const MinHeap *heap);
 
 // Push (item, priority). Returns 0 if the heap is full.
 int MinHeap_push(MinHeap *heap, int32_t item, float priority);
