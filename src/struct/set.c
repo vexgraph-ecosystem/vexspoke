@@ -4,6 +4,7 @@
 
 #include "nio/mem.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "util/arrays.h"
 #include "util/hash.h"
 #include "annotation/definition.h"
@@ -166,7 +167,10 @@ Set *Set_2(uint32_t elementClass, size_t capacity) {
     if (cap < 4) cap = 4;
 
     Set *set = (Set*) Memory_alloc(TYPE_SET, sizeof(Set));
-    if (!set) return nullptr;
+    if (!set) {
+        (void) Struct_reportConstructionExhaustion("set", sizeof(Set));
+        return nullptr;
+    }
 
     Collection *c = asCollection(set);
     (*c).typeId = TYPE_SET;
@@ -182,6 +186,7 @@ Set *Set_2(uint32_t elementClass, size_t capacity) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SET);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("set", Bytes);
         Memory_free(set);
         return nullptr;
     }
