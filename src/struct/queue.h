@@ -29,6 +29,8 @@ uint8_t *Queue_slot(Queue *queue, size_t index);
 
 bool Queue_isEmpty(Queue *queue);
 size_t Queue_size(Queue *queue);
+// Refused-grow count since construction (the Exhaustion Loudness Law).
+uint64_t Queue_exhaustionCount(const Queue *queue);
 size_t Queue_length(Queue *queue);
 size_t Queue_capacity(Queue *queue);
 uint32_t Queue_elementClassId(Queue *queue);

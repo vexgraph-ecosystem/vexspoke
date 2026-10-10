@@ -84,6 +84,8 @@ static Queue *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).stride = (uint32_t)stride;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
@@ -103,8 +105,10 @@ static int ensureCapacity(Collection *c) {
     size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
-    if (!next)
+    if (!next) {
+        Collection_reportExhaustion(c, Bytes);
         return 0;
+    }
 
     size_t count = (*c).activeCount;
     if (count > 0) {
@@ -184,6 +188,10 @@ bool Queue_isEmpty(Queue *queue) {
 
 size_t Queue_size(Queue *queue) {
     return Collection_size(asCollection(queue));
+}
+
+uint64_t Queue_exhaustionCount(const Queue *queue) {
+    return Collection_exhaustionCount((const Collection*) queue);
 }
 
 size_t Queue_length(Queue *queue) {
