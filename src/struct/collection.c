@@ -6,6 +6,7 @@
 
 #include "nio/mem.h"
 #include "exception/throw.h"
+#include "annotation/debug.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -56,6 +57,9 @@
  *   - Collection_capacity(c)
  *   - Collection_head(c)
  *   - Collection_dataBuffer(c)
+ *   - Collection_reportExhaustion(c, requestedBytes)
+ *   - Collection_exhaustionCount(c)
+ *   - Collection_resetExhaustion(c)
  *   - Collection_readSlot(c, index)
  *   - Collection_writeSlot(c, index, value)
  *   - Collection_readSlotUnsafe(c, index)
@@ -126,6 +130,36 @@ uint32_t Collection_valClassId(Collection *c) {
 uint32_t Collection_capacity(Collection *c) {
     if (!c) return 0;
     return (*c).capacity;
+}
+
+// --- Exhaustion observability (the Exhaustion Loudness Law) ---
+
+/** Count a refused grow and emit the epoch's single diagnostic. Always false. */
+;;DEBUG
+bool Collection_reportExhaustion(Collection *c, size_t requestedBytes) {
+    if (!c) {
+        THROW("collection: grow refused on a null collection (%zu bytes)", requestedBytes);
+        return false;
+    }
+    (*c).exhaustionCount++;
+    if (!(*c).exhaustionReported) {
+        (*c).exhaustionReported = true;
+        THROW("collection: grow refused, requested %zu bytes (capacity %u slots, stride %u)",
+              requestedBytes, (*c).capacity, (*c).stride);
+    }
+    return false;
+}
+
+/** Return the refused-grow count since construction or the last reset. */
+uint64_t Collection_exhaustionCount(const Collection *c) {
+    return c ? (*c).exhaustionCount : 0;
+}
+
+/** Start a fresh exhaustion epoch for this collection. */
+void Collection_resetExhaustion(Collection *c) {
+    if (!c) return;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 }
 
 uint32_t Collection_head(Collection *c) {

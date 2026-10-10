@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "annotation/debug.h"
+
 // struct/collection.h — the Collection metadata struct, ported from
 // struct/Collection.java.
 //
@@ -22,6 +24,10 @@ typedef struct Collection {
     uint32_t capacity;      // element capacity (or slot capacity)
     uint32_t head;          // circular head index (Deque/Queue); else 0
     uint8_t *data;          // element / slot buffer
+    // Exhaustion observability (the Exhaustion Loudness Law): every refused
+    // grow is counted; the epoch's first refusal also emits one diagnostic.
+    uint64_t exhaustionCount;   // refusals since construction/reset
+    bool exhaustionReported;    // the epoch's one diagnostic was emitted
 } Collection;
 
 uint64_t Collection_type(Collection *c);
@@ -35,6 +41,18 @@ uint32_t Collection_valClassId(Collection *c);
 uint32_t Collection_capacity(Collection *c);
 uint32_t Collection_head(Collection *c);
 uint8_t *Collection_dataBuffer(Collection *c);
+
+// --- Exhaustion observability (the Exhaustion Loudness Law) ---
+// Called by a container when its buffer could not grow: counts the refusal and
+// emits the epoch's single THROW naming the requested bytes. Always returns
+// false so a caller can `return Collection_reportExhaustion(...)`. A collection
+// constructed (or reset) starts a fresh epoch.
+;;DEBUG
+bool Collection_reportExhaustion(Collection *c, size_t requestedBytes);
+// The number of refused grows since the collection was constructed or reset.
+uint64_t Collection_exhaustionCount(const Collection *c);
+// Start a fresh exhaustion epoch (count zeroed, diagnostic armed again).
+void Collection_resetExhaustion(Collection *c);
 
 // Generic slot read/write for the scalar/pointer collections. Reads the slot at
 // index with the collection's stride, widening small ints (legacy readSlot).
