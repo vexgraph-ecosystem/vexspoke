@@ -272,8 +272,11 @@ static bool dirGrow(ChunkedList *self) {
     uint32_t newCap = oldCap == 0u ? VEX_CHUNKED_DIR_INIT : oldCap * 2u;
     size_t Bytes = sizeof(ChunkDir) + (size_t)newCap * sizeof(_Atomic(uint8_t*));
     ChunkDir *next = (ChunkDir*) Memory_alloc(TYPE_CHUNKED_LIST, Bytes);
-    if (!next)
+    if (!next) {
+        // Loud, counted refusal through the embedded Collection mirror.
+        Collection_reportExhaustion(&(*self).collection, Bytes);
         return false;
+    }
 
     (*next).prev = old;
     (*next).capacity = newCap;
@@ -719,6 +722,11 @@ bool ChunkedList_isEmpty(const ChunkedList *self) {
     if (!self)
         return true;
     return atomic_load(&(*self).committed) == 0u;
+}
+
+;;TEST
+uint64_t ChunkedList_exhaustionCount(const ChunkedList *self) {
+    return self ? Collection_exhaustionCount(&(*self).collection) : 0;
 }
 
 uint32_t ChunkedList_elementClassId(const ChunkedList *self) {

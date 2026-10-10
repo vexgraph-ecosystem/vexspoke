@@ -194,6 +194,9 @@ uint32_t ChunkedList_size(const ChunkedList *self);
 uint32_t ChunkedList_length(const ChunkedList *self);
 uint32_t ChunkedList_capacity(const ChunkedList *self);
 bool ChunkedList_isEmpty(const ChunkedList *self);
+// Refused-directory-grow count since construction (the Exhaustion Loudness Law).
+;;TEST
+uint64_t ChunkedList_exhaustionCount(const ChunkedList *self);
 uint32_t ChunkedList_elementClassId(const ChunkedList *self);
 uint32_t ChunkedList_stride(const ChunkedList *self);
 uint32_t ChunkedList_getChunkCount(const ChunkedList *self);
