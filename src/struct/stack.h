@@ -40,6 +40,8 @@ uint8_t *Stack_slot(Stack *stack, size_t index);
 
 bool Stack_isEmpty(Stack *stack);
 size_t Stack_size(Stack *stack);
+// Refused-grow count since construction (the Exhaustion Loudness Law).
+uint64_t Stack_exhaustionCount(const Stack *stack);
 size_t Stack_length(Stack *stack);
 size_t Stack_capacity(Stack *stack);
 uint32_t Stack_elementClassId(Stack *stack);

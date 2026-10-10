@@ -87,6 +87,8 @@ static Stack *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).stride = (uint32_t)stride;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
@@ -141,7 +143,9 @@ TryValue Stack_pushTry(Stack *stack, uint64_t valueOrPointer) {
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
         uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
         if (!next) {
-            THROW("stack pushTry: growth allocation failed, arena exhausted (needed %zu bytes)", Bytes);
+            // Shared loud, counted refusal (the Exhaustion Loudness Law); the
+            // Try carries the machine-readable reason.
+            (void) Collection_reportExhaustion(c, Bytes);
             return TryValue_error(TRY_NO_MEMORY);
         }
         memcpy(next, (*c).data, (*c).activeCount * (*c).stride);
@@ -185,6 +189,10 @@ bool Stack_isEmpty(Stack *stack) {
 
 size_t Stack_size(Stack *stack) {
     return Collection_size(asCollection(stack));
+}
+
+uint64_t Stack_exhaustionCount(const Stack *stack) {
+    return Collection_exhaustionCount((const Collection*) stack);
 }
 
 size_t Stack_length(Stack *stack) {
