@@ -40,6 +40,8 @@ List *Set_toSortedList(Set *set);
 
 bool Set_isEmpty(Set *set);
 size_t Set_size(Set *set);
+// Refused-grow count since construction (the Exhaustion Loudness Law).
+uint64_t Set_exhaustionCount(const Set *set);
 size_t Set_capacity(Set *set);
 uint32_t Set_elementClassId(Set *set);
 uint8_t *Set_dataBuffer(Set *set);

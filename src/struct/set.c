@@ -133,7 +133,10 @@ static void rehash(Collection *c, size_t newCap) {
     size_t Bytes = newCap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SET);
     uint8_t *newData = (uint8_t*) Memory_alloc(bufType, Bytes);
-    if (!newData) return;
+    if (!newData) {
+        Collection_reportExhaustion(c, Bytes);
+        return;
+    }
     memset(newData, 0, Bytes);
 
     size_t mask = newCap - 1;
@@ -172,6 +175,8 @@ Set *Set_2(uint32_t elementClass, size_t capacity) {
     (*c).stride = 0;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_SET);
@@ -311,6 +316,10 @@ bool Set_isEmpty(Set *set) {
 
 size_t Set_size(Set *set) {
     return Collection_size(asCollection(set));
+}
+
+uint64_t Set_exhaustionCount(const Set *set) {
+    return Collection_exhaustionCount((const Collection*) set);
 }
 
 size_t Set_capacity(Set *set) {
