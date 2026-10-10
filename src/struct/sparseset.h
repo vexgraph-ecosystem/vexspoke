@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include "c23/constructor.h"
 
+#include "struct/exhaustion.h"
+
 // struct/sparseset.h — the SparseSet class, ported from struct/SparseSet.java.
 //
 // ECS sparse set: maps sparse entity ids (int) to a tightly packed dense index.
@@ -20,6 +22,9 @@ typedef struct SparseSet {
     int32_t *dense;        // dense[i] = entity id
     int32_t *sparse;       // sparse[entity] = dense index, -1 = absent
     uint8_t *data;         // component data, capacity * stride Bytes
+    // Exhaustion observability (the Exhaustion Loudness Law).
+    uint64_t exhaustionCount;
+    bool exhaustionReported;
 } SparseSet;
 
 // Set over entity ids [0, maxEntities) with optional component stride.
@@ -28,6 +33,9 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride);
 void SparseSet_free(SparseSet *set);
 
 size_t SparseSet_count(SparseSet *set);
+// Refused-insertion count since construction (the Exhaustion Loudness Law).
+;;TEST
+uint64_t SparseSet_exhaustionCount(const SparseSet *set);
 size_t SparseSet_capacity(SparseSet *set);
 size_t SparseSet_maxEntities(SparseSet *set);
 

@@ -77,6 +77,8 @@ SparseSet *SparseSet_3(size_t capacity, size_t maxEntities, size_t stride) {
     (*set).maxEntities = (int32_t)maxEntities;
     (*set).count = 0;
     (*set).stride = (int32_t)stride;
+    (*set).exhaustionCount = 0;
+    (*set).exhaustionReported = false;
 
     (*set).dense = allocateInts(capacity);
     if (!(*set).dense) {
@@ -122,6 +124,11 @@ size_t SparseSet_count(SparseSet *set) {
     return (size_t)(*set).count;
 }
 
+;;TEST
+uint64_t SparseSet_exhaustionCount(const SparseSet *set) {
+    return set ? Struct_exhaustionCount(&(*set).exhaustionCount) : 0;
+}
+
 size_t SparseSet_capacity(SparseSet *set) {
     if (!set) return 0;
     return (size_t)(*set).capacity;
@@ -151,8 +158,12 @@ uint8_t *SparseSet_add(SparseSet *set, int32_t entityId) {
         return (*set).data;
     }
 
-    if ((*set).count >= (*set).capacity)
+    if ((*set).count >= (*set).capacity) {
+        // The dense capacity is full: a refusal, reported (once per epoch).
+        (void) Struct_reportExhaustion(&(*set).exhaustionCount, &(*set).exhaustionReported,
+                                       "sparseset", (size_t) (*set).capacity, (size_t) (*set).capacity);
         return nullptr;
+    }
 
     int32_t count = (*set).count;
     (*set).dense[count] = entityId;
