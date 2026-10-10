@@ -334,6 +334,7 @@ size_t Map_size(Map *map) {
     return Collection_size(asCollection(map));
 }
 
+;;TEST
 uint64_t Map_exhaustionCount(const Map *map) {
     return Collection_exhaustionCount((const Collection*) map);
 }
