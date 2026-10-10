@@ -224,10 +224,11 @@
 #define TYPE_REACTIVE_PROBABLE      (SUGAR_VEX | PROJ_VEXSPOKE | FORM_SINGLETON | WRAP_REACTIVE | WRAP2_PROBABLE | ID_REACTIVE_PROBABLE)
 
 // --- DOWNSTREAM CLASS SPACE (owned per project, NOT listed here) ---
-// Every project ships its own *-type.h registry and numbers its classes
-// from 1: darling classes live in darling/c23/darling-type.h, graphvex in
-// graphvex/src/graphvex/type.h, hotcwap module constants in
-// hotcwap/oop/hotcwap-type.h. This file keeps vexspoke-owned IDs only, in the
+// Each project numbers its classes from 1 in its own *-type.h: darkbase
+// (src/darkbase/type.h) and samplerate (src/oop/type.h) ship real registries
+// today; darling's src/c23/darling-type.h is still an empty draft, and
+// graphvex/hotcwap ship no registry file yet. This file keeps vexspoke-owned
+// IDs only, in the
 // legacy 1-based list that predates the project byte (vexspoke primitives
 // pass bare ids to the allocator's BitPool keyed by these numbers). Central
 // logic must never include downstream ID files (upstream builds standalone) —
