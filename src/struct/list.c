@@ -85,8 +85,12 @@ static uint8_t *bufferGrow(Collection *c, size_t needed) {
     size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
-    if (!next)
+    if (!next) {
+        // Loud, counted refusal (the Exhaustion Loudness Law): the element is
+        // not admitted and the caller can query Collection_exhaustionCount.
+        Collection_reportExhaustion(c, Bytes);
         return nullptr;
+    }
     size_t oldBytes = (*c).activeCount * (*c).stride;
     memcpy(next, (*c).data, oldBytes);
     Memory_free((*c).data);
@@ -109,6 +113,8 @@ static List *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).stride = (uint32_t)stride;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
@@ -218,6 +224,10 @@ bool List_isEmpty(List *list) {
 
 size_t List_size(List *list) {
     return Collection_size(asCollection(list));
+}
+
+uint64_t List_exhaustionCount(const List *list) {
+    return Collection_exhaustionCount((const Collection*) list);
 }
 
 size_t List_length(List *list) {
