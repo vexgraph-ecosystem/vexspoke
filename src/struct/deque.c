@@ -91,6 +91,8 @@ static Deque *instant(uint32_t elementClass, size_t capacity, size_t count) {
     (*c).stride = (uint32_t)stride;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
@@ -110,8 +112,10 @@ static int ensureCapacity(Collection *c) {
     size_t Bytes = newCap * (*c).stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
     uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
-    if (!next)
+    if (!next) {
+        Collection_reportExhaustion(c, Bytes);
         return 0;
+    }
 
     size_t count = (*c).activeCount;
     if (count > 0) {
@@ -237,6 +241,10 @@ bool Deque_isEmpty(Deque *deque) {
 
 size_t Deque_size(Deque *deque) {
     return Collection_size(asCollection(deque));
+}
+
+uint64_t Deque_exhaustionCount(const Deque *deque) {
+    return Collection_exhaustionCount((const Collection*) deque);
 }
 
 size_t Deque_length(Deque *deque) {
