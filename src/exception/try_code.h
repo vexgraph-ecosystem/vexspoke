@@ -19,7 +19,8 @@ typedef enum TryCode {
     TRY_NOT_FOUND,    // the named thing is absent
     TRY_IO,           // a file or stream read/write failed
     TRY_FORMAT,       // Bytes were present but malformed
-    TRY_UNSUPPORTED   // the operation is not supported here
+    TRY_UNSUPPORTED,  // the operation is not supported here
+    TRY_NO_MEMORY     // the owner's backing storage could not satisfy the request
 } TryCode;
 
 // True when code == TRY_OK — the single success test (the Hot-Path Minimal

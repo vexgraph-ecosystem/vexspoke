@@ -28,7 +28,7 @@
  * ----------------------------------------------------------------------------
  *   TryCode {
  *     TRY_OK, TRY_NULL_ARG, TRY_BOUNDS, TRY_OVERFLOW, TRY_EMPTY,
- *     TRY_NOT_FOUND, TRY_IO, TRY_FORMAT, TRY_UNSUPPORTED
+ *     TRY_NOT_FOUND, TRY_IO, TRY_FORMAT, TRY_UNSUPPORTED, TRY_NO_MEMORY
  *   }
  *
  * FUNCTION REGISTRY:
@@ -57,6 +57,7 @@ const char *TryCode_name(TryCode code) {
         case TRY_IO:          return "TRY_IO";
         case TRY_FORMAT:      return "TRY_FORMAT";
         case TRY_UNSUPPORTED: return "TRY_UNSUPPORTED";
+        case TRY_NO_MEMORY:   return "TRY_NO_MEMORY";
         default:              return "TRY_UNKNOWN";
     }
 }
@@ -73,6 +74,7 @@ const char *TryCode_message(TryCode code) {
         case TRY_IO:          return "file or stream operation failed";
         case TRY_FORMAT:      return "Bytes present but malformed";
         case TRY_UNSUPPORTED: return "operation not supported here";
+        case TRY_NO_MEMORY:   return "owner backing storage could not satisfy the request";
         default:              return "unknown TryCode";
     }
 }

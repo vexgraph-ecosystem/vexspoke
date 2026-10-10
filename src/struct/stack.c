@@ -5,6 +5,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "exception/throw.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -47,6 +48,7 @@
  *   - Stack_2Count(element_class, count)
  *   - Stack_free(stack)
  *   - Stack_push(stack, value_or_pointer)
+ *   - Stack_pushTry(stack, value_or_pointer)
  *   - Stack_pop(stack)
  *   - Stack_peek(stack)
  *   - Stack_slot(stack, index)
@@ -114,7 +116,16 @@ void Stack_free(Stack *stack) {
 }
 
 void Stack_push(Stack *stack, uint64_t valueOrPointer) {
-    if (!stack) return;
+    // Family-consistent void entry point, but not silent: a refused element is
+    // reported by Stack_pushTry (THROW + a named TryCode).
+    (void) Stack_pushTry(stack, valueOrPointer);
+}
+
+TryValue Stack_pushTry(Stack *stack, uint64_t valueOrPointer) {
+    if (!stack) {
+        THROW("stack pushTry: null stack");
+        return TryValue_error(TRY_NULL_ARG);
+    }
     Collection *c = asCollection(stack);
     if ((*c).activeCount >= (*c).capacity) {
         // Double, like the sibling containers (Deque/Queue/List). Growing by a
@@ -122,13 +133,17 @@ void Stack_push(Stack *stack, uint64_t valueOrPointer) {
         // storage is reclaimed only wholesale -- so a large push run exhausts
         // the arena long before the buffer fits (the No Hardcoding Law).
         size_t newCap = (*c).capacity ? (size_t)(*c).capacity * 2 : DEFAULT_CAPACITY;
-        if (newCap > UINT32_MAX)
-            return; // capacity is a uint32 field; refuse rather than truncate
+        if (newCap > UINT32_MAX) {
+            THROW("stack pushTry: capacity %zu would exceed uint32", newCap);
+            return TryValue_error(TRY_OVERFLOW);
+        }
         size_t Bytes = newCap * (*c).stride;
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
         uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
-        if (!next)
-            return;
+        if (!next) {
+            THROW("stack pushTry: growth allocation failed, arena exhausted (needed %zu bytes)", Bytes);
+            return TryValue_error(TRY_NO_MEMORY);
+        }
         memcpy(next, (*c).data, (*c).activeCount * (*c).stride);
         Memory_free((*c).data);
         (*c).data = next;
@@ -136,6 +151,7 @@ void Stack_push(Stack *stack, uint64_t valueOrPointer) {
     }
     Collection_writeSlot(c, (*c).activeCount, valueOrPointer);
     (*c).activeCount++;
+    return TryValue_ok(valueOrPointer);
 }
 
 uint64_t Stack_pop(Stack *stack) {
