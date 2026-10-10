@@ -98,6 +98,8 @@ SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass,
     (*self).collection.stride = (uint32_t) stride;
     (*self).collection.capacity = (uint32_t) totalVoxels;
     (*self).collection.head = 0;
+    (*self).collection.exhaustionCount = 0;
+    (*self).collection.exhaustionReported = false;
     (*self).collection.data = data;
     (*self).radius = radius;
     (*self).diameter = diameter;
