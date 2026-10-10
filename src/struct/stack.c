@@ -6,6 +6,7 @@
 #include "oop/stride.h"
 #include "oop/type.h"
 #include "exception/throw.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -77,8 +78,10 @@ static Stack *instant(uint32_t elementClass, size_t capacity, size_t count) {
     size_t stride = Stride_get(elementClass);
     size_t cap = capacity < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : capacity;
     Stack *stack = (Stack*) Memory_alloc(TYPE_STACK, sizeof(Stack));
-    if (!stack)
+    if (!stack) {
+        (void) Struct_reportConstructionExhaustion("stack", sizeof(Stack));
         return nullptr;
+    }
 
     Collection *c = asCollection(stack);
     (*c).typeId = TYPE_STACK;
@@ -94,6 +97,7 @@ static Stack *instant(uint32_t elementClass, size_t capacity, size_t count) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("stack", Bytes);
         Memory_free(stack);
         return nullptr;
     }
