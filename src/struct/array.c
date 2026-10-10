@@ -6,6 +6,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "annotation/checker.h"
@@ -76,8 +77,10 @@ static Collection *asCollection(Array *array) {
 Array *Array_2(uint32_t elementClass, size_t length) {
     size_t stride = Stride_get(elementClass);
     Array *array = (Array*) Memory_alloc(TYPE_ARRAY, sizeof(Array));
-    if (!array)
+    if (!array) {
+        (void) Struct_reportConstructionExhaustion("array", sizeof(Array));
         return nullptr;
+    }
 
     Collection *c = asCollection(array);
     (*c).typeId = TYPE_ARRAY;
@@ -93,6 +96,7 @@ Array *Array_2(uint32_t elementClass, size_t length) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("array", Bytes);
         Memory_free(array);
         return nullptr;
     }
