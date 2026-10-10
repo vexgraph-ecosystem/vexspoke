@@ -1,19 +1,5 @@
 # vexspoke, by Vex, truly.
 
-## CLion: CMake is IDE metadata only
-
-Open this repository root as a CMake project. `CMakeLists.txt` provides C23
-source targets, include paths and compiler flags for navigation, diagnostics
-and inlay hints. Its object target is excluded from the default build; no
-dependency downloads, linking or application runner are wired into it.
-Optional `VULKAN_INCLUDE_DIR` supplies local SDK headers. Missing headers stay
-real IDE errors; no fake declarations are generated. IDE appearance is user-verified.
-
-Build with [b](https://github.com/vex-graph/b), not this adapter. From the
-Vexgraph workspace root: `./tools/b build vexspoke`. A standalone checkout
-must supply its real b build/dependency context; IDE configuration is not proof
-of standalone runtime readiness.
-
 ## Current State
 
 **Role:** R2 CPU computation and behavior — math, algorithms, synchronization,
@@ -69,9 +55,6 @@ The separate engine `nio/relational_memory.h` exposes the Rust byte/string ABI.
 No C/Rust atomic-layout compatibility,
 automatic schema migration or live engine reload integration is implied.
 
-For the IDE adapter, set `-DRELATIONAL_ENGINE_SOURCE_DIR=<relational-engine>/src`.
-Canonical IO/NIO headers come from that checkout; missing headers remain errors.
-
 Vexspoke includes no consumer or host headers; its production R2 storage boundary
 does not introduce an R1/R3/R4/R5 dependency. GPU shaders and dispatch remain
 Graphvex R3. The ecosystem map lives in the workspace `../../../README.md` and
@@ -84,9 +67,9 @@ the readiness Gist. The ecosystem, especially its R5 apps, is unfinished.
 ```
 
 ### Standalone autonomy
-The Standalone Autonomy Law still requires real dependency closure for runtime
-builds. This IDE-only CMake adapter does not export a runtime `vexspoke` target
-and never fetches dependencies; configure consumers' local header paths instead.
+The Standalone Autonomy Law requires real dependency closure through
+[b](https://github.com/vex-graph/b), including the engine-owned IO/NIO headers
+and implementation. Workspace indexing does not prove standalone runtime readiness.
 
 ---
 
