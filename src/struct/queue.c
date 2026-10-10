@@ -5,6 +5,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -74,8 +75,10 @@ static Queue *instant(uint32_t elementClass, size_t capacity, size_t count) {
     size_t stride = Stride_get(elementClass);
     size_t cap = capacity < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : capacity;
     Queue *queue = (Queue*) Memory_alloc(TYPE_QUEUE, sizeof(Queue));
-    if (!queue)
+    if (!queue) {
+        (void) Struct_reportConstructionExhaustion("queue", sizeof(Queue));
         return nullptr;
+    }
 
     Collection *c = asCollection(queue);
     (*c).typeId = TYPE_QUEUE;
@@ -91,6 +94,7 @@ static Queue *instant(uint32_t elementClass, size_t capacity, size_t count) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("queue", Bytes);
         Memory_free(queue);
         return nullptr;
     }
