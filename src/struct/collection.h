@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "annotation/debug.h"
+#include "annotation/test.h"
 
 // struct/collection.h — the Collection metadata struct, ported from
 // struct/Collection.java.
@@ -50,8 +51,10 @@ uint8_t *Collection_dataBuffer(Collection *c);
 ;;DEBUG
 bool Collection_reportExhaustion(Collection *c, size_t requestedBytes);
 // The number of refused grows since the collection was constructed or reset.
+;;TEST
 uint64_t Collection_exhaustionCount(const Collection *c);
 // Start a fresh exhaustion epoch (count zeroed, diagnostic armed again).
+;;TEST
 void Collection_resetExhaustion(Collection *c);
 
 // Generic slot read/write for the scalar/pointer collections. Reads the slot at

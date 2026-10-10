@@ -7,6 +7,7 @@
 #include "nio/mem.h"
 #include "exception/throw.h"
 #include "annotation/debug.h"
+#include "annotation/test.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -151,11 +152,13 @@ bool Collection_reportExhaustion(Collection *c, size_t requestedBytes) {
 }
 
 /** Return the refused-grow count since construction or the last reset. */
+;;TEST
 uint64_t Collection_exhaustionCount(const Collection *c) {
     return c ? (*c).exhaustionCount : 0;
 }
 
 /** Start a fresh exhaustion epoch for this collection. */
+;;TEST
 void Collection_resetExhaustion(Collection *c) {
     if (!c) return;
     (*c).exhaustionCount = 0;
