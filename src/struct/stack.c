@@ -15,10 +15,12 @@
  * ============================================================================
  * LIFO stack ported from struct/Stack.java: embeds the Collection mirror as
  * its first member (a Stack* is a Collection*) and grows its single data
- * buffer by DEFAULT_CAPACITY (1024) slots when full, copying live entries
- * into the new arena block. Push/pop/peek/slot ride Collection_readSlot /
- * Collection_writeSlot; capacity floors at 1024. Lives at R2 as a leaf
- * container behavior.
+ * buffer by doubling when full, copying live entries into the new arena block.
+ * Push/pop/peek/slot ride Collection_readSlot / Collection_writeSlot; capacity
+ * floors at 1024. Doubling matches the sibling containers and keeps the total
+ * bump allocated across growths proportional to the final size, because freed
+ * bump storage is reclaimed only wholesale. Lives at R2 as a leaf container
+ * behavior.
  * ============================================================================
  */
 
@@ -115,7 +117,13 @@ void Stack_push(Stack *stack, uint64_t valueOrPointer) {
     if (!stack) return;
     Collection *c = asCollection(stack);
     if ((*c).activeCount >= (*c).capacity) {
-        size_t newCap = (*c).capacity + DEFAULT_CAPACITY;
+        // Double, like the sibling containers (Deque/Queue/List). Growing by a
+        // fixed step allocates a fresh buffer on every growth, and freed bump
+        // storage is reclaimed only wholesale -- so a large push run exhausts
+        // the arena long before the buffer fits (the No Hardcoding Law).
+        size_t newCap = (*c).capacity ? (size_t)(*c).capacity * 2 : DEFAULT_CAPACITY;
+        if (newCap > UINT32_MAX)
+            return; // capacity is a uint32 field; refuse rather than truncate
         size_t Bytes = newCap * (*c).stride;
         uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*c).elementClass);
         uint8_t *next = (uint8_t*) Memory_alloc(bufType, Bytes);
