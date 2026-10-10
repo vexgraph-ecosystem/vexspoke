@@ -4,6 +4,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -84,11 +85,13 @@ CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass,
 
     CircleArray *self = (CircleArray*) Memory_alloc(TYPE_CIRCLE_ARRAY, sizeof(CircleArray));
     if (self == nullptr) {
+        (void) Struct_reportConstructionExhaustion("circle_array", sizeof(CircleArray));
         return nullptr;
     }
 
     uint8_t *data = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, dataBytes);
     if (data == nullptr) {
+        (void) Struct_reportConstructionExhaustion("circle_array", dataBytes);
         Memory_free(self);
         return nullptr;
     }
