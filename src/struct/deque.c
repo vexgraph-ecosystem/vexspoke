@@ -5,6 +5,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -81,8 +82,10 @@ static Deque *instant(uint32_t elementClass, size_t capacity, size_t count) {
     size_t stride = Stride_get(elementClass);
     size_t cap = capacity < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : capacity;
     Deque *deque = (Deque*) Memory_alloc(TYPE_DEQUE, sizeof(Deque));
-    if (!deque)
+    if (!deque) {
+        (void) Struct_reportConstructionExhaustion("deque", sizeof(Deque));
         return nullptr;
+    }
 
     Collection *c = asCollection(deque);
     (*c).typeId = TYPE_DEQUE;
@@ -98,6 +101,7 @@ static Deque *instant(uint32_t elementClass, size_t capacity, size_t count) {
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
     (*c).data = (uint8_t*) Memory_alloc(bufType, Bytes);
     if (!(*c).data) {
+        (void) Struct_reportConstructionExhaustion("deque", Bytes);
         Memory_free(deque);
         return nullptr;
     }
