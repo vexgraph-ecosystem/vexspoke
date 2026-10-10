@@ -75,7 +75,7 @@ and implementation. Workspace indexing does not prove standalone runtime readine
 
 ## What's in this repo
 
-* **`src/annotation`** — Zero-cost C23 static assert markers (`;;OVERVIEW`, `;;DRAFT`, `;;INTENTION`, `;;PLATFORM_EXCLUSIVE`).
+* **`src/annotation`** — Zero-cost C23 static assert markers (`;;OVERVIEW`, `;;DEFINITION`, `;;GETTER`, `;;SETTER`, `;;DRAFT`, `;;INCOMPLETE`, `;;PLATFORM_EXCLUSIVE`, `;;INTENTION`, `;;INHERITS`, `;;REACTIVE`, `;;WHAT`, `;;CHECKER`, `;;HOTCODE`, `;;DEBUG`). `;;DEBUG` marks a debug-only surface a release build may drop (the Two-Semicolon Annotation Style Law).
 * **`src/c23/constructor.h`** — Java-style arity constructor overloading (`Class(...)` $\rightarrow$ `Class_0`, `Class_1`) via pure preprocessor dispatch.
 * **Engine `src/nio/mem.h/.c`** — Production `Memory_*` ABI and self-describing header, implemented and linked from Relational Engine. No Vexspoke IO/NIO source remains.
 * **Engine `src/nio/relational_memory.h`** — Separate Rust byte/string ABI include, not a silent replacement for native arena semantics.
