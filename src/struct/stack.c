@@ -191,6 +191,7 @@ size_t Stack_size(Stack *stack) {
     return Collection_size(asCollection(stack));
 }
 
+;;TEST
 uint64_t Stack_exhaustionCount(const Stack *stack) {
     return Collection_exhaustionCount((const Collection*) stack);
 }
@@ -211,6 +212,7 @@ size_t Stack_stride(Stack *stack) {
     return Collection_stride(asCollection(stack));
 }
 
+;;TEST
 uint8_t *Stack_dataBuffer(Stack *stack) {
     return Collection_dataBuffer(asCollection(stack));
 }
