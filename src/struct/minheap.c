@@ -106,7 +106,10 @@ static void sift_down(MinHeap *heap, size_t index) {
 MinHeap *MinHeap_1(size_t capacity) {
     size_t slots = capacity + 1;
     MinHeap *heap = (MinHeap*) Memory_alloc(TYPE_MIN_HEAP, sizeof(MinHeap));
-    if (!heap) return nullptr;
+    if (!heap) {
+        (void) Struct_reportConstructionExhaustion("minheap", sizeof(MinHeap));
+        return nullptr;
+    }
 
     (*heap).size = 0;
     (*heap).capacity = (int32_t)capacity;
