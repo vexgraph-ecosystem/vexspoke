@@ -135,7 +135,10 @@ static void rehash(Collection *c, size_t newCap) {
     size_t Bytes = newCap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
     uint8_t *newData = (uint8_t*) Memory_alloc(bufType, Bytes);
-    if (!newData) return;
+    if (!newData) {
+        Collection_reportExhaustion(c, Bytes);
+        return;
+    }
     memset(newData, 0, Bytes);
 
     size_t mask = newCap - 1;
@@ -176,6 +179,8 @@ Map *Map_3(uint32_t keyClass, uint32_t valClass, size_t capacity) {
     (*c).stride = valClass;
     (*c).capacity = (uint32_t)cap;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = cap * SLOT_SIZE;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, ID_MAP);
@@ -327,6 +332,10 @@ bool Map_isEmpty(Map *map) {
 
 size_t Map_size(Map *map) {
     return Collection_size(asCollection(map));
+}
+
+uint64_t Map_exhaustionCount(const Map *map) {
+    return Collection_exhaustionCount((const Collection*) map);
 }
 
 size_t Map_capacity(Map *map) {

@@ -41,6 +41,8 @@ Array *Map_keys(Map *map);
 
 bool Map_isEmpty(Map *map);
 size_t Map_size(Map *map);
+// Refused-grow count since construction (the Exhaustion Loudness Law).
+uint64_t Map_exhaustionCount(const Map *map);
 size_t Map_capacity(Map *map);
 uint32_t Map_keyClassId(Map *map);
 uint32_t Map_valClassId(Map *map);
