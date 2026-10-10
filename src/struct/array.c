@@ -86,6 +86,8 @@ Array *Array_2(uint32_t elementClass, size_t length) {
     (*c).stride = (uint32_t)stride;
     (*c).capacity = (uint32_t)length;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
 
     size_t Bytes = length * stride;
     uint64_t bufType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, elementClass);
