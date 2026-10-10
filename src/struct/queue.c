@@ -190,6 +190,7 @@ size_t Queue_size(Queue *queue) {
     return Collection_size(asCollection(queue));
 }
 
+;;TEST
 uint64_t Queue_exhaustionCount(const Queue *queue) {
     return Collection_exhaustionCount((const Collection*) queue);
 }
