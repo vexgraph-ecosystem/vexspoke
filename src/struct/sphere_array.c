@@ -4,6 +4,7 @@
 #include "nio/mem.h"
 #include "oop/stride.h"
 #include "oop/type.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 
@@ -83,11 +84,13 @@ SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass,
 
     SphereArray *self = (SphereArray*) Memory_alloc(TYPE_SPHERE_ARRAY, sizeof(SphereArray));
     if (self == nullptr) {
+        (void) Struct_reportConstructionExhaustion("sphere_array", sizeof(SphereArray));
         return nullptr;
     }
 
     uint8_t *data = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, dataBytes);
     if (data == nullptr) {
+        (void) Struct_reportConstructionExhaustion("sphere_array", dataBytes);
         Memory_free(self);
         return nullptr;
     }
