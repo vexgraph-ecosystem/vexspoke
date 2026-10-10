@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "atomic/spin.h"
+#include "struct/exhaustion.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "nio/mem.h"
@@ -412,14 +413,17 @@ static ChunkedList *buildPaged(uint32_t elementClass, size_t stride, const uint3
         return nullptr;
 
     ChunkedList *self = (ChunkedList*) Memory_alloc(TYPE_CHUNKED_LIST, sizeof(ChunkedList));
-    if (!self)
+    if (!self) {
+        (void) Struct_reportConstructionExhaustion("chunked_list", sizeof(ChunkedList));
         return nullptr;
+    }
     memset(self, 0, sizeof(*self));
 
     uint32_t *radices = (uint32_t*) Memory_alloc(TYPE_CHUNKED_LIST, (size_t)levels * sizeof(uint32_t));
     uint32_t *shifts = (uint32_t*) Memory_alloc(TYPE_CHUNKED_LIST, (size_t)levels * sizeof(uint32_t));
     uint32_t *masks = (uint32_t*) Memory_alloc(TYPE_CHUNKED_LIST, (size_t)levels * sizeof(uint32_t));
     if (!radices || !shifts || !masks) {
+        (void) Struct_reportConstructionExhaustion("chunked_list", (size_t)levels * sizeof(uint32_t) * 3u);
         Memory_free(radices);
         Memory_free(shifts);
         Memory_free(masks);
