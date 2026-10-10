@@ -226,6 +226,7 @@ size_t List_size(List *list) {
     return Collection_size(asCollection(list));
 }
 
+;;TEST
 uint64_t List_exhaustionCount(const List *list) {
     return Collection_exhaustionCount((const Collection*) list);
 }

@@ -50,6 +50,7 @@ bool List_compare(List *a, List *b);
 bool List_isEmpty(List *list);
 size_t List_size(List *list);
 // Refused-grow count since construction (the Exhaustion Loudness Law).
+;;TEST
 uint64_t List_exhaustionCount(const List *list);
 size_t List_length(List *list);
 size_t List_capacity(List *list);
