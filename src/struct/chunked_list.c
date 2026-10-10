@@ -448,6 +448,8 @@ static ChunkedList *buildPaged(uint32_t elementClass, size_t stride, const uint3
     (*c).stride = (uint32_t)stride;
     (*c).capacity = 0;
     (*c).head = 0;
+    (*c).exhaustionCount = 0;
+    (*c).exhaustionReported = false;
     (*c).data = nullptr;
 
     atomic_store_explicit(&(*self).directory, nullptr, memory_order_relaxed);
