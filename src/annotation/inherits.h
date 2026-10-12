@@ -19,7 +19,7 @@
 // makeup reads from the file alone.
 //
 // See intention.h for the macro convention (C has no language-level
-// annotations). Usage: `;;INHERITS("...")` (see preferences.md, Two-Semicolon
+// annotations). Usage: `;;INHERITS("...")` (see PREFERENCES.md, Two-Semicolon
 // Annotation Style Law).
 
 #define INHERITS(text) _Static_assert(1, "@Inherits(" text ")");

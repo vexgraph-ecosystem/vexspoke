@@ -8,7 +8,7 @@
 // Complements `;;OVERVIEW` (which serves as the structural summary and function index).
 //
 // Usage: prefix the marker with two semicolons:
-// `;;DEFINITION` (see preferences.md, Two-Semicolon Annotation Style Law).
+// `;;DEFINITION` (see PREFERENCES.md, Two-Semicolon Annotation Style Law).
 
 #define DEFINITION _Static_assert(1, "@Definition");
 

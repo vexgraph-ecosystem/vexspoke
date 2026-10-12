@@ -19,7 +19,7 @@
 // intent is legible before a single byte is allocated.
 //
 // See intention.h for the macro convention (C has no language-level
-// annotations). Usage: `;;WHAT("...")` (see preferences.md, WHAT Law, under the
+// annotations). Usage: `;;WHAT("...")` (see PREFERENCES.md, WHAT Law, under the
 // Two-Semicolon Annotation Style Law). An annotation is not a declarator — the
 // line-above form is the only compilable form; there is no inline
 // `void* WHAT("...") x;`.

@@ -7,7 +7,7 @@
 // of a header/class for a reason. The text is a string literal.
 //
 // See draft.h for the macro convention (C has no language-level annotations).
-// Usage: `;;INTENTION("...")` (see preferences.md, rule 8).
+// Usage: `;;INTENTION("...")` (see PREFERENCES.md, rule 8).
 
 #define INTENTION(text) _Static_assert(1, "@Intention(" text ")");
 

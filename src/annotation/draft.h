@@ -13,7 +13,7 @@
 // first fresh write, not ready for production.
 //
 // Usage: prefix the marker with two semicolons so it reads as a marker:
-// `;;DRAFT` (see preferences.md, rule 8).
+// `;;DRAFT` (see PREFERENCES.md, rule 8).
 
 #define DRAFT _Static_assert(1, "@Draft");
 
