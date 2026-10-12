@@ -8,7 +8,7 @@ cooperating R2 storage owner is Relational Engine; R1 `hotcwap` supervises
 lifetimes. An unfinished ecosystem library, not a finished product.
 
 **Implemented and proven (macOS arm64):** the CPU/behavior surface with owner
-tests under `tests/vexspoke/` — math (`FastMath`/`Vec*`/`Mat*`), algorithms
+tests under `../../tests/vexspoke` — math (`FastMath`/`Vec*`/`Mat*`), algorithms
 (sort/BVH/path), lockless `BitPool`/`RingBuffer`/`SpinLock`, collections
 (`List`/`Map`/`Set`/`Heap`/…), the reflection hierarchy (`Variable`/`Field`/
 `Struct`/`Class`/`Method`, with `Field` carrying physical layout), reactive
@@ -26,7 +26,7 @@ or `src/nio` copies here. The shared **type algebra** (`MASK_*`/`PROJ_*`/
 
 **Platforms proven:** macOS arm64 only; Windows is unproven.
 
-**Evidence:** `tests/vexspoke/` owners and `tests/test-checklist.md`; the
+**Evidence:** `../../tests/vexspoke` owners and `../../gist/test-checklist.md`; the
 `type_test` owner pins the registry + algebra mapping.
 
 A C23 CPU computation and behavior library — everything is a pointer.
@@ -57,7 +57,7 @@ automatic schema migration or live engine reload integration is implied.
 
 Vexspoke includes no consumer or host headers; its production R2 storage boundary
 does not introduce an R1/R3/R4/R5 dependency. GPU shaders and dispatch remain
-Graphvex R3. The ecosystem map lives in the workspace `../../../README.md` and
+Graphvex R3. The ecosystem map lives in the workspace `../../README.md` and
 the readiness Gist. The ecosystem, especially its R5 apps, is unfinished.
 
 ### Build
@@ -81,10 +81,10 @@ and implementation. Workspace indexing does not prove standalone runtime readine
 * **Engine `src/nio/relational_memory.h`** — Separate Rust byte/string ABI include, not a silent replacement for native arena semantics.
 * **`src/bit/bit.h/.c`** — The lockless width pool (`BitPool`). ABA-tagged freelists recycle slots; freed slots return at the *exact same address*.
 * **`src/oop/type.h`** — the vexspoke class registry plus the shared 64-bit type-id algebra (Relational Engine `type/type.h`); one 64-bit id encodes project, form, modifier, wrappers, sugar and class.
-* **`src/reflection/`** — the reflection hierarchy (`Variable`/`Field`/`Struct`/`Class`/`Method`); `src/oop/stride.h` holds the class → byte-width table.
+* **`src/reflection`** — the reflection hierarchy (`Variable`/`Field`/`Struct`/`Class`/`Method`); `src/oop/stride.h` holds the class → byte-width table.
 * **`src/atomic/ring.h/.c`** — Lockless MPMC ring buffer (`RingBuffer`), the inter-thread messaging highway.
 * **`src/atomic/spin.h/.c`** — C23 `stdatomic` ticket locks (`SpinLock`) with bounded spin backoff.
-* **`src/relational/`** — Retained C relational bindings and symbol operations; migration to the R2 storage owner requires separate proof.
+* **`src/relational`** — Retained C relational bindings and symbol operations; migration to the R2 storage owner requires separate proof.
 * **`src/lang`** — Zero-allocation math primitives: `FastMath`, `Vec2`, `Vec3`, `Vec4`, and `Mat4`.
 * **`src/struct`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
 * **IO/NIO** — implemented in Relational Engine; this repository keeps no `src/io` or `src/nio` sources.
@@ -159,7 +159,7 @@ By forcing the intermediate pointer into a local:
 * A modern C23 compiler (Clang recommended, `-std=gnu23` enabled).
 * Apple Silicon (arm64 macOS 14+) or Linux.
 * Vulkan SDK (MoltenVK on macOS).
-* The workspace build system, `b` (bundled at `../../../personal/b`).
+* The workspace build system, `b` (bundled at `../../personal/b`).
 
 ---
 
