@@ -1,7 +1,6 @@
 #ifndef STRUCT_EXHAUSTION_H
 #define STRUCT_EXHAUSTION_H
 
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 

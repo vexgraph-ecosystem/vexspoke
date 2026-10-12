@@ -15,7 +15,12 @@
 //
 // Writer builds into a caller byte buffer the same way.
 
-#define JSON_MAX_DEPTH 24
+// Recursive-descent depth bound. This is a C-STACK SAFETY limit, not a payload
+// policy: parseValue checks depth at entry and FAILS CLOSED beyond it, so no input
+// can recurse further and overflow the stack. 32 matches the host admission bound.
+// Need deeper documents? add a separate NON-RECURSIVE parse entry rather than
+// raising this constant.
+#define JSON_MAX_DEPTH 32
 
 typedef enum {
     JSON_NULL = 0,
