@@ -77,7 +77,7 @@
  *   - AppDetect_getName / getAltProcs / getDisplayName / getNote(self, slot)
  * ============================================================================
  */
-;;INTENTION("probes are PATH-scan + bundle-scan + libproc liveness (vexspoke R1 owns system probes; api-haven consumes for CLI/MCP — preferences.md Rule 17)")
+;;INTENTION("probes are PATH-scan + bundle-scan + libproc liveness (vexspoke R1 owns system probes; api-haven consumes for CLI/MCP — PREFERENCES.md Rule 17)")
 ;;INTENTION("isRunning is a loose basename match by design: enough to answer 'is codex alive'; bundle-id verification is deferred (would need ObjC NSRunningApplication)")
 ;;INTENTION("immutable registry rows — setters omitted; access via AppDetect_* table functions — Rule 33 Tier-2 waiver")
 
