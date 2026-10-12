@@ -1,104 +1,58 @@
 #include "cli/console.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "primitive/string.h"
-#include "atomic/ring.h"
+#include "exception/throw.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
+#include <stdio.h>
 
 ;;DEFINITION
-/**
- * ============================================================================
- * DEFINITION: Console
- * ============================================================================
- * The CLI log console (Legacy: cli/Console.java): a process-wide RingBuffer
- * of string blocks that defers printf output until Console_drain, so hot
- * paths never block on the terminal. Exists because R1 hosts and R5 apps need
- * a bounded, allocation-light log path that can be drained on the frame loop.
- * memory: one static 1024-slot RingBuffer of uint8_t* string handles,
- * initialized once by Console_init. Lifetime: process-scoped;
- * Console_shutdown frees the queue. Adjacent: R2 string primitives feed it;
- * R1 Kernel and R5 apps consume it.
- * ============================================================================
- */
-
+/** Bare R2 cold one-line output, not a terminal application or queue. No screen,
+ * cursor, input, worker or R3 dependency is owned. System's existing init call
+ * remains harmless. Output uses synchronous stdio and is not realtime/bounded. */
 ;;OVERVIEW
-/**
- * ============================================================================
+/** ========================================================================
  * MODULE: Console (cli/console.c)
- * ============================================================================
- * the Console class, ported from cli/Console.java.
- *
- * STRUCT FIELDS: none — procedural (operates on RingBuffer message queue of string blocks)
- *
- * FUNCTION REGISTRY:
- * ----------------------------------------------------------------------------
- * Constructors:
- *   - Console_init(void)
- *
- * Core Functions:
- *   - Console_log(message)
- *   - Console_logString(_string)
- *   - Console_drain(void)
- *   - Console_shutdown(void)
- * ============================================================================
- */
-
-
-// console.c — the Console class, ported from cli/Console.java.
-
-static RingBuffer *log_queue = nullptr;
-static const size_t CONSOLE_QUEUE_CAPACITY = 1024;
-
-void Console_init(void) {
-    if (log_queue)
-        return;
-    RingBuffer *ring = malloc(sizeof(RingBuffer));
-    if (!ring)
-        return;
-    if (!RingBuffer_init(ring, sizeof(uint8_t*), CONSOLE_QUEUE_CAPACITY)) {
-        free(ring);
-        return;
-    }
-    log_queue = ring;
-}
-
-void Console_logString(uint8_t *_string) {
-    if (!_string)
-        return;
-    if (log_queue) {
-        if (RingBuffer_push(log_queue, &_string))
-            return;
-    }
-    printf("%s\n", string_get(_string));
-    string_free(_string);
-}
+ * ------------------------------------------------------------------------
+ * STATE: none; no queue, allocation or retained message.
+ * FUNCTION REGISTRY (exports)
+ * Lifecycle: void Console_init(void), Console_drain(void), Console_shutdown(void)
+ *   Compatibility no-ops; never acquire/clear a terminal.
+ * Output: void Console_log(const char *message)
+ *   Borrowed NUL-terminated text, controls escaped, one final newline.
+ * Output: void Console_logString(uint8_t *message)
+ *   Takes ownership of a live R2 string block; releases it after output.
+ * PRIVATE BEHAVIOR: log writes printable bytes; escapes controls as \\xHH.
+ * CONTRACT: cold caller-thread stdio; null rejects once with THROW. A write
+ * failure reports once and may have written a prefix (no rollback of stdio).
+ * Managed screens must route output through their presentation seam instead.
+ * ======================================================================== */
+void Console_init(void) {}
+void Console_drain(void) {}
+void Console_shutdown(void) {}
 
 void Console_log(const char *message) {
-    if (!message)
+    if (message == nullptr) {
+        THROW("Console log: null message");
         return;
-    uint8_t *string_ptr = string_allocate(message);
-    if (string_ptr)
-        Console_logString(string_ptr);
-}
-
-void Console_drain(void) {
-    if (!log_queue)
-        return;
-    uint8_t *string_ptr;
-    while (RingBuffer_pop(log_queue, &string_ptr)) {
-        printf("%s\n", string_get(string_ptr));
-        string_free(string_ptr);
     }
+    bool ok = true;
+    for (const unsigned char *p = (const unsigned char*) message; *p != 0; ++p) {
+        unsigned char ch = *p;
+        if (ch < 32 || ch == 127) {
+            if (fprintf(stdout, "\\x%02X", ch) < 0)
+                ok = false;
+        } else if (fputc(ch, stdout) == EOF)
+            ok = false;
+        if (!ok)
+            break;
+    }
+    if (ok)
+        ok = fputc('\n', stdout) != EOF;
+    if (!ok)
+        THROW("Console log: output failed");
 }
 
-void Console_shutdown(void) {
-    if (!log_queue)
-        return;
-    Console_drain();
-    RingBuffer_shutdown(log_queue);
-    free(log_queue);
-    log_queue = nullptr;
+void Console_logString(uint8_t *message) {
+    Console_log(string_get(message));
+    string_free(message);
 }
