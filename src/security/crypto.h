@@ -11,7 +11,11 @@
 // 1. SHA-256 (NIST FIPS 180-4): Standard cryptographic digest (32 Bytes).
 // 2. Relational Fast Hash: 64-bit and 32-bit non-cryptographic symbol hashing.
 // 3. Constant-Time Verification: Side-channel-safe equality check.
-// 4. PRNG Engine: XorShift128+ pseudo-random byte and integer generator.
+// 4. PRNG Engine: XorShift128+ DETERMINISTIC pseudo-random generator. It is NOT a
+//    CSPRNG and must never produce a credential, token, key, nonce or salt. Use
+//    SecureRandom_bytes (security/secure_random.h) for anything secret: it draws
+//    from the OS entropy source. The seeded API is named Crypto_prng* so a call
+//    site cannot mistake it for randomness.
 // 5. Hex Encoding/Decoding: Zero-allocation string serialization.
 
 #define CRYPTO_SHA256_DIGEST_SIZE 32
@@ -58,9 +62,10 @@ void     Crypto_rngBytes(CryptoRng *rng, void *dest, size_t len);
 // and identical across runs and processes. It exists for reproducible crypto
 // tests. NEVER use it for tokens, keys, nonces, salts, or session ids. For
 // unpredictable randomness use security/SecureRandom (the OS CSPRNG).
-void     Crypto_randomSeed(uint64_t seed);
-uint64_t Crypto_randomU64(void);
-void     Crypto_randomBytes(void *dest, size_t len);
+// DETERMINISTIC (XorShift128+). Reproducible by design; NEVER for secrets.
+void     Crypto_prngSeed(uint64_t seed);
+uint64_t Crypto_prngU64(void);
+void     Crypto_prngBytes(void *dest, size_t len);
 
 // Hex helpers (Dest-last order)
 void   Crypto_toHex(const uint8_t *Bytes, size_t len, char *outHex);

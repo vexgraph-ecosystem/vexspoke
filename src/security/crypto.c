@@ -52,9 +52,9 @@
  *   - Crypto_rngInit(rng, seed)
  *   - Crypto_rngNextU64(rng)
  *   - Crypto_rngBytes(rng, dest, len)
- *   - Crypto_randomSeed(seed)
- *   - Crypto_randomU64(void)
- *   - Crypto_randomBytes(dest, len)
+ *   - Crypto_prngSeed(seed)   DETERMINISTIC; never for secrets
+ *   - Crypto_prngU64(void)
+ *   - Crypto_prngBytes(dest, len)
  *   - Crypto_toHex(Bytes, len, outHex)
  *   - Crypto_fromHex(hex, outBytes, maxBytes)
  *
@@ -324,15 +324,15 @@ void Crypto_rngBytes(CryptoRng *rng, void *dest, size_t len) {
 
 static CryptoRng g_defaultRng = { { 0x123456789abcdef0ULL, 0xfedcba9876543210ULL } };
 
-void Crypto_randomSeed(uint64_t seed) {
+void Crypto_prngSeed(uint64_t seed) {
     Crypto_rngInit(&g_defaultRng, seed);
 }
 
-uint64_t Crypto_randomU64(void) {
+uint64_t Crypto_prngU64(void) {
     return Crypto_rngNextU64(&g_defaultRng);
 }
 
-void Crypto_randomBytes(void *dest, size_t len) {
+void Crypto_prngBytes(void *dest, size_t len) {
     Crypto_rngBytes(&g_defaultRng, dest, len);
 }
 
