@@ -18,6 +18,7 @@ Universal laws are inherited from the canonical `../../gist/PREFERENCES.md` Inde
 | **BitPool Slot Segregation Law** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
 | **24-Byte Variable Slot Law (The 23+1 Rule)** | R2 Relational memory Substrate | Mandatory for `vexspoke` |
 | **Reactive Generics Law** | R2 behavior (the reactive engine + the generic family) | Mandatory for `vexspoke` |
+| **Pure Format Algorithm Law** | R2 CPU computation (`net/`, `search/`, `image/`) | Mandatory for `vexspoke` |
 
 ## 2. Exclusive Repo-Local Laws (FULL PROSE RESTATEMENT)
 
@@ -139,6 +140,43 @@ mechanical template stamps that differ only in VEX_T, not hand-authored classes;
 one file pair per family reads clearer than twenty identical ones. Per the
 Conflict Triage Law.")
 ```
+
+---
+
+### Pure Format Algorithm Law
+
+#### Definition:
+Vexspoke owns the ecosystem's **pure format algorithms**: code that turns bytes
+into other bytes with no file, path, handle, device or persistent state. Today
+that is the JSON parser (`net/json`), the URL parser (`net/url`), and the PNG →
+RGBA8 decoder (`image/png`, system zlib for DEFLATE). Each takes a borrowed byte
+span and returns a value; none reads a file or opens a path.
+
+#### The Why:
+Decoding is computation, not storage. Keeping it here means the *caller* owns
+I/O (the engine's `File`) and *storage* stays with the engine — the decoder holds
+no handle that could outlive its bytes, and every tier above R2 (R1, R3, R4, R5)
+can borrow the same pure function. Image **decoding** here is deliberately
+distinct from image **composition** (Graphvex R3 uploads/samples and, per its own
+`FrameImporter` note, never decodes) and from terminal **rasterisation**
+(Determinant R3 turns decoded pixels into cells).
+
+#### The Rule:
+1. **Bytes in, bytes out.** A format algorithm takes `(const uint8_t *bytes,
+   size_t length)` and returns a decoded value; it never opens a file or path.
+   The caller reads the bytes.
+2. **Engine-backed output.** Decoded buffers are allocated through the engine's
+   `Memory_*` ABI, so the engine owns the storage and the caller receives a
+   stable pointer to free with `Memory_free`.
+3. **Reject, never half-decode.** Unsupported or hostile input returns a named
+   code (`PngCode`-style) with one cold `THROW`; a corrupted stream never yields
+   plausible output. Geometry is bounded before allocation.
+4. **Verify what the format promises.** Checksums/CRCs are validated (PNG chunk
+   CRCs), and an inflate that does not match the declared geometry is a failure,
+   not a padding opportunity.
+5. **No third-party container.** New formats do not pull an SDK into R2; a
+   system library for the primitive codec (zlib for DEFLATE) is the ceiling, and
+   is declared at the owning target.
 
 ---
 
