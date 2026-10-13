@@ -1,5 +1,6 @@
 #include "image/png.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
 
@@ -115,8 +116,29 @@ static bool pngUnfilter(uint8_t *raw, uint32_t height, size_t rowBytes, uint32_t
     return true;
 }
 
+static PngCode Png_decodeWith(const uint8_t *bytes, size_t length, uint8_t **outRgba,
+                              uint32_t *outWidth, uint32_t *outHeight, bool useMalloc);
+
+static void *pngAlloc(size_t bytes, bool useMalloc) {
+    return useMalloc ? malloc(bytes) : Memory_alloc(TYPE_BYTE_ARRAY, bytes);
+}
+static void pngRelease(void *block, bool useMalloc) {
+    if (useMalloc) free(block);
+    else Memory_free(block);
+}
+
 PngCode Png_decode(const uint8_t *bytes, size_t length, uint8_t **outRgba,
                    uint32_t *outWidth, uint32_t *outHeight) {
+    return Png_decodeWith(bytes, length, outRgba, outWidth, outHeight, false);
+}
+
+PngCode Png_decodeMalloc(const uint8_t *bytes, size_t length, uint8_t **outRgba,
+                         uint32_t *outWidth, uint32_t *outHeight) {
+    return Png_decodeWith(bytes, length, outRgba, outWidth, outHeight, true);
+}
+
+static PngCode Png_decodeWith(const uint8_t *bytes, size_t length, uint8_t **outRgba,
+                              uint32_t *outWidth, uint32_t *outHeight, bool useMalloc) {
     if (bytes == nullptr || outRgba == nullptr || outWidth == nullptr || outHeight == nullptr) {
         THROW("Png decode: null bytes or output");
         return PNG_INVALID;
@@ -193,14 +215,14 @@ PngCode Png_decode(const uint8_t *bytes, size_t length, uint8_t **outRgba,
         THROW("Png decode: raw size");
         return PNG_INVALID;
     }
-    uint8_t *compressed = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, idatTotal ? idatTotal : 1);
+    uint8_t *compressed = (uint8_t*) pngAlloc(idatTotal ? idatTotal : 1, useMalloc);
     if (compressed == nullptr) {
         THROW("Png decode: idat allocation");
         return PNG_NO_MEMORY;
     }
-    uint8_t *raw = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, rawSize);
+    uint8_t *raw = (uint8_t*) pngAlloc(rawSize, useMalloc);
     if (raw == nullptr) {
-        Memory_free(compressed);
+        pngRelease(compressed, useMalloc);
         THROW("Png decode: raw allocation");
         return PNG_NO_MEMORY;
     }
@@ -222,22 +244,22 @@ PngCode Png_decode(const uint8_t *bytes, size_t length, uint8_t **outRgba,
 
     uLongf rawLen = (uLongf) rawSize;
     int zc = uncompress(raw, &rawLen, compressed, (uLong) gathered);
-    Memory_free(compressed);
+    pngRelease(compressed, useMalloc);
     if (zc != Z_OK || rawLen != rawSize) {
-        Memory_free(raw);
+        pngRelease(raw, useMalloc);
         THROW("Png decode: inflate failed (%d)", zc);
         return PNG_INVALID;
     }
     if (!pngUnfilter(raw, height, rowBytes, channels)) {
-        Memory_free(raw);
+        pngRelease(raw, useMalloc);
         THROW("Png decode: filter type");
         return PNG_INVALID;
     }
 
     size_t outBytes = (size_t) width * height * 4u;
-    uint8_t *rgba = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, outBytes);
+    uint8_t *rgba = (uint8_t*) pngAlloc(outBytes, useMalloc);
     if (rgba == nullptr) {
-        Memory_free(raw);
+        pngRelease(raw, useMalloc);
         THROW("Png decode: output allocation");
         return PNG_NO_MEMORY;
     }
@@ -255,7 +277,7 @@ PngCode Png_decode(const uint8_t *bytes, size_t length, uint8_t **outRgba,
             dst += 4;
         }
     }
-    Memory_free(raw);
+    pngRelease(raw, useMalloc);
 
     *outRgba = rgba;
     *outWidth = width;

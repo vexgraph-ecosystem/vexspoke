@@ -41,6 +41,12 @@ bool Png_isPng(const uint8_t *bytes, size_t length);
 PngCode Png_decode(const uint8_t *bytes, size_t length, uint8_t **outRgba,
                    uint32_t *outWidth, uint32_t *outHeight);
 
+// Same decode, but the RGBA buffer comes from libc malloc so a caller that is not
+// the engine (a lean host without an arena) can decode its own asset. Release it
+// with free(). Everything else is identical.
+PngCode Png_decodeMalloc(const uint8_t *bytes, size_t length, uint8_t **outRgba,
+                         uint32_t *outWidth, uint32_t *outHeight);
+
 // Stable name for a code (diagnostics/projections).
 const char *Png_codeName(PngCode code);
 
