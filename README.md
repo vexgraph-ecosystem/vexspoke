@@ -12,7 +12,9 @@ tests under `../../tests/vexspoke` — math (`FastMath`/`Vec*`/`Mat*`), algorith
 (sort/BVH/path), lockless `BitPool`/`RingBuffer`/`SpinLock`, collections
 (`List`/`Map`/`Set`/`Heap`/…), the reflection hierarchy (`Variable`/`Field`/
 `Struct`/`Class`/`Method`, with `Field` carrying physical layout), reactive
-bindings, `net` (URL/JSON/HTTP/TLS), and the fixed-timestep `Loop`.
+bindings, `net` (URL/JSON/HTTP/TLS), `search` (find/SQL-LIKE, the `Calc`
+expression engine, `Spotlight` ranking, and the `Regex` byte-regex engine), and
+the fixed-timestep `Loop`.
 
 **Ownership moved out of this repository:** the default allocator and all
 `io/*`/`nio/*` implementations live in Relational Engine; there are no `src/io`
@@ -89,6 +91,7 @@ and implementation. Workspace indexing does not prove standalone runtime readine
 * **`src/struct`** — High-performance off-heap collections: `List`, `Map`, `Queue`, `Deque`, `Stack`, `Set`, `MinHeap`, and `SparseSet`.
 * **IO/NIO** — implemented in Relational Engine; this repository keeps no `src/io` or `src/nio` sources.
 * **`src/net`** — Zero-allocation HTTP client, URL parser, JSON serializer, and TLS streaming abstractions.
+* **`src/search`** — Text/shape search: `Find` substring/LIKE matching, the `Calc` math-expression evaluator, `Spotlight` ranked search, and `Regex` — a compile-once, byte-oriented regular expression matched in linear time (Thompson NFA + Pike VM, no backtracking).
 * **`src/engine/loop.h/.c`** — Fixed-timestep engine loop (`Loop`).
 * **Graphvex R3** — GPU resources, Vulkan pipelines, shaders and dispatch belong to the graphics owner, not this CPU library.
 * **`src/objc`** — Hardware platform bridges: TouchID biometric authentication, Apple SecureTransport TLS, and CoreAudio.
@@ -190,8 +193,9 @@ Enforced compilation flags: `-Wall -Wextra -Werror` with C23 (`-std=gnu23`) and 
 ## Scope and Limitations
 
 **Scope:** R2 CPU computation and behavior: math, algorithms, synchronization,
-collections, reflection, reactive behavior, the networking client and the engine
-loop. It provides the CPU contract the higher tiers build on.
+collections, reflection, reactive behavior, the networking client, text/shape
+search (including the `Regex` engine) and the engine loop. It provides the CPU
+contract the higher tiers build on.
 
 **Deliberately not covered:**
 - No memory/IO implementation: the allocator and `io/*`/`nio/*` live in
@@ -201,6 +205,11 @@ loop. It provides the CPU contract the higher tiers build on.
   in Relational Engine `type/type.h`.
 
 **Known limits and gaps:**
+- `Regex` v1 is byte-oriented and greedy-only: no lazy/possessive quantifiers,
+  lookaround, backreferences, `\b` word boundaries, named groups, or Unicode
+  classes; pattern node/program/nesting/repeat counts are documented safety
+  ceilings with loud rejection. Its matcher allocates bounded scratch per call
+  (a cold path, not a frame path).
 - Collection/relational migration to R2 storage is staged; retained C surfaces
   remain until migrated with owner proof.
 - Proven only on macOS arm64; Windows is untested.
