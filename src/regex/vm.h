@@ -12,8 +12,10 @@
 // regex/vm.h — the RegexVm: the Pike-VM simulator that executes a compiled
 // program over a subject. Single Class Per File Law: RegexVm.
 //
-// The simulation is the reason this engine cannot hang: work is bounded by
-// (subject length x program length) with NO backtracking and NO recursion, and
+// For a fixed compiled pattern, work scales linearly with subject length:
+// O((length + 1) * instructions * (groups + 1)), including capture copies.
+// This is not a wall-clock bound or cancellation guarantee. NO backtracking
+// and NO recursion occur during matching, and
 // everything it needs is allocated once, before the run. A thread list carries
 // the still-live NFA states; each capture set lives in a row of the capture
 // table; and the epsilon-closure walks a work stack instead of the C stack.
@@ -68,6 +70,11 @@ void RegexVm_free(RegexVm *vm);
 // on a match and copies the winning capture row into the VM's best row.
 bool RegexVm_run(RegexVm *vm, const RegexCharClass *classes, const char *subject,
                  size_t length, bool anchored, RegexOptions options);
+
+// Accept only at subject end, starting at zero. A premature MATCH does not
+// discard competing alternatives; search branch priority otherwise survives.
+bool RegexVm_runFull(RegexVm *vm, const RegexCharClass *classes, const char *subject,
+                     size_t length, RegexOptions options);
 
 // The winning capture span for one group (0 = the whole match); an unmatched
 // group yields RegexSpan_none(). Valid after a successful run.

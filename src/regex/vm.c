@@ -19,9 +19,10 @@
  * hostile pattern a way to hang its caller — the classic (a+)+b blow-up — and
  * this engine is called from cold seams that must always return. The
  * simulation keeps every alternative alive at once as a thread list, advances
- * all of them one subject byte at a time, and therefore does exactly
- * (subject length x program length) steps: no input can make one match take
- * unbounded time (the Bounded Wait Law).
+ * all of them one subject byte at a time. Capture-row copies also scale with
+ * group count: O((length + 1) * instructions * (groups + 1)). Finite input
+ * gives finite work, not a wall-clock deadline; execution budgets and
+ * cancellation are still absent and this is not bounded-join worker proof.
  *
  * A thread is a program counter plus a capture row. The epsilon-closure (the
  * zero-width part: SPLIT, JUMP, SAVE, anchors) runs on an explicit work stack,
@@ -81,10 +82,12 @@
  *   - RegexVm_init(vm, program, groupCount)
  *   - RegexVm_free(vm)
  *   - RegexVm_run(vm, classes, subject, length, anchored, options)
+ *   - RegexVm_runFull(vm, classes, subject, length, options)
  *   - RegexVm_span(vm, group)
  *
  * Private Core Functions: (.c static)
  *   - lowerByte(c) / capRowBase(list) / addThread(...) / instMatches(...)
+ *   - run(..., full): full mode ignores premature MATCH without pruning peers.
  *
  * Admission, ownership, failure:
  *   - init sizes every block from the program and groupCount; false means the
@@ -271,8 +274,8 @@ void RegexVm_free(RegexVm *vm) {
     memset(vm, 0, sizeof(RegexVm));
 }
 
-bool RegexVm_run(RegexVm *vm, const RegexCharClass *classes, const char *subject,
-                 size_t length, bool anchored, RegexOptions options) {
+static bool run(RegexVm *vm, const RegexCharClass *classes, const char *subject,
+                size_t length, bool anchored, RegexOptions options, bool full) {
     uint32_t n = (*vm).capRowCount;
     RegexList clist;
     clist.pc = (*vm).clistPc;
@@ -303,6 +306,8 @@ bool RegexVm_run(RegexVm *vm, const RegexCharClass *classes, const char *subject
             if (!raw)
                 continue;
             if ((*raw).op == REGEX_OP_MATCH) {
+                if (full && pos != length)
+                    continue;
                 matched = true;
                 memcpy((*vm).best, (*vm).caps + (size_t) clist.cap[i] * (*vm).capStride,
                        (size_t)(*vm).capStride * sizeof(size_t));
@@ -324,6 +329,16 @@ bool RegexVm_run(RegexVm *vm, const RegexCharClass *classes, const char *subject
             break;
     }
     return matched;
+}
+
+bool RegexVm_run(RegexVm *vm, const RegexCharClass *classes, const char *subject,
+                 size_t length, bool anchored, RegexOptions options) {
+    return run(vm, classes, subject, length, anchored, options, false);
+}
+
+bool RegexVm_runFull(RegexVm *vm, const RegexCharClass *classes, const char *subject,
+                     size_t length, RegexOptions options) {
+    return run(vm, classes, subject, length, true, options, true);
 }
 
 RegexSpan RegexVm_span(const RegexVm *vm, uint32_t group) {
