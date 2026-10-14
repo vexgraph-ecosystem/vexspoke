@@ -84,7 +84,9 @@
  *   - init zeroes the parser and allocates nothing; a null pattern is the
  *     caller's misuse and outside this unit's contract.
  *   - parse returns the root index or REGEX_NODE_NONE; ok/error report the
- *     single recorded reason. A failed parse leaves nodes/classes allocated
+ *     single recorded reason. Unsupported alphabetic escapes and stacked
+ *     quantifiers reject instead of changing meaning; punctuation stays literal.
+ *     A failed parse leaves nodes/classes allocated
  *     for free() and nothing usable for the caller.
  *   - releaseClasses transfers ownership once; a second call yields nullptr.
  *   - free releases the AST and any un-transferred class array, then zeroes
@@ -183,6 +185,11 @@ static bool parseEscapeByte(RegexParser *parser, uint8_t *outByte) {
         return true;
     }
     default:
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+            (c >= '1' && c <= '9')) {
+            parserFail(parser, "unsupported escape");
+            return false;
+        }
         // Every other escaped byte is that literal byte (\\. \\* \\\\ ...).
         *outByte = (uint8_t) c;
         return true;
@@ -468,6 +475,16 @@ static uint32_t parseRepeat(RegexParser *parser) {
             (*n).repMax = hasMax ? max : REGEX_REP_INF;
         }
         atom = wrap;
+        if ((*parser).pos < (*parser).length) {
+            char next = (*parser).pattern[(*parser).pos];
+            if (next == '*' || next == '+' || next == '?' ||
+                (next == '{' && (*parser).pos + 1u < (*parser).length &&
+                 isAsciiDigit((*parser).pattern[(*parser).pos + 1u]))) {
+                parserFail(parser, "stacked, lazy or possessive quantifier unsupported");
+                return REGEX_NODE_NONE;
+            }
+        }
+        break;
     }
     return atom;
 }
