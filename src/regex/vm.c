@@ -157,9 +157,9 @@ static void addThread(RegexVm *vm, RegexList *list, uint32_t pc0, const size_t *
             work[task.slot] = task.value;
             continue;
         }
-        if (list->seen[task.pc])
+        if ((*list).seen[task.pc])
             continue;
-        list->seen[task.pc] = 1u;
+        (*list).seen[task.pc] = 1u;
         const RegexInst *raw = RegexProgram_at((*vm).program, task.pc);
         if (!raw)
             continue;
