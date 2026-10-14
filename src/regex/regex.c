@@ -122,8 +122,10 @@ static bool runSearch(const Regex *regex, const char *subject, size_t length,
     RegexVm vm;
     if (!RegexVm_init(&vm, &(*regex).program, (*regex).groupCount))
         return false;
-    bool hit = RegexVm_run(&vm, (*regex).classes, subject, length, anchored,
-                           regexOptions((*regex).flags));
+    RegexOptions options = regexOptions((*regex).flags);
+    bool hit = anchored
+        ? RegexVm_runFull(&vm, (*regex).classes, subject, length, options)
+        : RegexVm_run(&vm, (*regex).classes, subject, length, false, options);
     if (hit && outSpans) {
         size_t groups = (size_t)(*regex).groupCount + 1u;
         size_t fill = groups < spanCapacity ? groups : spanCapacity;

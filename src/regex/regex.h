@@ -16,8 +16,9 @@
 // Regex_2 is the public entry: it parses the pattern (regex/parser.c), emits a
 // Thompson-NFA program (regex/program.c) and keeps the class bitmaps, then
 // throws the AST away. Matching runs a Pike-VM simulation (regex/vm.c), which
-// is linear in subject x program with no backtracking, so a hostile pattern
-// cannot make one match hang the caller. Case folding is resolved at compile
+// is linear in subject length for a fixed program, with capture-copy cost
+// proportional to group count. No wall-clock budget/cancellation is offered.
+// Case folding is resolved at compile
 // time, so the match loop is a plain byte compare.
 //
 // Matching is BYTE-oriented, not Unicode: the subject is a byte span and every
@@ -70,6 +71,8 @@ Regex *Regex_1(const char *pattern);
 // Compile with explicit REGEX_* flags. Returns nullptr (loudly) on a bad
 // pattern; a null pattern is rejected the same way.
 Regex *Regex_2(const char *pattern, uint32_t flags);
+// Unsupported alphabetic escapes/backreferences and repeated quantifiers
+// reject, including lazy/possessive spellings; no literal fallback is offered.
 
 // Release the compiled pattern, its program and its class bitmaps. Null-safe.
 void Regex_free(Regex *regex);
@@ -99,6 +102,8 @@ uint32_t Regex_classCount(const Regex *regex);
 bool Regex_isMatch(const Regex *regex, const char *subject);
 
 // True when the pattern matches and consumes the entire NUL-terminated subject.
+// End admission occurs inside the VM: a|ab fully matches ab despite the
+// shorter first branch. Ordinary search keeps first-alternative priority.
 bool Regex_isFullMatch(const Regex *regex, const char *subject);
 
 // Finds the first (leftmost) match in a byte span and writes its (start, end)
