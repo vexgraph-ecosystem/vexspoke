@@ -136,7 +136,7 @@
 #define ID_THREAD_COMPUTE     0x00A9u
 
 // --- SEARCH / PATTERN CLASSES ---
-// The compiled regular expression (search/regex), appended past the thread block.
+// The compiled regular expression (regex/), appended past the thread block.
 #define ID_REGEX              0x00AAu
 
 #define TYPE_THREAD_SINGLETON             (SUGAR_VEX | PROJ_HOTCWAP | FORM_SINGLETON | ID_THREAD)
