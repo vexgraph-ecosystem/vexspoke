@@ -193,6 +193,16 @@ Enforced compilation flags: `-Wall -Wextra -Werror` with C23 (`-std=gnu23`) and 
 
 ## Scope and Limitations
 
+Regex correctness update: full-match admission now occurs at subject end inside
+the VM, so `a|ab` fully matches `ab` without changing ordinary search priority.
+Unsupported alphabetic escapes/backreferences and stacked/lazy/possessive
+quantifiers reject instead of silently becoming literals or nested repetition.
+`python3 tests/vexspoke/regex/run.py` (workspace root) runs all seven owners in
+strict optimized C23 and ASan/UBSan configurations with child watchdogs.
+Allocation-failure injection, execution budgets/cancellation, iterative emission,
+complete differential/concurrency pressure and non-macOS proof remain unfinished.
+This slice is not a production-readiness claim or a wall-clock latency guarantee.
+
 **Scope:** R2 CPU computation and behavior: math, algorithms, synchronization,
 collections, reflection, reactive behavior, the networking client, text/shape
 search (including the `regex` subsystem) and the engine loop. It provides the CPU
