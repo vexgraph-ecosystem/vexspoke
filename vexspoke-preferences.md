@@ -5,7 +5,7 @@
 ## 0. Constitution Link (supreme)
 - [preferences.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a) — real, Git-ignored workspace file at `../../gist/PREFERENCES.md`, not a tracked Vexspoke file or symlink.
 - All universal laws in `../../gist/PREFERENCES.md` are mandatory and binding across the ecosystem.
-- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation and behavior). Relational Engine now owns production IO/NIO, including the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke consumes those contracts and contains no IO/NIO implementation copies. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
+- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation, behavior, and network protocols). Relational Engine owns filesystem IO/NIO and the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke `net/` owns network protocol clients and servers, including BSD socket-backed HTTP. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
 
 ## 1. Repo-Local Law Index (Binding Matrix)
 
@@ -188,8 +188,12 @@ distinct from image **composition** (Graphvex R3 uploads/samples and, per its ow
 
 ;;INTENTION("R2 Relational memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
 
-`nio/mem.h`, `io/*` and `nio/relational_memory.h` resolve from Relational Engine,
-not Vexspoke. The default production build links the native engine implementation
+`nio/mem.h`, filesystem `io/*` and `nio/relational_memory.h` resolve from Relational Engine,
+not Vexspoke. Network protocols and socket adapters belong in Vexspoke `net/*`;
+the current `net/http.c` implements BSD socket-backed HTTP and `net/websocket.c`
+implements the RFC 6455 client — handshake, frame codec with client masking, the
+ping/pong/close control path and continuation reassembly — over its own BSD
+socket, with `wss://` refused until a TLS backend lands behind `net/tls.h`. The default production build links the native engine implementation
 of `Memory_*`; the Rust byte/string ABI in `relational_engine/memory.h` remains
 a separate surface. No C/Rust
 atomic layouts are shared and other imported comparison directories remain
@@ -197,6 +201,10 @@ outside production dependency closure. R1 keeps
 engine code and owner storage resident during consumer reloads and excludes
 active callers before destruction. Whole-string replacement is not automatic
 record-schema migration; actual Hotcwap reload integration remains unproved.
+WebSocket protocol support now exists as the R2 client (`net/websocket.{h,c}`); the
+legacy frame inbox remains a caller-fed inbox and is still not a WebSocket client.
+R3 does not include the client: api-haven keeps the `WsSource` fn-table shape and a
+host that can see both layers binds it.
 
 ---
 

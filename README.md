@@ -12,7 +12,8 @@ tests under `../../tests/vexspoke` — math (`FastMath`/`Vec*`/`Mat*`), algorith
 (sort/BVH/path), lockless `BitPool`/`RingBuffer`/`SpinLock`, collections
 (`List`/`Map`/`Set`/`Heap`/…), the reflection hierarchy (`Variable`/`Field`/
 `Struct`/`Class`/`Method`, with `Field` carrying physical layout), reactive
-bindings, `net` (URL/JSON/HTTP/TLS), `search` (find/SQL-LIKE, the `Calc`
+bindings, `net` (URL/JSON/HTTP/TLS and the RFC 6455 `WebSocket` client),
+`search` (find/SQL-LIKE, the `Calc`
 expression engine, `Spotlight` ranking), the `regex` subsystem (the `Regex`
 byte-regex engine), and the fixed-timestep `Loop`.
 
@@ -23,7 +24,9 @@ or `src/nio` copies here. The shared **type algebra** (`MASK_*`/`PROJ_*`/
 `type/type.h`: `src/oop/type.h` is the vexspoke registry plus that include, and
 `src/oop/type.c` was removed.
 
-**Stubbed, draft, or planned:** staged migration of the retained containers and
+**Stubbed, draft, or planned:** `wss://` needs a TLS backend behind
+`net/tls.h` and is refused until one lands (the WebSocket client is `ws://`
+only); staged migration of the retained containers and
 `src/relational` bindings to R2 storage; live engine reload integration (R1).
 
 **Platforms proven:** macOS arm64 only; Windows is unproven.
@@ -220,7 +223,7 @@ contract the higher tiers build on.
   lookaround, backreferences, `\b` word boundaries, named groups, or Unicode
   classes; the pattern node/program/class/nesting/repeat counts are documented
   safety ceilings with loud rejection. A match allocates bounded scratch once
-  per call (`RegexVm_init`) and frees it on every path — a cold path, not a
+  per call (`RegexVm(...)`) and frees it on every path — a cold path, not a
   frame path.
 - Collection/relational migration to R2 storage is staged; retained C surfaces
   remain until migrated with owner proof.
