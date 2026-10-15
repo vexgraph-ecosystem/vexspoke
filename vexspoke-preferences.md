@@ -209,10 +209,13 @@ R3 does not include the client: api-haven keeps the `WsSource` fn-table shape an
 host that can see both layers binds it. The Apple TLS backend now exists
 (`net/tls_apple.m`, Network.framework, verifying against the system trust
 anchors) and proves its refusal paths; `net/tls_curl.c` remains a fail-closed
-stub for the other platforms. The client now routes `wss://` through that seam
+stub for the other platforms. The client routes `wss://` through that seam
 and pushes its poll budget into the session (`Tls_setBudget`), using
 `Tls_readable` for readiness because a TLS connection has no descriptor to poll;
-`ws://` is unchanged and still polls its socket directly.
+`ws://` is unchanged and still polls its socket directly. A completed secure
+handshake, real server framing and a cheap idle session are proved by the opt-in
+live smoke (`tests/vexspoke/net/websocket_smoke.c`), whose credential-free target
+is Discord's gateway.
 
 ---
 
