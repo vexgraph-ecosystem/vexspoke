@@ -4,13 +4,14 @@
 // net/net.h — THE networking surface (Legacy: net/* as one).
 //
 // Everything network lives behind this single include under the Net_
-// namespace: JSON documents, URL/auth synthesis, the HTTP client, and the
-// micro server. Sub-modules stay includable individually; this header is the
-// door engine code uses.
+// namespace: JSON documents, URL/auth synthesis, the HTTP client, the WebSocket
+// client, and the micro server. Sub-modules stay includable individually; this
+// header is the door engine code uses.
 
 #include "net/http.h"
 #include "net/json.h"
 #include "net/url.h"
+#include "net/websocket.h"
 
 // --- Combined conveniences: HTTP + JSON in one call each ---
 
