@@ -11,6 +11,7 @@
 #include "net/http.h"
 #include "net/json.h"
 #include "net/url.h"
+#include "net/vex_ws_source.h"
 #include "net/websocket.h"
 
 // --- Combined conveniences: HTTP + JSON in one call each ---
