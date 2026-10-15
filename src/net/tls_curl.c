@@ -69,6 +69,29 @@ bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut) {
     return false;
 }
 
+// Nothing is ever readable from a backend that produces no connection, so the
+// accessors exist only so a host compiles and links identically on every
+// platform and can see for itself that this backend answered nothing.
+bool Tls_readable(TlsConn *conn, uint32_t budgetMs) {
+    (void) conn;
+    (void) budgetMs;
+    return false;
+}
+
+void Tls_setBudget(TlsConn *conn, uint32_t timeoutMs) {
+    (void) conn;
+    (void) timeoutMs;
+}
+
+uint32_t Tls_getBudget(const TlsConn *conn) {
+    (void) conn;
+    return 0u;
+}
+
+TlsBackendKind Tls_backend(void) {
+    return TLS_BACKEND_NONE;
+}
+
 void Tls_close(TlsConn *conn) {
     if (!conn)
         return;

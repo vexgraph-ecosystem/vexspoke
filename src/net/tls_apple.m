@@ -98,6 +98,9 @@ static TlsBackendKind s_lastBackend = TLS_BACKEND_NONE;
 @interface VexTlsSession : NSObject
 @property (nonatomic, strong) nw_connection_t connection;
 @property (nonatomic, strong) dispatch_queue_t queue;
+@property (nonatomic) uint32_t budgetMs;     // per-operation IO budget in force
+@property (nonatomic) bool pendingValid;     // a probed Byte is held back
+@property (nonatomic) uint8_t pendingByte;   // the Byte Tls_readable probed out
 @end
 
 @implementation VexTlsSession
@@ -245,6 +248,8 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
         VexTlsSession *session = [[VexTlsSession alloc] init];
         session.connection = connection;
         session.queue = dispatch_queue_create("vex.tls.apple", DISPATCH_QUEUE_SERIAL);
+        session.budgetMs = VEX_TLS_IO_TIMEOUT_MS;
+        session.pendingValid = false;
 
         if (!vexWaitForReady(connection, session.queue, VEX_TLS_CONNECT_TIMEOUT_MS)) {
             nw_connection_cancel(connection);
@@ -273,21 +278,68 @@ bool Tls_send(TlsConn *conn, const char *buf, size_t len) {
     if (len == 0u)
         return true;
     @autoreleasepool {
-        return vexSendBounded(session.connection, buf, len, VEX_TLS_IO_TIMEOUT_MS);
+        return vexSendBounded(session.connection, buf, len, session.budgetMs);
     }
 }
 
-/** Receive at most cap Bytes, bounded; gotOut receives the count actually read. */
+/**
+ * Receive at most cap Bytes, bounded by the connection's budget. A Byte a
+ * previous readiness probe held back is served first, so probing never costs a
+ * Byte.
+ */
 bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut) {
     if (gotOut != nullptr)
         *gotOut = 0u;
     VexTlsSession *session = vexSession(conn);
     if (session == nullptr || buf == nullptr || cap == 0u || gotOut == nullptr)
         return false;
-    @autoreleasepool {
-        return vexReceiveBounded(session.connection, buf, cap, gotOut,
-                                 VEX_TLS_IO_TIMEOUT_MS);
+    if (session.pendingValid) {
+        buf[0] = (char) session.pendingByte;
+        session.pendingValid = false;
+        *gotOut = 1u;
+        return true;
     }
+    @autoreleasepool {
+        return vexReceiveBounded(session.connection, buf, cap, gotOut, session.budgetMs);
+    }
+}
+
+/**
+ * Report whether a Byte can be read within the budget, without consuming it: the
+ * probed Byte is held in the session and handed to the next Tls_recv. False means
+ * the budget was quiet OR the connection is broken — a poll loop only needs the
+ * first question answered, and it stops asking as soon as it reads.
+ */
+bool Tls_readable(TlsConn *conn, uint32_t budgetMs) {
+    VexTlsSession *session = vexSession(conn);
+    if (session == nullptr)
+        return false;
+    if (session.pendingValid)
+        return true;
+    uint8_t probe = 0u;
+    size_t got = 0u;
+    uint32_t budget = budgetMs == 0u ? session.budgetMs : budgetMs;
+    @autoreleasepool {
+        if (!vexReceiveBounded(session.connection, &probe, 1u, &got, budget) || got == 0u)
+            return false;
+    }
+    session.pendingByte = probe;
+    session.pendingValid = true;
+    return true;
+}
+
+/** Set the per-operation IO budget, so a read cannot outlive its caller's slice. */
+void Tls_setBudget(TlsConn *conn, uint32_t timeoutMs) {
+    VexTlsSession *session = vexSession(conn);
+    if (session == nullptr)
+        return;
+    session.budgetMs = timeoutMs == 0u ? VEX_TLS_IO_TIMEOUT_MS : timeoutMs;
+}
+
+/** The IO budget in force, or zero when there is no live session. */
+uint32_t Tls_getBudget(const TlsConn *conn) {
+    VexTlsSession *session = vexSession(conn);
+    return session == nullptr ? 0u : session.budgetMs;
 }
 
 /** Cancel the connection, release the session and free the record. Null-safe. */
