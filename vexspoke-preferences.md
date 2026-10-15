@@ -201,10 +201,13 @@ outside production dependency closure. R1 keeps
 engine code and owner storage resident during consumer reloads and excludes
 active callers before destruction. Whole-string replacement is not automatic
 record-schema migration; actual Hotcwap reload integration remains unproved.
-WebSocket protocol support now exists as the R2 client (`net/websocket.{h,c}`); the
+WebSocket protocol support now exists as the R2 client (`net/websocket.{h,c}`), and
+`net/vex_ws_source.{h,c}` is its adapter: the same four seam signatures a host's
+transport table binds, so the host assigns them with no cross-repo include. The
 legacy frame inbox remains a caller-fed inbox and is still not a WebSocket client.
 R3 does not include the client: api-haven keeps the `WsSource` fn-table shape and a
-host that can see both layers binds it.
+host that can see both layers binds it. `wss://` stays refused until a TLS backend
+reports ready behind `net/tls.h` — `Tls_connect` currently fails closed.
 
 ---
 
