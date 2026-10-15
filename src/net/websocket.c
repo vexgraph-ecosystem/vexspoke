@@ -472,10 +472,15 @@ static bool wsAppendMessage(WebSocket *self, const uint8_t *bytes, size_t length
     return true;
 }
 
+/** True when this client owns a live transport — a socket or a TLS session. */
+static inline bool wsConnected(const WebSocket *self) {
+    return self != nullptr && ((*self).fd >= 0 || (*self).tls != nullptr);
+}
+
 /** Encode one final-or-fragmented frame with a fresh mask and send it. */
 static bool wsSendFrame(WebSocket *self, uint8_t opcode, bool fin,
                         const uint8_t *payload, size_t length) {
-    if (self == nullptr || (*self).fd < 0)
+    if (!wsConnected(self))
         return false;
     uint8_t header[14];
     size_t headerLength = 0u;
@@ -953,7 +958,7 @@ WebSocketMessage WebSocket_poll(WebSocket *self, uint32_t budgetMs) {
 
 /** Send one final text frame; the payload must already be valid UTF-8. */
 bool WebSocket_writeText(WebSocket *self, const char *text, size_t length) {
-    if (self == nullptr || text == nullptr || (*self).fd < 0)
+    if (!wsConnected(self) || text == nullptr)
         return false;
     if (!wsUtf8Valid((const uint8_t*) text, length)) {
         // A locally rejected payload is not a transport fault: the connection
@@ -970,7 +975,7 @@ bool WebSocket_writeText(WebSocket *self, const char *text, size_t length) {
 
 /** Send one final binary frame. */
 bool WebSocket_writeBinary(WebSocket *self, const uint8_t *bytes, size_t length) {
-    if (self == nullptr || (bytes == nullptr && length != 0u) || (*self).fd < 0)
+    if (!wsConnected(self) || (bytes == nullptr && length != 0u))
         return false;
     if (!wsSendFrame(self, WEBSOCKET_BINARY, true, bytes, length)) {
         wsFail(self, "binary frame write failed");
@@ -981,7 +986,7 @@ bool WebSocket_writeBinary(WebSocket *self, const uint8_t *bytes, size_t length)
 
 /** Send a ping; the peer's pong is consumed silently by poll. */
 bool WebSocket_writePing(WebSocket *self, const uint8_t *payload, size_t length) {
-    if (self == nullptr || (payload == nullptr && length != 0u) || (*self).fd < 0)
+    if (!wsConnected(self) || (payload == nullptr && length != 0u))
         return false;
     if (length > WS_CONTROL_MAX_BYTES) {
         THROW("WebSocket_writePing: control payload exceeds 125 Bytes");
@@ -996,7 +1001,7 @@ bool WebSocket_writePing(WebSocket *self, const uint8_t *payload, size_t length)
 
 /** Send a close frame and move to CLOSING; the reason is cut and flagged. */
 bool WebSocket_writeClose(WebSocket *self, uint16_t code, const char *reason) {
-    if (self == nullptr || (*self).fd < 0)
+    if (!wsConnected(self))
         return false;
     uint8_t payload[2u + WS_CLOSE_REASON_BYTES];
     size_t length = 0u;
