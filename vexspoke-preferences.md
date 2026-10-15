@@ -54,10 +54,11 @@ retain their existing behavior.
 In a relational substrate where everything is a pointer, an opaque `void*` is hazardous unless the runtime can instantly discover its type, size, and validity. Bit-packed headers give every raw pointer self-describing introspection without requiring separate wrapper structs or runtime type dictionaries.
 
 #### The Rule:
-1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 32 Bytes for header bits: the triple-sugar self-describe id, the recomputed hash veto over (id, length, pointer), the payload length, and the block's own payload pointer.
-2. **Triple Sugar:** The header validates three ways and fails closed on any of them — the `BE6C` sugar inside the id, the hash over the stated fields, and the stored pointer equal to this header's own payload address.
-3. **Immovable Blocks:** A block is never relocated after allocation. The stored self-pointer would go stale and the header would fail closed, so any future arena compaction must re-stamp every moved header.
-4. **Zero Secondary Storage:** Never store redundant length or class IDs in secondary hash maps when the pointer carries its own metadata.
+1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 32 Bytes for header bits: the triple-sugar self-describe id, the recomputed hash veto over (id, length, pointer), the payload length, and the block's redirect.
+2. **Triple Sugar:** The header validates two ways and fails closed on either — the `BE6C` sugar inside the id, and the hash over the stated fields; provenance beyond that is the arena-range gate, never a magic cookie.
+3. **Redirect:** The `pointer` word redirects to the object's own address, or to the value's address when the id's form bits say the type is a primitive (`Type_isPrimitive`). The id's `BE6C` sugar is what makes that question answerable from the header alone, so one header serves an object and a primitive alike.
+4. **Immovable Blocks:** A block is never relocated after allocation. The redirect records an address, so any future arena compaction must re-stamp every moved header.
+5. **Zero Secondary Storage:** Never store redundant length or class IDs in secondary hash maps when the pointer carries its own metadata.
 
 ---
 
