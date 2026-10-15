@@ -144,6 +144,14 @@ static bool vexWaitForReady(nw_connection_t connection, dispatch_queue_t queue,
 /**
  * Send one buffer, bounded. A deadline cancels the connection, because a
  * pending send handler must not fire into a caller that has already returned.
+ *
+ * is_complete is FALSE on purpose: the default content context carries no
+ * message boundaries, so marking a send complete on a byte stream tells the
+ * framework no further data will follow and it half-closes the write side. A
+ * connection may only send ONE buffer that way -- every later send is writing
+ * into a shut stream. That is invisible on a peer which speaks first (a gateway
+ * sends its HELLO the moment the upgrade lands) and fatal on a peer which waits
+ * for us.
  */
 static bool vexSendBounded(nw_connection_t connection, const void *bytes,
                            size_t length, uint32_t timeoutMs) {
@@ -151,7 +159,8 @@ static bool vexSendBounded(nw_connection_t connection, const void *bytes,
                                                    DISPATCH_DATA_DESTRUCTOR_DEFAULT);
     dispatch_semaphore_t settled = dispatch_semaphore_create(0);
     __block bool sent = false;
-    nw_connection_send(connection, payload, NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT, true,
+    nw_connection_send(connection, payload, NW_CONNECTION_DEFAULT_MESSAGE_CONTEXT,
+                       false,
                        ^(nw_error_t error) {
         sent = (error == nullptr);
         dispatch_semaphore_signal(settled);

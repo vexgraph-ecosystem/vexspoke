@@ -214,8 +214,11 @@ and pushes its poll budget into the session (`Tls_setBudget`), using
 `Tls_readable` for readiness because a TLS connection has no descriptor to poll;
 `ws://` is unchanged and still polls its socket directly. A completed secure
 handshake, real server framing and a cheap idle session are proved by the opt-in
-live smoke (`tests/vexspoke/net/websocket_smoke.c`), whose credential-free target
-is Discord's gateway.
+live smoke (`tests/vexspoke/net/websocket_smoke_test.c`), whose credential-free
+target is Discord's gateway. One limit stands: on a TLS connection `poll` cannot
+yet distinguish a quiet peer from a closed one — a dropped TLS connection reports
+`WS_MESSAGE_NONE` until a read or write actually fails — so a host that must
+notice a dead gateway needs that distinction added.
 
 ---
 
