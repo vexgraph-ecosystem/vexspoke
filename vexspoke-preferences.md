@@ -206,8 +206,12 @@ WebSocket protocol support now exists as the R2 client (`net/websocket.{h,c}`), 
 transport table binds, so the host assigns them with no cross-repo include. The
 legacy frame inbox remains a caller-fed inbox and is still not a WebSocket client.
 R3 does not include the client: api-haven keeps the `WsSource` fn-table shape and a
-host that can see both layers binds it. `wss://` stays refused until a TLS backend
-reports ready behind `net/tls.h` — `Tls_connect` currently fails closed.
+host that can see both layers binds it. The Apple TLS backend now exists
+(`net/tls_apple.m`, Network.framework, verifying against the system trust
+anchors) and proves its refusal paths; `net/tls_curl.c` remains a fail-closed
+stub for the other platforms. The WebSocket client is NOT yet wired to that seam,
+so it still refuses `wss://` at the URL: `https://`/`wss://` remain unusable until
+the client routes through `TlsConn`.
 
 ---
 
