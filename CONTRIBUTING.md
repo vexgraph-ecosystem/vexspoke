@@ -60,7 +60,7 @@ documentation is committed locally under the Git Workflow Law. Never auto-push.
 | Principle | Specification |
 | :--- |:---|
 | **Everything is a pointer** | Symbols resolve to addresses, addresses decode themselves; no wrappers, no handles-to-handles. |
-| **Self-describing memory** | Every block carries a bit-packed `type_id` + `length` header; `Memory_type()`/`Memory_length()` are free. |
+| **Self-describing memory** | Every block carries a 32-byte triple-sugar header (id with `BE6C`, hash, length, self-pointer); `Memory_type()`/`Memory_length()` are free. |
 | **Zero steady-state allocation** | One arena carved from the OS; no `malloc` in ticks, physics, audio, or networking paths. |
 | **Lockless subsystems** | ABA-tagged freelists, CAS spinlocks, MPMC rings. No mutexes in the hot path. |
 | **Atomic Commit Discipline** | Per-file atomic git commits with explicit scopes (`feat`, `refactor`, `perf`, `chore`, `style`). |

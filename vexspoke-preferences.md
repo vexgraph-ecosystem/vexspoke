@@ -45,16 +45,19 @@ In `vexspoke`, spatial vector representations (`Vec2`, `Vec3`, `Vec4`) must not 
 
 #### Definition:
 Every block obtained by Vexspoke consumers through the engine-owned `Memory_*`
-ABI carries the existing 16-byte header (`typeId`, `length`, `sugar`) prepended
-before its payload pointer. The owner moved to Relational Engine; the ABI did
-not change. `Memory_type()` and `Memory_length()` retain their existing behavior.
+ABI carries the existing 32-byte header (`typeId` with its `BE6C` sugar, `hash`,
+`length`, `pointer`) prepended before its payload pointer. The owner moved to
+Relational Engine; the ABI did not change. `Memory_type()` and `Memory_length()`
+retain their existing behavior.
 
 #### The Why:
 In a relational substrate where everything is a pointer, an opaque `void*` is hazardous unless the runtime can instantly discover its type, size, and validity. Bit-packed headers give every raw pointer self-describing introspection without requiring separate wrapper structs or runtime type dictionaries.
 
 #### The Rule:
-1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 16 Bytes for header bits.
-2. **Zero Secondary Storage:** Never store redundant length or class IDs in secondary hash maps when the pointer carries its own metadata.
+1. **Header Layout:** All blocks allocated through `Memory_alloc` reserve 32 Bytes for header bits: the triple-sugar self-describe id, the recomputed hash veto over (id, length, pointer), the payload length, and the block's own payload pointer.
+2. **Triple Sugar:** The header validates three ways and fails closed on any of them — the `BE6C` sugar inside the id, the hash over the stated fields, and the stored pointer equal to this header's own payload address.
+3. **Immovable Blocks:** A block is never relocated after allocation. The stored self-pointer would go stale and the header would fail closed, so any future arena compaction must re-stamp every moved header.
+4. **Zero Secondary Storage:** Never store redundant length or class IDs in secondary hash maps when the pointer carries its own metadata.
 
 ---
 
