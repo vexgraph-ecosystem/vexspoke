@@ -139,7 +139,8 @@
 typedef struct WsTarget {
     char host[WS_HOST_BYTES]; // authority host (userinfo stripped)
     char path[WS_PATH_BYTES]; // request target, "/" when absent
-    int port;                 // 80 when the authority omits it
+    int port;                 // 80 for ws://, 443 for wss://, when omitted
+    bool secure;              // true for wss://, decided by the scheme alone
 } WsTarget;
 
 // PRIVATE HELPERS
@@ -223,10 +224,27 @@ static bool wsSendAll(int fd, const uint8_t *bytes, size_t length) {
     return true;
 }
 
-/** Read exactly length Bytes, retrying short reads within the socket budget. */
+/** Write through whichever transport this client owns (socket or TLS). */
+static bool wsWrite(WebSocket *self, const uint8_t *bytes, size_t length) {
+    if (self == nullptr)
+        return false;
+    if ((*self).tls != nullptr)
+        return Tls_send((*self).tls, (const char*) bytes, length);
+    return (*self).fd >= 0 && wsSendAll((*self).fd, bytes, length);
+}
+
+/** Read exactly length Bytes, retrying short reads within the transport budget. */
 static bool wsReadExact(WebSocket *self, uint8_t *dest, size_t length) {
     size_t got = 0u;
     while (got < length) {
+        if ((*self).tls != nullptr) {
+            size_t taken = 0u;
+            if (!Tls_recv((*self).tls, (char*) dest + got, length - got, &taken) ||
+                taken == 0u)
+                return false;
+            got += taken;
+            continue;
+        }
         ssize_t taken = recv((*self).fd, dest + got, length - got, 0);
         if (taken <= 0)
             return false;
@@ -294,9 +312,18 @@ static bool wsHeaderValue(const char *block, const char *name, char *out, size_t
 
 /** Split a ws:// URL into authority host, port and request target. */
 static bool wsParseUrl(const char *url, WsTarget *out) {
-    if (url == nullptr || strncmp(url, "ws://", 5u) != 0)
+    if (url == nullptr)
         return false;
-    const char *rest = url + 5u;
+    bool secure = false;
+    const char *rest = nullptr;
+    if (strncmp(url, "wss://", 6u) == 0) {
+        secure = true;
+        rest = url + 6u;
+    } else if (strncmp(url, "ws://", 5u) == 0) {
+        rest = url + 5u;
+    } else {
+        return false;
+    }
     const char *slash = strchr(rest, '/');
     size_t authorityLength = slash == nullptr ? strlen(rest) : (size_t) (slash - rest);
     if (authorityLength == 0u || authorityLength >= WS_HOST_BYTES + 8u)
@@ -308,7 +335,7 @@ static bool wsParseUrl(const char *url, WsTarget *out) {
     const char *userInfo = strrchr(authority, '@');
     const char *hostPort = userInfo == nullptr ? authority : userInfo + 1;
 
-    int port = 80;
+    int port = secure ? 443 : 80;
     size_t hostLength = strlen(hostPort);
     if (*hostPort == '[') {
         const char *close = strchr(hostPort, ']');
@@ -363,6 +390,7 @@ static bool wsParseUrl(const char *url, WsTarget *out) {
         return false;
     memcpy(out->path, path, strlen(path) + 1u);
     out->port = port;
+    out->secure = secure;
     return true;
 }
 
@@ -474,7 +502,7 @@ static bool wsSendFrame(WebSocket *self, uint8_t opcode, bool fin,
         return false;
     memcpy(header + headerLength, mask, 4u);
     headerLength += 4u;
-    if (!wsSendAll((*self).fd, header, headerLength))
+    if (!wsWrite(self, header, headerLength))
         return false;
 
     // Mask in bounded chunks: the mask index keeps running across chunks, so
@@ -485,7 +513,7 @@ static bool wsSendFrame(WebSocket *self, uint8_t opcode, bool fin,
         size_t take = length - sent < sizeof(chunk) ? length - sent : sizeof(chunk);
         for (size_t i = 0u; i < take; i++)
             chunk[i] = (uint8_t) (payload[sent + i] ^ mask[(sent + i) & 3u]);
-        if (!wsSendAll((*self).fd, chunk, take))
+        if (!wsWrite(self, chunk, take))
             return false;
         sent += take;
     }
@@ -721,7 +749,7 @@ static bool wsHandshake(WebSocket *self, const WsTarget *target) {
         wsFail(self, "handshake request does not fit");
         return false;
     }
-    if (!wsSendAll((*self).fd, (const uint8_t*) request, (size_t) written)) {
+    if (!wsWrite(self, (const uint8_t*) request, (size_t) written)) {
         THROW("WebSocket_open: handshake request write failed");
         wsFail(self, "handshake request write failed");
         return false;
@@ -735,10 +763,9 @@ static bool wsHandshake(WebSocket *self, const WsTarget *target) {
     size_t used = 0u;
     bool complete = false;
     while (used < WS_HANDSHAKE_MAX_BYTES) {
-        ssize_t taken = recv((*self).fd, response + used, 1u, 0);
-        if (taken <= 0)
+        if (!wsReadExact(self, (uint8_t*) (response + used), 1u))
             break;
-        used += (size_t) taken;
+        used += 1u;
         response[used] = '\0';
         if (used >= 4u && wsFindHeaderEnd(response, used) != SIZE_MAX) {
             complete = true;
@@ -803,20 +830,28 @@ bool WebSocket_open(WebSocket *self, const char *url, WebSocketConfig config) {
 
     WsTarget target;
     if (!wsParseUrl(url, &target)) {
-        if (strncmp(url, "wss://", 6u) == 0)
-            THROW("WebSocket_open: wss:// needs the TLS backend (unimplemented)");
-        else
-            THROW("WebSocket_open: malformed or unsupported ws:// URL");
+        THROW("WebSocket_open: malformed or unsupported WebSocket URL");
         wsFail(self, "unsupported URL");
         return false;
     }
-    int fd = wsConnect(&target, (*self).timeoutMs);
-    if (fd < 0) {
-        THROW("WebSocket_open: connect failed");
-        wsFail(self, "connect failed");
-        return false;
+    if (target.secure) {
+        TlsConn *tls = nullptr;
+        if (!Tls_connect(target.host, target.port, &tls)) {
+            THROW("WebSocket_open: TLS connect failed (no backend, or the peer was refused)");
+            wsFail(self, "TLS connect failed");
+            return false;
+        }
+        Tls_setBudget(tls, (*self).timeoutMs);
+        (*self).tls = tls;
+    } else {
+        int fd = wsConnect(&target, (*self).timeoutMs);
+        if (fd < 0) {
+            THROW("WebSocket_open: connect failed");
+            wsFail(self, "connect failed");
+            return false;
+        }
+        (*self).fd = fd;
     }
-    (*self).fd = fd;
     (*self).message = (uint8_t*) Memory_alloc(TYPE_BYTE_ARRAY, 1024u);
     if ((*self).message == nullptr) {
         THROW("WebSocket_open: reassembly buffer allocation failed");
@@ -837,9 +872,14 @@ bool WebSocket_open(WebSocket *self, const char *url, WebSocketConfig config) {
 void WebSocket_close(WebSocket *self) {
     if (self == nullptr)
         return;
+    if ((*self).state == WEBSOCKET_OPEN &&
+        ((*self).fd >= 0 || (*self).tls != nullptr))
+        (void) WebSocket_writeClose(self, 1000u, nullptr);
+    if ((*self).tls != nullptr) {
+        Tls_close((*self).tls);
+        (*self).tls = nullptr;
+    }
     if ((*self).fd >= 0) {
-        if ((*self).state == WEBSOCKET_OPEN)
-            (void) WebSocket_writeClose(self, 1000u, nullptr);
         close((*self).fd);
         (*self).fd = -1;
     }
@@ -861,7 +901,7 @@ WebSocketMessage WebSocket_poll(WebSocket *self, uint32_t budgetMs) {
     memset(&result, 0, sizeof(result));
     result.kind = WS_MESSAGE_NONE;
     result.closeCode = 1005u;
-    if (self == nullptr || (*self).fd < 0) {
+    if (self == nullptr || ((*self).fd < 0 && (*self).tls == nullptr)) {
         result.kind = WS_MESSAGE_ERROR;
         memcpy(result.error, "connection is not open", sizeof("connection is not open"));
         return result;
@@ -885,15 +925,25 @@ WebSocketMessage WebSocket_poll(WebSocket *self, uint32_t budgetMs) {
         uint32_t slice = (uint32_t) (deadline - now);
         if (slice > 100u)
             slice = 100u; // bounded slices: re-check the budget, never park
-        struct pollfd waiting = { .fd = (*self).fd, .events = POLLIN };
-        int ready = poll(&waiting, 1, (int) slice);
-        if (ready == 0)
-            continue;
-        if (ready < 0) {
-            wsFail(self, "poll failed");
-            result.kind = WS_MESSAGE_ERROR;
-            memcpy(result.error, (*self).error, sizeof(result.error));
-            return result;
+        if ((*self).tls != nullptr) {
+            // A TLS connection has no descriptor to poll, so ask the transport
+            // for readiness instead. A quiet budget keeps the connection healthy
+            // and simply yields nothing this step; a broken peer is reported by
+            // the read or write that actually fails.
+            Tls_setBudget((*self).tls, slice);
+            if (!Tls_readable((*self).tls, slice))
+                continue;
+        } else {
+            struct pollfd waiting = { .fd = (*self).fd, .events = POLLIN };
+            int ready = poll(&waiting, 1, (int) slice);
+            if (ready == 0)
+                continue;
+            if (ready < 0) {
+                wsFail(self, "poll failed");
+                result.kind = WS_MESSAGE_ERROR;
+                memcpy(result.error, (*self).error, sizeof(result.error));
+                return result;
+            }
         }
         WebSocketMessage frame = wsConsumeFrame(self);
         if (frame.kind != WS_MESSAGE_NONE)

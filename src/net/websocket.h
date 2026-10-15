@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "c23/constructor.h"
+#include "net/tls.h"
 
 // net/websocket.h — RFC 6455 WebSocket client over BSD sockets
 //
@@ -15,8 +16,13 @@
 // continuation-frame reassembly. Like net/http.c it allocates nothing on the
 // caller's behalf beyond the one reassembly buffer this class owns, and it owns
 // no threads: every wait is bounded by the caller's budget, and a timeout
-// mid-frame fails the connection rather than blocking. `wss://` is refused
-// loudly until a TLS backend lands behind net/tls.h; only `ws://` is implemented.
+// mid-frame fails the connection rather than blocking. `ws://` runs on a plain
+// BSD socket; `wss://` runs over the net/tls.h seam when a backend answers and is
+// refused at the URL when none does (net/tls_curl.c is still a stub, so the
+// non-Apple platforms have no transport security yet). A TLS connection has no
+// descriptor to poll, so the client asks the transport for readiness instead and
+// pushes the caller's budget into it, which is what keeps a read from outliving
+// the poll that asked for it.
 //
 // R3 does not include this header. api-haven's WsSource is a duck-typed
 // fn-table shape; a host that can see both binds this client to it.
@@ -82,6 +88,7 @@ typedef struct WebSocketConfig {
 
 typedef struct WebSocket {
     int fd;                        // connected socket, -1 once released
+    TlsConn *tls;                  // TLS session for wss://, null for ws://
     WebSocketState state;
     uint32_t timeoutMs;            // transport budget for one read/write burst
     size_t maxMessageBytes;        // reassembly cap
@@ -103,8 +110,9 @@ typedef struct WebSocket {
 // The empty instance: no socket, CLOSED, no owned buffer. Inline, like
 // HttpResponse, so the caller owns the storage and nothing is allocated here.
 static inline WebSocket WebSocket_0(void) {
-    return (WebSocket) { .fd = -1, .state = WEBSOCKET_CLOSED, .closeCode = 1005u,
-                         .timeoutMs = 5000u, .maxMessageBytes = WS_MESSAGE_BYTES_DEFAULT };
+    return (WebSocket) { .fd = -1, .tls = nullptr, .state = WEBSOCKET_CLOSED,
+                         .closeCode = 1005u, .timeoutMs = 5000u,
+                         .maxMessageBytes = WS_MESSAGE_BYTES_DEFAULT };
 }
 #define WebSocket(...) CONSTRUCTOR_DISPATCH(WebSocket, __VA_ARGS__)
 
