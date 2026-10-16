@@ -95,15 +95,31 @@
 static TlsBackendKind s_lastBackend = TLS_BACKEND_NONE;
 
 /** One connection's retained state; owned by TlsConn.opaque via a bridge cast. */
+// The session's read slot. Network.framework permits ONE outstanding receive per
+// connection: arming a second one aborts the connection, which is exactly how a
+// timed-out readiness probe used to kill a healthy session. So every read goes
+// through this single slot, and a wait that expires leaves the receive armed with
+// its Bytes intact instead of abandoning it.
+#define VEX_TLS_READ_BYTES 4096u
+
 @interface VexTlsSession : NSObject
 @property (nonatomic, strong) nw_connection_t connection;
 @property (nonatomic, strong) dispatch_queue_t queue;
-@property (nonatomic) uint32_t budgetMs;     // per-operation IO budget in force
-@property (nonatomic) bool pendingValid;     // a probed Byte is held back
-@property (nonatomic) uint8_t pendingByte;   // the Byte Tls_readable probed out
+@property (nonatomic) uint32_t budgetMs;      // per-operation IO budget in force
+@property (nonatomic) bool readArmed;         // a receive is outstanding
+@property (nonatomic) bool readReady;         // it completed with Bytes waiting
+@property (nonatomic) bool readFailed;        // the connection will deliver no more
+@property (nonatomic, strong) dispatch_semaphore_t readSettled; // signalled on completion
+@property (nonatomic) uint8_t *readBytes;     // malloc'd VEX_TLS_READ_BYTES
+@property (nonatomic) size_t readOffset;      // Bytes already handed to the caller
+@property (nonatomic) size_t readLength;      // Bytes this receive produced
 @end
 
 @implementation VexTlsSession
+- (void)dealloc {
+    if (_readBytes != nullptr)
+        free(_readBytes);
+}
 @end
 
 ;;INTENTION("the seam is synchronous and Network.framework is not, so this adapter waits on a semaphore with a deadline and cancels the connection on expiry -- a bounded wait the seam could not otherwise promise (the Bounded Wait Law)")
@@ -173,40 +189,62 @@ static bool vexSendBounded(nw_connection_t connection, const void *bytes,
 }
 
 /**
- * Receive one buffer, bounded. A clean end of stream reports false with a zero
- * count, which is the seam's "nothing more will arrive".
+ * Arm the session's ONE outstanding receive. Doing nothing when it is already
+ * armed is the whole point: this is what stops a second receive from aborting the
+ * connection.
  */
-static bool vexReceiveBounded(nw_connection_t connection, void *dest, size_t capacity,
-                              size_t *gotOut, uint32_t timeoutMs) {
-    *gotOut = 0u;
-    dispatch_semaphore_t settled = dispatch_semaphore_create(0);
-    __block bool received = false;
-    __block size_t got = 0u;
-    nw_connection_receive(connection, 1u, (uint32_t) capacity,
-                          ^(dispatch_data_t content, nw_content_context_t context,
-                            bool is_complete, nw_error_t error) {
-        (void) context;
-        (void) is_complete;
-        if (error == nullptr && content != nullptr) {
-            dispatch_data_apply(content, ^bool(dispatch_data_t region, size_t offset,
-                                               const void *buffer, size_t size) {
-                (void) region;
-                size_t room = capacity - offset;
-                size_t copy = size < room ? size : room;
-                memcpy((uint8_t*) dest + offset, buffer, copy);
-                got = offset + copy;
-                return true;
-            });
-            received = got > 0u;
-        }
-        dispatch_semaphore_signal(settled);
-    });
-    if (dispatch_semaphore_wait(settled, vexDeadline(timeoutMs)) != 0) {
-        nw_connection_cancel(connection);
+static void vexArmRead(VexTlsSession *session) {
+    if (session.readArmed || session.readFailed)
+        return;
+    session.readArmed = true;
+    session.readReady = false;
+    session.readOffset = 0u;
+    session.readLength = 0u;
+    session.readSettled = dispatch_semaphore_create(0);
+    nw_connection_receive(session.connection, 1u, VEX_TLS_READ_BYTES,
+        ^(dispatch_data_t content, nw_content_context_t context, bool is_complete,
+          nw_error_t error) {
+            (void) context;
+            session.readArmed = false; // the slot is free again
+            if (error == nullptr && content != nullptr) {
+                __block size_t got = 0u;
+                dispatch_data_apply(content, ^bool(dispatch_data_t region, size_t offset,
+                                                   const void *buffer, size_t size) {
+                    (void) region;
+                    if (offset + size > VEX_TLS_READ_BYTES)
+                        return false;
+                    memcpy(session.readBytes + offset, buffer, size);
+                    got = offset + size;
+                    return true;
+                });
+                session.readLength = got;
+                session.readReady = got > 0u;
+                if (got == 0u && is_complete)
+                    session.readFailed = true; // a clean end of stream
+            } else {
+                session.readFailed = true;
+            }
+            dispatch_semaphore_signal(session.readSettled);
+        });
+}
+
+/**
+ * Wait, bounded, for Bytes to be available — readiness WITHOUT consuming: the
+ * Bytes stay in the slot. False means the budget expired (the receive is still
+ * armed, so nothing was lost) or the connection will deliver no more.
+ */
+static bool vexAwaitRead(VexTlsSession *session, uint32_t budgetMs) {
+    if (session.readOffset < session.readLength)
+        return true; // Bytes are already buffered
+    if (session.readFailed)
         return false;
-    }
-    *gotOut = got;
-    return received;
+    vexArmRead(session);
+    dispatch_semaphore_t settled = session.readSettled;
+    if (settled == nil)
+        return false;
+    if (dispatch_semaphore_wait(settled, vexDeadline(budgetMs)) != 0)
+        return false; // still armed; the Bytes are not lost
+    return session.readOffset < session.readLength;
 }
 
 /** Borrow the session a TlsConn carries, or null when the handle is unusable. */
@@ -258,7 +296,15 @@ bool Tls_connect(const char *host, int port, TlsConn **connOut) {
         session.connection = connection;
         session.queue = dispatch_queue_create("vex.tls.apple", DISPATCH_QUEUE_SERIAL);
         session.budgetMs = VEX_TLS_IO_TIMEOUT_MS;
-        session.pendingValid = false;
+        session.readArmed = false;
+        session.readReady = false;
+        session.readFailed = false;
+        session.readBytes = (uint8_t*) malloc(VEX_TLS_READ_BYTES);
+        if (session.readBytes == nullptr) {
+            nw_connection_cancel(connection);
+            THROW("Tls_connect: read slot allocation failed");
+            return false;
+        }
 
         if (!vexWaitForReady(connection, session.queue, VEX_TLS_CONNECT_TIMEOUT_MS)) {
             nw_connection_cancel(connection);
@@ -292,9 +338,9 @@ bool Tls_send(TlsConn *conn, const char *buf, size_t len) {
 }
 
 /**
- * Receive at most cap Bytes, bounded by the connection's budget. A Byte a
- * previous readiness probe held back is served first, so probing never costs a
- * Byte.
+ * Receive at most cap Bytes, bounded by the connection's budget. Bytes a
+ * readiness probe already fetched are served from the session's slot, so probing
+ * never costs or duplicates a Byte.
  */
 bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut) {
     if (gotOut != nullptr)
@@ -302,15 +348,22 @@ bool Tls_recv(TlsConn *conn, char *buf, size_t cap, size_t *gotOut) {
     VexTlsSession *session = vexSession(conn);
     if (session == nullptr || buf == nullptr || cap == 0u || gotOut == nullptr)
         return false;
-    if (session.pendingValid) {
-        buf[0] = (char) session.pendingByte;
-        session.pendingValid = false;
-        *gotOut = 1u;
-        return true;
-    }
     @autoreleasepool {
-        return vexReceiveBounded(session.connection, buf, cap, gotOut, session.budgetMs);
+        if (!vexAwaitRead(session, session.budgetMs))
+            return false;
+        size_t available = session.readLength - session.readOffset;
+        size_t copy = available < cap ? available : cap;
+        memcpy(buf, session.readBytes + session.readOffset, copy);
+        session.readOffset += copy;
+        *gotOut = copy;
+        if (session.readOffset == session.readLength) {
+            // Fully consumed: release the slot so the next read re-arms cleanly.
+            session.readReady = false;
+            session.readOffset = 0u;
+            session.readLength = 0u;
+        }
     }
+    return true;
 }
 
 /**
@@ -323,18 +376,10 @@ bool Tls_readable(TlsConn *conn, uint32_t budgetMs) {
     VexTlsSession *session = vexSession(conn);
     if (session == nullptr)
         return false;
-    if (session.pendingValid)
-        return true;
-    uint8_t probe = 0u;
-    size_t got = 0u;
     uint32_t budget = budgetMs == 0u ? session.budgetMs : budgetMs;
     @autoreleasepool {
-        if (!vexReceiveBounded(session.connection, &probe, 1u, &got, budget) || got == 0u)
-            return false;
+        return vexAwaitRead(session, budget);
     }
-    session.pendingByte = probe;
-    session.pendingValid = true;
-    return true;
 }
 
 /** Set the per-operation IO budget, so a read cannot outlive its caller's slice. */
