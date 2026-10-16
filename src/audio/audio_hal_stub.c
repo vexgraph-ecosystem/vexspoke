@@ -43,9 +43,13 @@
  *
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
+ * Public Constructors: (.h)
+ *   - AudioHalConfig_0()
+ *   - AudioHalConfig_1(callback)
+ *   - AudioHalConfig_2(callback, user_data)
+ *   - AudioHal_0()
+ *   - AudioHal_1(config)
  * Public Core Functions: (.h)
- *   - AudioHalConfig_default(void)
- *   - AudioHal_create(config, hal_out)
  *   - AudioHal_start(hal)
  *   - AudioHal_stop(hal)
  *   - AudioHal_destroy(hal)
@@ -64,7 +68,7 @@ struct AudioHal {
     bool is_running;
 };
 
-AudioHalConfig AudioHalConfig_default(void) {
+AudioHalConfig AudioHalConfig_0(void) {
     AudioHalConfig cfg;
     cfg.sample_rate = 48000.0;
     cfg.channels = 2;
@@ -74,12 +78,42 @@ AudioHalConfig AudioHalConfig_default(void) {
     return cfg;
 }
 
-bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out) {
+AudioHalConfig AudioHalConfig_1(AudioHalRenderCallback callback) {
+    return AudioHalConfig_2(callback, nullptr);
+}
+
+AudioHalConfig AudioHalConfig_2(AudioHalRenderCallback callback, void *user_data) {
+    AudioHalConfig cfg = AudioHalConfig_0();
+    cfg.callback = callback;
+    cfg.user_data = user_data;
+    return cfg;
+}
+
+bool AudioHalConfig_set_sample_rate(AudioHalConfig *config, double sample_rate) {
+    if (!config || sample_rate <= 0.0) return false;
+    (*config).sample_rate = sample_rate;
+    return true;
+}
+
+bool AudioHalConfig_set_channels(AudioHalConfig *config, uint32_t channels) {
+    if (!config || channels == 0) return false;
+    (*config).channels = channels;
+    return true;
+}
+
+bool AudioHalConfig_set_buffer_frames(AudioHalConfig *config, uint32_t buffer_frames) {
+    if (!config || buffer_frames == 0) return false;
+    (*config).buffer_frames = buffer_frames;
+    return true;
+}
+
+AudioHal *AudioHal_0(void) {
+    return AudioHal_1(nullptr);
+}
+
+AudioHal *AudioHal_1(const AudioHalConfig *config) {
     (void) config;
-    if (hal_out) {
-        *hal_out = nullptr;
-    }
-    return false;
+    return nullptr;
 }
 
 bool AudioHal_start(AudioHal *hal) {

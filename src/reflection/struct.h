@@ -53,7 +53,7 @@ bool Struct_setName(Struct *self, const char *name);
 // offsets; a caller setting physical Fields also sets the row size.
 void Struct_setSize(Struct *self, uint32_t size);
 uint32_t Struct_getSize(const Struct *self);
-int Struct_getName(const Struct *self, char *out, size_t outCap);
+const char *Struct_getName(const Struct *self);
 uint32_t Struct_count(const Struct *self);
 bool Struct_isEmpty(const Struct *self);
 

@@ -58,7 +58,8 @@
 BitPool g_boolPool;
 
 bool Bool_init(void) {
-    return BitPool_init(&g_boolPool, 1, 1024);
+    g_boolPool = BitPool(1, 1024);
+    return g_boolPool.arena != nullptr;
 }
 
 void Bool_shutdown(void) {

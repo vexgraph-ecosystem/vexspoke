@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // relational/symbol_table.h — the relational symbol registry (Legacy: variable/SymbolTable.java).
 //
 // Maps a name to a (classId, targetPointer) payload. Every registered symbol
@@ -47,9 +49,10 @@ typedef struct SymbolTable {
     uint32_t bySlotCap;     // bySlot slots allocated
 } SymbolTable;
 
-// Set up the registry (brings the shared pool up on the default arena,
-// allocates rows). Returns false on OOM.
-bool SymbolTable_init(SymbolTable *v);
+// Construct the registry (brings the shared pool up on the default arena and
+// allocates rows). An inactive value means memory or pool setup failed.
+SymbolTable SymbolTable_0(void);
+#define SymbolTable(...) CONSTRUCTOR_DISPATCH(SymbolTable, __VA_ARGS__)
 
 // Release rows and index. Safe to call twice. Never touches the pool.
 void SymbolTable_shutdown(SymbolTable *v);
@@ -78,9 +81,9 @@ void SymbolTable_setPointer(SymbolTable *v, int32_t varId, uintptr_t targetPoint
 bool SymbolTable_compareAndSetPointer(SymbolTable *v, int32_t varId, uintptr_t expected, uintptr_t newPointer);
 uint32_t SymbolTable_getClassId(SymbolTable *v, int32_t varId);
 
-// Copy the registered name into _out (nul-terminated, at most outCap Bytes).
-// Returns the string length, or -1 on bad varId / short buffer.
-int SymbolTable_getName(SymbolTable *v, int32_t varId, char *out, size_t outCap);
+// Borrow the registered name from the shared pool. Valid while the pool lives;
+// returns nullptr for an invalid varId.
+const char *SymbolTable_getName(const SymbolTable *v, int32_t varId);
 
 // Number of registered symbols.
 size_t SymbolTable_getActiveCount(SymbolTable *v);

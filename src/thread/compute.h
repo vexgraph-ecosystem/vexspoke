@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "thread/thread.h"
+#include "c23/constructor.h"
 
 // thread/compute.h — the heavy-work job system (the parking lot).
 //
@@ -29,6 +30,22 @@ typedef struct ComputeJob {
     void *ctx;           // its argument (caller-owned; keep alive until run)
     ComputeJobFn onDone; // optional completion (runs on the same worker)
 } ComputeJob;
+
+static inline ComputeJob ComputeJob_3(ComputeJobFn run, void *context,
+                                      ComputeJobFn onDone) {
+    return (ComputeJob) { .tag = COMPUTE_JOB_TAG, .run = run,
+        .ctx = context, .onDone = onDone };
+}
+#define ComputeJob(...) CONSTRUCTOR_DISPATCH(ComputeJob, __VA_ARGS__)
+static inline void ComputeJob_setRun(ComputeJob *job, ComputeJobFn run) {
+    if (job) (*job).run = run;
+}
+static inline void ComputeJob_setContext(ComputeJob *job, void *context) {
+    if (job) (*job).ctx = context;
+}
+static inline void ComputeJob_setOnDone(ComputeJob *job, ComputeJobFn onDone) {
+    if (job) (*job).onDone = onDone;
+}
 
 // Recognise / execute a task as a ComputeJob. A role's job calls isJob first;
 // when true it runs the job and returns, so generic work may be dispatched to

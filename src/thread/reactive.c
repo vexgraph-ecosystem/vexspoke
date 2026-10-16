@@ -80,12 +80,12 @@ static void reactive_job(Thread *self, void *task) {
 }
 
 Thread *ReactiveThread_invoke(void) {
-    return Thread_new(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
+    return Thread(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
 }
 
 Thread *ReactiveThread_core(void) {
     if (s_core == nullptr) {
-        s_core = Thread_new(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
+        s_core = Thread(TYPE_THREAD_REACTIVE_SINGLETON, reactive_job, 2048, false, false);
         if (s_core != nullptr)
             Thread_run(s_core);              // the default owner is live on first use
     }

@@ -112,9 +112,9 @@ static const SegmentEntry *entryAt(const SegmentIndex *index, uint32_t entry) {
 // order, so findPosting can binary search.
 static bool postSegment(SegmentIndex *index, uint32_t entry, uint32_t position, const char *segment) {
     VariableHashMap *postings = (*index).postings;
-    uintptr_t existing = 0u;
+    uintptr_t existing = VariableHashMap_get(postings, segment);
     ChunkedList *list = nullptr;
-    if (VariableHashMap_get(postings, segment, &existing))
+    if (VariableHashMap_contains(postings, segment))
         list = (ChunkedList*) existing;
     if (!list) {
         list = ChunkedList_3(ID_SEGMENT_POSTING, (uint32_t) sizeof(SegmentPosting), VEX_CHUNKED_BYTES_DEFAULT);
@@ -222,8 +222,8 @@ typedef struct BuildCtx {
 
 static void buildFn(VariableSlot *slot, void *userdata) {
     BuildCtx *ctx = (BuildCtx*) userdata;
-    char name[SEGMENT_NAME_BYTES];
-    if (VariableSlot_getName(slot, name, sizeof(name)) < 0)
+    const char *name = VariableSlot_getName(slot);
+    if (!name)
         return;
     SegmentIndex_add((*ctx).index, name, (uintptr_t) slot);
 }
@@ -427,8 +427,8 @@ size_t SegmentIndex_query(const SegmentIndex *index, const char *query, SegmentM
     const ChunkedList *lists[SEGMENT_QUERY_SEGMENTS_MAX];
     size_t rarest = 0u;
     for (size_t k = 0u; k < qn; k++) {
-        uintptr_t value = 0u;
-        if (!VariableHashMap_get((*index).postings, segs[k], &value) || value == 0u)
+        uintptr_t value = VariableHashMap_get((*index).postings, segs[k]);
+        if (value == 0u)
             return 0u;
         lists[k] = (const ChunkedList*) value;
         if (ChunkedList_size(lists[k]) < ChunkedList_size(lists[rarest]))

@@ -60,7 +60,7 @@
  * ----------------------------------------------------------------------------
  * Constructors:
  *   - Audio_init(void)
- *   - AudioVoice_new(void)
+ *   - AudioVoice(void)
  *   - Audio_0(void)
  *   - Audio_2(sampleRate, channels)
  *
@@ -287,7 +287,7 @@ static bool audioNodePlay(AVAudioPlayerNode *node) {
     return true;
 }
 
-AudioVoice *AudioVoice_new(void) {
+AudioVoice *AudioVoice_0(void) {
     if (!s_ready)
         return nullptr;
     @autoreleasepool {

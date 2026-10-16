@@ -1,6 +1,7 @@
 #ifndef REACTIVE_REACTIVE_OBJECT_H
 #define REACTIVE_REACTIVE_OBJECT_H
 
+#include "c23/constructor.h"
 #include "lang/rect/rectangle.h"
 #include "lang/vec2/vec2.h"
 #include "lang/vec3/vec3.h"
@@ -27,5 +28,15 @@ TYPEDEF_REACTIVE(Rectangle);
 TYPEDEF_REACTIVE(IntDouble);
 TYPEDEF_REACTIVE(LongFloat);
 TYPEDEF_REACTIVE(LongDouble);
+
+// TYPEDEF_REACTIVE stamps the constructor arms; expose normal class chooser
+// macros for the standard object family at the consumer boundary.
+#define ReactiveVec2(...) CONSTRUCTOR_DISPATCH(ReactiveVec2, __VA_ARGS__)
+#define ReactiveVec3(...) CONSTRUCTOR_DISPATCH(ReactiveVec3, __VA_ARGS__)
+#define ReactiveVec4(...) CONSTRUCTOR_DISPATCH(ReactiveVec4, __VA_ARGS__)
+#define ReactiveRectangle(...) CONSTRUCTOR_DISPATCH(ReactiveRectangle, __VA_ARGS__)
+#define ReactiveIntDouble(...) CONSTRUCTOR_DISPATCH(ReactiveIntDouble, __VA_ARGS__)
+#define ReactiveLongFloat(...) CONSTRUCTOR_DISPATCH(ReactiveLongFloat, __VA_ARGS__)
+#define ReactiveLongDouble(...) CONSTRUCTOR_DISPATCH(ReactiveLongDouble, __VA_ARGS__)
 
 #endif

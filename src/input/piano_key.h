@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // input/piano_key.h — Musical / MIDI Keyboard Pitch & Event Model.
 //
@@ -39,6 +40,20 @@ typedef struct PianoKeyEvent {
     uint64_t timestampUs; // Microsecond timestamp
 } PianoKeyEvent;
 
+static inline PianoKeyEvent PianoKeyEvent_3(uint8_t note, bool isDown, float velocity) {
+    return (PianoKeyEvent) { .note = note, .isDown = isDown, .velocity = velocity };
+}
+#define PianoKeyEvent(...) CONSTRUCTOR_DISPATCH(PianoKeyEvent, __VA_ARGS__)
+static inline void PianoKeyEvent_setNote(PianoKeyEvent *event, uint8_t note) {
+    if (event) (*event).note = note;
+}
+static inline void PianoKeyEvent_setDown(PianoKeyEvent *event, bool isDown) {
+    if (event) (*event).isDown = isDown;
+}
+static inline void PianoKeyEvent_setVelocity(PianoKeyEvent *event, float velocity) {
+    if (event) (*event).velocity = velocity;
+}
+
 typedef struct PianoState {
     float    velocities[PIANO_MAX_NOTES]; // 0.0 if not pressed
     float    pressures[PIANO_MAX_NOTES];  // Aftertouch per key
@@ -56,7 +71,8 @@ int32_t         PianoKey_octave(uint8_t note);
 void            PianoKey_noteName(uint8_t note, char *dest, size_t maxLen);
 
 // State container management
-void PianoState_init(PianoState *state);
+PianoState PianoState_0(void);
+#define PianoState(...) CONSTRUCTOR_DISPATCH(PianoState, __VA_ARGS__)
 void PianoState_processEvent(PianoState *state, PianoKeyEvent event);
 bool PianoState_isNoteOn(const PianoState *state, uint8_t note);
 float PianoState_noteVelocity(const PianoState *state, uint8_t note);

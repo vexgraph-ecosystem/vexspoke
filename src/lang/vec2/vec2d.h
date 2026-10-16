@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // lang/vec2/vec2d.h — 2D Double-Precision Vector.
 //
 // Single Class Per File Law: Vec2d.
@@ -21,6 +23,7 @@ typedef struct Vec2d {
 
 Vec2d *Vec2d_0(void);
 Vec2d *Vec2d_2(double horizontal, double vertical);
+#define Vec2d(...) CONSTRUCTOR_DISPATCH(Vec2d, __VA_ARGS__)
 void Vec2d_free(Vec2d *v);
 
 double Vec2d_getRight(const Vec2d *v);

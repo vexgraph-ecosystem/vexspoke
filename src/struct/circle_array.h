@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 #include "struct/collection.h"
 
 // struct/circle_array.h — 2D Circular Matrix evaluated via the Pythagorean Theorem.
@@ -19,8 +20,9 @@ typedef struct CircleArray {
 } CircleArray;
 
 // Allocation: creates a CircleArray with radius and element class.
-CircleArray *CircleArray_create(int32_t radius, uint32_t elementClass);
-CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass, size_t stride);
+CircleArray *CircleArray_2(int32_t radius, uint32_t elementClass);
+CircleArray *CircleArray_3(int32_t radius, uint32_t elementClass, size_t stride);
+#define CircleArray(...) CONSTRUCTOR_DISPATCH(CircleArray, __VA_ARGS__)
 void CircleArray_free(CircleArray *self);
 
 int32_t CircleArray_radius(const CircleArray *self);
@@ -33,12 +35,12 @@ bool CircleArray_containsOffset(const CircleArray *self, int32_t dx, int32_t dy)
 int64_t CircleArray_distanceSquaredGrid(const CircleArray *self, int32_t gridX, int32_t gridY);
 int64_t CircleArray_distanceSquaredOffset(int32_t dx, int32_t dy);
 
-// Cell access by grid coordinates [0, diameter - 1] (Dest-last order: get writes to dest, set reads from src)
-bool CircleArray_getGrid(const CircleArray *self, int32_t gridX, int32_t gridY, void *dest);
+// Cell access by grid coordinates [0, diameter - 1] (get output first, set input last)
+bool CircleArray_getGrid(void *dest, const CircleArray *self, int32_t gridX, int32_t gridY);
 bool CircleArray_setGrid(CircleArray *self, int32_t gridX, int32_t gridY, const void *src);
 
 // Cell access by center-relative offsets [-radius, radius]
-bool CircleArray_getOffset(const CircleArray *self, int32_t dx, int32_t dy, void *dest);
+bool CircleArray_getOffset(void *dest, const CircleArray *self, int32_t dx, int32_t dy);
 bool CircleArray_setOffset(CircleArray *self, int32_t dx, int32_t dy, const void *src);
 
 // Raw pointer to cell slot inside circular matrix (nullptr if outside circle or bounds)

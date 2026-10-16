@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
 #include "regex/charclass.h"
 #include "regex/program.h"
 #include "regex/span.h"
@@ -29,6 +30,20 @@ typedef struct RegexOptions {
     bool multiline;   // '^'/'\$' also match at line edges
 } RegexOptions;
 
+static inline RegexOptions RegexOptions_3(bool ignoreCase, bool dotall, bool multiline) {
+    return (RegexOptions) { .ignoreCase = ignoreCase, .dotall = dotall, .multiline = multiline };
+}
+#define RegexOptions(...) CONSTRUCTOR_DISPATCH(RegexOptions, __VA_ARGS__)
+static inline void RegexOptions_setIgnoreCase(RegexOptions *options, bool value) {
+    if (options) (*options).ignoreCase = value;
+}
+static inline void RegexOptions_setDotall(RegexOptions *options, bool value) {
+    if (options) (*options).dotall = value;
+}
+static inline void RegexOptions_setMultiline(RegexOptions *options, bool value) {
+    if (options) (*options).multiline = value;
+}
+
 // One closure work item: either "expand this pc" or "restore a capture slot
 // after the subtree beneath it finishes" (so sibling branches stay clean).
 typedef struct RegexTask {
@@ -40,7 +55,7 @@ typedef struct RegexTask {
 
 // Per-run scratch, sized once from the program. One row per thread slot in
 // each of two capture regions, a shared all-unset seed row, and the copied
-// winner. Immutable except for `best` after RegexVm_init.
+// winner. Immutable except for `best` after construction.
 typedef struct RegexVm {
     const RegexProgram *program;       // borrowed instruction source
     uint32_t   *clistPc;               // current thread list: program counters
@@ -59,9 +74,10 @@ typedef struct RegexVm {
     uint32_t    stackCapacity;         // work-stack entries
 } RegexVm;
 
-// Allocate every scratch block up front; a run allocates nothing more. False
-// when the arena refuses, in which case the VM is unusable.
-bool RegexVm_init(RegexVm *vm, const RegexProgram *program, uint32_t groupCount);
+// Allocate every scratch block up front; a run allocates nothing more. A
+// refused allocation returns an empty VM (`best == nullptr`).
+RegexVm RegexVm_2(const RegexProgram *program, uint32_t groupCount);
+#define RegexVm(...) CONSTRUCTOR_DISPATCH(RegexVm, __VA_ARGS__)
 
 // Release every scratch block and zero the VM. Null-safe.
 void RegexVm_free(RegexVm *vm);

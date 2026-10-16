@@ -29,10 +29,11 @@ typedef struct Point {
 #define POINT_BYTES 8u
 
 // Constructors:
-//   Point()        : Point_0()   — origin (0, 0)
-//   Point(x, y)    : Point_2(x, y)
+//   Point()        — origin (0, 0)
+//   Point(x, y)    — explicit pixel position
 Point *Point_0(void);
 Point *Point_2(int32_t x, int32_t y);
+#define Point(...) CONSTRUCTOR_DISPATCH(Point, __VA_ARGS__)
 void Point_free(Point *p);
 
 // Setters

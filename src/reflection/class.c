@@ -212,15 +212,8 @@ ClassConstructFn Class_getConstruct(const Class *self) {
     return (*self).construct;
 }
 
-int Class_getName(const Class *self, char *out, size_t outCap) {
-    if (self == nullptr || out == nullptr || outCap == 0u)
-        return -1;
-    const char *src = (*self).name;
-    size_t len = strlen(src);
-    if (len + 1u > outCap)
-        return -1;
-    memcpy(out, src, len + 1u);
-    return (int) len;
+const char *Class_getName(const Class *self) {
+    return self ? (*self).name : nullptr;
 }
 
 uint32_t Class_methodCount(const Class *self) {

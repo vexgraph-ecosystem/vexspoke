@@ -1,7 +1,42 @@
 #include "exception.h"
+#include "annotation/definition.h"
+#include "annotation/overview.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+;;DEFINITION
+/** Exception owns formatted diagnostic strings and source metadata for a cold
+ * failure report. Formatting and printing may allocate or block, so this is a
+ * diagnostic/lifecycle object rather than a real-time error channel. */
+;;OVERVIEW
+/** ========================================================================
+ * CLASS: Exception (exception/exception.c)
+ * STRUCT FIELDS (Mirroring exception.h)
+ * uint64_t type                 project-scoped Exception singleton identity
+ * ExceptionCategory category    stable diagnostic category
+ * const char *site              borrowed operation/site label
+ * const char *file              borrowed source filename
+ * int line                      source line number
+ * char *message                 owned formatted primary diagnostic
+ * char *details                 owned formatted context diagnostic
+ * FUNCTION REGISTRY
+ * Projections: const char *Exception_categoryName(ExceptionCategory category)
+ * Constructors: Exception_0(), Exception_5(..), Exception_6(..),
+ *   Exception_7(..), Exception_8(..)
+ * Lifecycle: void Exception_free(Exception *self)
+ * Setters: void Exception_setDetails(Exception *self, const char *fmt, ...)
+ *   void Exception_setDetailsV(Exception *self, const char *fmt, va_list args)
+ * Operations: void Exception_print(const Exception *self)
+ * Private behavior: format sizing/copying is performed by exceptionInitializeV
+ *   and setDetailsV;
+ *   allocation failure preserves the prior details value on replacement.
+ * Null/default, failure and ownership contract:
+ * Exception_0 produces a valid empty diagnostic. Null self is ignored by
+ * setters, free and print. Formatted message/details allocations are owned by
+ * Exception and released by free;
+ * site/file strings are borrowed. stderr formatting is cold and synchronous.
+ * ======================================================================== */
 
 // Returns the stable display name for a category, or the unknown-category name.
 const char *Exception_categoryName(ExceptionCategory category) {
@@ -18,15 +53,13 @@ const char *Exception_categoryName(ExceptionCategory category) {
 }
 
 // Initializes exception metadata and formats an optional message using args.
-void Exception_initV(Exception *self,
-                     ExceptionCategory category,
-                     const char *site,
-                     const char *file,
-                     int line,
-                     const char *fmt,
-                     va_list args) {
-    if (self == nullptr) return;
-
+static void exceptionInitializeV(Exception *self,
+                                 ExceptionCategory category,
+                                 const char *site,
+                                 const char *file,
+                                 int line,
+                                 const char *fmt,
+                                 va_list args) {
     (*self).type = TYPE_EXCEPTION_SINGLETON;
     (*self).category = category;
     (*self).site = (site != nullptr) ? site : "UnknownSite";
@@ -51,18 +84,61 @@ void Exception_initV(Exception *self,
     }
 }
 
-// Initializes exception metadata and formats an optional variadic message.
-void Exception_init(Exception *self,
-                    ExceptionCategory category,
-                    const char *site,
-                    const char *file,
-                    int line,
-                    const char *fmt,
-                    ...) {
+Exception Exception_0(void) {
+    Exception self;
+    memset(&self, 0, sizeof self);
+    self.type = TYPE_EXCEPTION_SINGLETON;
+    self.category = EXCEPTION_RUNTIME;
+    self.site = "UnknownSite";
+    self.file = "UnknownFile";
+    return self;
+}
+
+static Exception exceptionFormatted(ExceptionCategory category,
+                                     const char *site,
+                                     const char *file,
+                                     int line,
+                                     const char *fmt,
+                                     va_list args) {
+    Exception self = Exception_0();
+    exceptionInitializeV(&self, category, site, file, line, fmt, args);
+    return self;
+}
+
+Exception Exception_5(ExceptionCategory category, const char *site,
+                      const char *file, int line, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    Exception_initV(self, category, site, file, line, fmt, args);
+    Exception self = exceptionFormatted(category, site, file, line, fmt, args);
     va_end(args);
+    return self;
+}
+
+Exception Exception_6(ExceptionCategory category, const char *site,
+                      const char *file, int line, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    Exception self = exceptionFormatted(category, site, file, line, fmt, args);
+    va_end(args);
+    return self;
+}
+
+Exception Exception_7(ExceptionCategory category, const char *site,
+                      const char *file, int line, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    Exception self = exceptionFormatted(category, site, file, line, fmt, args);
+    va_end(args);
+    return self;
+}
+
+Exception Exception_8(ExceptionCategory category, const char *site,
+                      const char *file, int line, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    Exception self = exceptionFormatted(category, site, file, line, fmt, args);
+    va_end(args);
+    return self;
 }
 
 // Replaces owned details with formatted args when formatting and allocation succeed.

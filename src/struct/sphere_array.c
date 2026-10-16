@@ -47,8 +47,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - SphereArray_create(radius, elementClass)
- *   - SphereArray_createWithStride(radius, elementClass, stride)
+ *   - SphereArray(radius, elementClass)
+ *   - SphereArray(radius, elementClass, stride)
  *
  * Core Functions:
  *   - SphereArray_free(self)
@@ -58,9 +58,9 @@
  *   - SphereArray_distanceSquaredOffset(dx, dy, dz)
  *   - SphereArray_slotGrid(self, gx, gy, gz)
  *   - SphereArray_slotOffset(self, dx, dy, dz)
- *   - SphereArray_getGrid(self, gx, gy, gz, dest)
+ *   - SphereArray_getGrid(dest, self, gx, gy, gz)
  *   - SphereArray_setGrid(self, gx, gy, gz, src)
- *   - SphereArray_getOffset(self, dx, dy, dz, dest)
+ *   - SphereArray_getOffset(dest, self, dx, dy, dz)
  *   - SphereArray_setOffset(self, dx, dy, dz, src)
  *   - SphereArray_forEach(self, callback, userData)
  *
@@ -74,7 +74,7 @@
  * ============================================================================
  */
 
-SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass, size_t stride) {
+SphereArray *SphereArray_3(int32_t radius, uint32_t elementClass, size_t stride) {
     if (radius < 0) {
         return nullptr;
     }
@@ -130,12 +130,12 @@ SphereArray *SphereArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-SphereArray *SphereArray_create(int32_t radius, uint32_t elementClass) {
+SphereArray *SphereArray_2(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;
     }
-    return SphereArray_createWithStride(radius, elementClass, stride);
+    return SphereArray_3(radius, elementClass, stride);
 }
 
 void SphereArray_free(SphereArray *self) {
@@ -222,7 +222,7 @@ uint8_t *SphereArray_slotOffset(SphereArray *self, int32_t dx, int32_t dy, int32
     return SphereArray_slotGrid(self, gx, gy, gz);
 }
 
-bool SphereArray_getGrid(const SphereArray *self, int32_t gx, int32_t gy, int32_t gz, void *dest) {
+bool SphereArray_getGrid(void *dest, const SphereArray *self, int32_t gx, int32_t gy, int32_t gz) {
     if (self == nullptr || dest == nullptr) return false;
     if (!SphereArray_containsGrid(self, gx, gy, gz)) {
         return false;
@@ -246,12 +246,12 @@ bool SphereArray_setGrid(SphereArray *self, int32_t gx, int32_t gy, int32_t gz, 
     return true;
 }
 
-bool SphereArray_getOffset(const SphereArray *self, int32_t dx, int32_t dy, int32_t dz, void *dest) {
+bool SphereArray_getOffset(void *dest, const SphereArray *self, int32_t dx, int32_t dy, int32_t dz) {
     if (self == nullptr) return false;
     int32_t gx = dx + (*self).radius;
     int32_t gy = dy + (*self).radius;
     int32_t gz = dz + (*self).radius;
-    return SphereArray_getGrid(self, gx, gy, gz, dest);
+    return SphereArray_getGrid(dest, self, gx, gy, gz);
 }
 
 bool SphereArray_setOffset(SphereArray *self, int32_t dx, int32_t dy, int32_t dz, const void *src) {

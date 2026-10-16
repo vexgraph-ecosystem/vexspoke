@@ -55,7 +55,8 @@
 BitPool g_intPool;
 
 bool Int_init(void) {
-    return BitPool_init(&g_intPool, 4, 1024);
+    g_intPool = BitPool(4, 1024);
+    return g_intPool.arena != nullptr;
 }
 
 void Int_shutdown(void) {

@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,9 +30,18 @@ typedef struct AudioHalConfig {
 
 typedef struct AudioHal AudioHal;
 
-AudioHalConfig AudioHalConfig_default(void);
+AudioHalConfig AudioHalConfig_0(void);
+AudioHalConfig AudioHalConfig_1(AudioHalRenderCallback callback);
+AudioHalConfig AudioHalConfig_2(AudioHalRenderCallback callback, void *user_data);
+#define AudioHalConfig(...) CONSTRUCTOR_DISPATCH(AudioHalConfig, __VA_ARGS__)
+bool AudioHalConfig_set_sample_rate(AudioHalConfig *config, double sample_rate);
+bool AudioHalConfig_set_channels(AudioHalConfig *config, uint32_t channels);
+bool AudioHalConfig_set_buffer_frames(AudioHalConfig *config, uint32_t buffer_frames);
 
-bool AudioHal_create(const AudioHalConfig *config, AudioHal **hal_out);
+AudioHal *AudioHal_0(void);
+AudioHal *AudioHal_1(const AudioHalConfig *config);
+#define AudioHal(...) CONSTRUCTOR_DISPATCH(AudioHal, __VA_ARGS__)
+
 bool AudioHal_start(AudioHal *hal);
 bool AudioHal_stop(AudioHal *hal);
 void AudioHal_destroy(AudioHal *hal);

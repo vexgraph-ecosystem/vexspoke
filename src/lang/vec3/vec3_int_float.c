@@ -47,7 +47,7 @@
  * ----------------------------------------------------------------------------
  * Constructors:
  *   - Vec3IntFloat_0()
- *   - Vec3IntFloat_create(sH, lH, sV, lV, sD, lD, frame)
+ *   - Vec3IntFloat(sectorH, localH, sectorV, localV, sectorD, localD, frame)
  *
  * Core Functions:
  *   - Vec3IntFloat_free(v)
@@ -79,15 +79,16 @@ Vec3IntFloat *Vec3IntFloat_0(void) {
     return v;
 }
 
-Vec3IntFloat *Vec3IntFloat_create(int32_t sH, float lH, int32_t sV, float lV, int32_t sD, float lD, CoordFrame frame) {
+Vec3IntFloat *Vec3IntFloat_7(int32_t sectorH, float localH, int32_t sectorV, float localV,
+                             int32_t sectorD, float localD, CoordFrame frame) {
     Vec3IntFloat *v = (Vec3IntFloat*) Memory_alloc(ID_VEC3, sizeof(Vec3IntFloat));
     if (!v) return nullptr;
-    (*v).horizontal.sector = sH;
-    (*v).horizontal.local = lH;
-    (*v).vertical.sector = sV;
-    (*v).vertical.local = lV;
-    (*v).depth.sector = sD;
-    (*v).depth.local = lD;
+    (*v).horizontal.sector = sectorH;
+    (*v).horizontal.local = localH;
+    (*v).vertical.sector = sectorV;
+    (*v).vertical.local = localV;
+    (*v).depth.sector = sectorD;
+    (*v).depth.local = localD;
     (*v).frame = CoordFrame_isValid(frame) ? (uint32_t) frame : (uint32_t) COORD_FRAME_DEFAULT;
     return v;
 }

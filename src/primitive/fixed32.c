@@ -57,7 +57,8 @@
 BitPool g_fixed32Pool;
 
 bool Fixed32_init(void) {
-    return BitPool_init(&g_fixed32Pool, 4, 1024);
+    g_fixed32Pool = BitPool(4, 1024);
+    return g_fixed32Pool.arena != nullptr;
 }
 
 void Fixed32_shutdown(void) {

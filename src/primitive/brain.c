@@ -60,7 +60,8 @@
 BitPool g_brainPool;
 
 bool Brain_init(void) {
-    return BitPool_init(&g_brainPool, 2, 1024);
+    g_brainPool = BitPool(2, 1024);
+    return g_brainPool.arena != nullptr;
 }
 
 void Brain_shutdown(void) {

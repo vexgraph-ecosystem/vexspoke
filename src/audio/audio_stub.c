@@ -34,7 +34,7 @@
  * ----------------------------------------------------------------------------
  * Constructors:
  *   - Audio_init(void)
- *   - AudioVoice_new(void)
+ *   - AudioVoice(void)
  *   - Audio_0(void)
  *   - Audio_2(sampleRate, channels)
  *
@@ -113,7 +113,7 @@ float AudioClip_seconds(AudioClip *clip) {
     return 0.0f;
 }
 
-AudioVoice *AudioVoice_new(void) {
+AudioVoice *AudioVoice_0(void) {
     return nullptr;
 }
 

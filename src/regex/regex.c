@@ -21,7 +21,7 @@
  * ============================================================================
  * The public face of the regex subsystem: compile a pattern once, then answer
  * "does this text look like that shape?" in time bounded by the input. It
- * exists because the ecosystem keeps needing text shapes — find/replace in
+ * exists because the vexgraph-ecosystem-gitrepo keeps needing text shapes — find/replace in
  * editors, log and manifest scanning, connector input validation, syntax
  * tooling — and neither a hand-rolled strstr nor a backtracking matcher is an
  * acceptable answer: the first cannot express the shape, the second hands a
@@ -119,8 +119,8 @@ static bool runSearch(const Regex *regex, const char *subject, size_t length,
                       size_t *outGroupCount, bool *outTruncated) {
     if (!regex || !subject)
         return false;
-    RegexVm vm;
-    if (!RegexVm_init(&vm, &(*regex).program, (*regex).groupCount))
+    RegexVm vm = RegexVm(&(*regex).program, (*regex).groupCount);
+    if (vm.best == nullptr)
         return false;
     RegexOptions options = regexOptions((*regex).flags);
     bool hit = anchored
@@ -190,9 +190,8 @@ static bool copyText(const char *text, char *dest, size_t cap, bool *outTruncate
 
 // Parse, emit and adopt for one already-allocated Regex.
 static bool compilePattern(Regex *regex, const char *pattern, size_t length) {
-    RegexParser parser;
-    RegexParser_init(&parser, pattern, length,
-                     ((*regex).flags & REGEX_CASE_INSENSITIVE) != 0);
+    RegexParser parser = RegexParser(pattern, length,
+                                     ((*regex).flags & REGEX_CASE_INSENSITIVE) != 0);
     uint32_t root = RegexParser_parse(&parser);
     bool ok = root != REGEX_NODE_NONE && RegexParser_ok(&parser);
     if (ok) {
@@ -225,7 +224,7 @@ Regex *Regex_2(const char *pattern, uint32_t flags) {
         return nullptr;
     }
     memset(regex, 0, sizeof(Regex));
-    RegexProgram_init(&(*regex).program);
+    (*regex).program = RegexProgram();
     (*regex).flags = flags;
 
     size_t length = strlen(pattern);

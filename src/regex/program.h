@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
 #include "regex/nodelist.h"
 
 // regex/program.h — the RegexProgram: the compiled instruction array, the
@@ -47,8 +48,9 @@ typedef struct RegexProgram {
     uint32_t   capacity; // instructions allocated
 } RegexProgram;
 
-// Zero the program; allocates nothing.
-void RegexProgram_init(RegexProgram *program);
+// Create an empty program; allocates nothing.
+RegexProgram RegexProgram_0(void);
+#define RegexProgram(...) CONSTRUCTOR_DISPATCH(RegexProgram, __VA_ARGS__)
 
 // Emit the Thompson program for an AST rooted at `root`. Returns false when
 // the instruction ceiling is reached or the arena refuses; the program is then

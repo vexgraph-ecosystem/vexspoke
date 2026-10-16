@@ -37,8 +37,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Point()          : Point_0()
- *   - Point(x, y)      : Point_2(x, y)
+ *   - Point()          : constructor chooser for the zero-argument form
+ *   - Point(x, y)      : constructor chooser for the two-argument form
  *
  * Setters:
  *   - Point_setX(p, x)

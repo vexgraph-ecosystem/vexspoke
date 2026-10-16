@@ -53,8 +53,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - CircleArray_create(radius, elementClass)
- *   - CircleArray_createWithStride(radius, elementClass, stride)
+ *   - CircleArray(radius, elementClass)
+ *   - CircleArray(radius, elementClass, stride)
  *
  * Public Core Functions: (.h)
  *   - CircleArray_free(self)
@@ -65,9 +65,9 @@
  *   - CircleArray_containsOffset(self, dx, dy)
  *   - CircleArray_distanceSquaredGrid(self, gridX, gridY)
  *   - CircleArray_distanceSquaredOffset(dx, dy)
- *   - CircleArray_getGrid(self, gridX, gridY, dest)
+ *   - CircleArray_getGrid(dest, self, gridX, gridY)
  *   - CircleArray_setGrid(self, gridX, gridY, src)
- *   - CircleArray_getOffset(self, dx, dy, dest)
+ *   - CircleArray_getOffset(dest, self, dx, dy)
  *   - CircleArray_setOffset(self, dx, dy, src)
  *   - CircleArray_slotGrid(self, gridX, gridY)
  *   - CircleArray_slotOffset(self, dx, dy)
@@ -75,7 +75,7 @@
  * ============================================================================
  */
 
-CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass, size_t stride) {
+CircleArray *CircleArray_3(int32_t radius, uint32_t elementClass, size_t stride) {
     if (radius < 0) {
         return nullptr;
     }
@@ -125,12 +125,12 @@ CircleArray *CircleArray_createWithStride(int32_t radius, uint32_t elementClass,
     return self;
 }
 
-CircleArray *CircleArray_create(int32_t radius, uint32_t elementClass) {
+CircleArray *CircleArray_2(int32_t radius, uint32_t elementClass) {
     size_t stride = Stride_get(elementClass);
     if (stride == 0) {
         stride = 8;
     }
-    return CircleArray_createWithStride(radius, elementClass, stride);
+    return CircleArray_3(radius, elementClass, stride);
 }
 
 void CircleArray_free(CircleArray *self) {
@@ -209,7 +209,7 @@ uint8_t *CircleArray_slotOffset(CircleArray *self, int32_t dx, int32_t dy) {
     return CircleArray_slotGrid(self, gridX, gridY);
 }
 
-bool CircleArray_getGrid(const CircleArray *self, int32_t gridX, int32_t gridY, void *dest) {
+bool CircleArray_getGrid(void *dest, const CircleArray *self, int32_t gridX, int32_t gridY) {
     if (self == nullptr || dest == nullptr) return false;
     if (!CircleArray_containsGrid(self, gridX, gridY)) {
         return false;
@@ -233,11 +233,11 @@ bool CircleArray_setGrid(CircleArray *self, int32_t gridX, int32_t gridY, const 
     return true;
 }
 
-bool CircleArray_getOffset(const CircleArray *self, int32_t dx, int32_t dy, void *dest) {
+bool CircleArray_getOffset(void *dest, const CircleArray *self, int32_t dx, int32_t dy) {
     if (self == nullptr) return false;
     int32_t gridX = dx + (*self).radius;
     int32_t gridY = dy + (*self).radius;
-    return CircleArray_getGrid(self, gridX, gridY, dest);
+    return CircleArray_getGrid(dest, self, gridX, gridY);
 }
 
 bool CircleArray_setOffset(CircleArray *self, int32_t dx, int32_t dy, const void *src) {

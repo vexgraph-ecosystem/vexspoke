@@ -27,7 +27,7 @@
  * cheap mask instead of a modulo. One spinlock serializes the actual copy
  * in/out while head/tail are monotonic atomic counters, so readers never see
  * torn data and full/empty are exact (head==tail empty, tail-head==capacity
- * full). The slots arena is calloc'd once at init and freed at shutdown —
+ * full). The slots arena is calloc'd once at construction and freed at shutdown —
  * push/pop allocate nothing on the hot path. Capacity is a hard contract:
  * any burst larger than the ring is rejected, never silently dropped.
  * ============================================================================
@@ -55,7 +55,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - RingBuffer_init(ring, elem_size, capacity)
+ *   - RingBuffer_0()
+ *   - RingBuffer_2(elem_size, capacity)
  *
  * Core Functions:
  *   - RingBuffer_shutdown(ring)
@@ -79,21 +80,30 @@ static size_t nextPow2(size_t value) {
     return value + 1;
 }
 
-// Initializes the ring and allocates zeroed storage with rounded-up capacity.
-bool RingBuffer_init(RingBuffer *ring, size_t elem_size, size_t capacity) {
-    if (!ring || elem_size == 0) return false;
+// Constructs the ring and allocates zeroed storage with rounded-up capacity.
+RingBuffer RingBuffer_0(void) {
+    RingBuffer ring;
+    memset(&ring, 0, sizeof ring);
+    ring.lock = SPIN_LOCK_INIT;
+    atomic_init(&ring.head, 0u);
+    atomic_init(&ring.tail, 0u);
+    return ring;
+}
+
+RingBuffer RingBuffer_2(size_t elem_size, size_t capacity) {
+    RingBuffer ring = RingBuffer_0();
+    if (elem_size == 0) return ring;
 
     // Round the request up to a power of two; slot = idx & mask.
     size_t cap = nextPow2(capacity);
-    (*ring).capacity = cap;
-    (*ring).mask = cap - 1;
-    (*ring).elem_size = elem_size;
-    (*ring).lock = SPIN_LOCK_INIT;
-    atomic_store_explicit(&(*ring).head, 0, memory_order_relaxed);
-    atomic_store_explicit(&(*ring).tail, 0, memory_order_relaxed);
-
-    (*ring).slots = (uint8_t*) calloc(cap, elem_size);
-    return (*ring).slots != nullptr;
+    ring.capacity = cap;
+    ring.mask = cap - 1;
+    ring.elem_size = elem_size;
+    ring.slots = (uint8_t*) calloc(cap, elem_size);
+    if (ring.slots == nullptr) {
+        memset(&ring, 0, sizeof ring);
+    }
+    return ring;
 }
 
 // Frees ring storage and clears its storage pointer.

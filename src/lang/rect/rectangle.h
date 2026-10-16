@@ -31,10 +31,11 @@ typedef struct Rectangle {
 #define RECTANGLE_BYTES 16u
 
 // Constructors:
-//   Rectangle()                 : Rectangle_0()             — empty at origin
-//   Rectangle(x, y, w, h)       : Rectangle_4(x, y, w, h)
+//   Rectangle()                 — empty at origin
+//   Rectangle(x, y, w, h)       — explicit rectangle bounds
 Rectangle *Rectangle_0(void);
 Rectangle *Rectangle_4(float x, float y, float width, float height);
+#define Rectangle(...) CONSTRUCTOR_DISPATCH(Rectangle, __VA_ARGS__)
 void Rectangle_free(Rectangle *r);
 
 // Setters

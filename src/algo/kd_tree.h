@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // algo/kd_tree.h — 3-Dimensional K-D Tree for Spatial Search.
 //
 // Organizes 3D points by cycling coordinate split planes (X -> Y -> Z)
@@ -14,6 +16,13 @@ typedef struct KdPoint {
     float    coord[3]; // [0] = x/horizontal, [1] = y/vertical, [2] = z/depth
     uint64_t payload;
 } KdPoint;
+
+static inline KdPoint KdPoint_0(void) { return (KdPoint) {0}; }
+static inline KdPoint KdPoint_4(float horizontal, float vertical, float depth,
+                               uint64_t payload) {
+    return (KdPoint) { .coord = { horizontal, vertical, depth }, .payload = payload };
+}
+#define KdPoint(...) CONSTRUCTOR_DISPATCH(KdPoint, __VA_ARGS__)
 
 typedef struct KdNode {
     KdPoint        point;

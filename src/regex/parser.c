@@ -64,7 +64,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - RegexParser_init(parser, pattern, length, ignoreCase)
+ *   - RegexParser(pattern, length, ignoreCase)
  *   - RegexParser_parse(parser)
  *   - RegexParser_ok(parser)
  *   - RegexParser_error(parser)
@@ -539,19 +539,21 @@ static uint32_t parseAlternation(RegexParser *parser) {
     return left;
 }
 
-void RegexParser_init(RegexParser *parser, const char *pattern, size_t length, bool ignoreCase) {
-    (*parser).pattern = pattern;
-    (*parser).length = length;
-    (*parser).pos = 0;
-    (*parser).ignoreCase = ignoreCase;
-    RegexNodeList_init(&(*parser).nodes);
-    (*parser).classes = nullptr;
-    (*parser).classCount = 0;
-    (*parser).classCapacity = 0;
-    (*parser).groupCount = 0;
-    (*parser).depth = 0;
-    (*parser).failed = false;
-    (*parser).error = nullptr;
+RegexParser RegexParser_3(const char *pattern, size_t length, bool ignoreCase) {
+    RegexParser parser;
+    parser.pattern = pattern;
+    parser.length = length;
+    parser.pos = 0u;
+    parser.ignoreCase = ignoreCase;
+    parser.nodes = RegexNodeList();
+    parser.classes = nullptr;
+    parser.classCount = 0u;
+    parser.classCapacity = 0u;
+    parser.groupCount = 0u;
+    parser.depth = 0u;
+    parser.failed = false;
+    parser.error = nullptr;
+    return parser;
 }
 
 uint32_t RegexParser_parse(RegexParser *parser) {
@@ -597,5 +599,5 @@ void RegexParser_free(RegexParser *parser) {
     RegexNodeList_free(&(*parser).nodes);
     if ((*parser).classes)
         Memory_free((*parser).classes);
-    RegexParser_init(parser, nullptr, 0, false);
+    *parser = RegexParser(nullptr, 0u, false);
 }

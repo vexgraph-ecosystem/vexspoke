@@ -4,6 +4,7 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // engine/loop.h — the engine loop API (Legacy: engine/EngineLoop.java).
 //
@@ -20,6 +21,21 @@ typedef struct Loop {
     int64_t frame_ms;       // fixed timestep in milliseconds (>0)
     _Atomic bool running;   // Loop_stop flips this to end the loop
 } Loop;
+
+static inline Loop Loop_3(TickFn tick, void *userdata, int64_t frameMilliseconds) {
+    return (Loop) { .tick = tick, .userdata = userdata, .frame_ms = frameMilliseconds,
+        .running = false };
+}
+#define Loop(...) CONSTRUCTOR_DISPATCH(Loop, __VA_ARGS__)
+static inline void Loop_setTick(Loop *loop, TickFn tick) {
+    if (loop) (*loop).tick = tick;
+}
+static inline void Loop_setUserdata(Loop *loop, void *userdata) {
+    if (loop) (*loop).userdata = userdata;
+}
+static inline void Loop_setFrameMilliseconds(Loop *loop, int64_t frameMilliseconds) {
+    if (loop) (*loop).frame_ms = frameMilliseconds;
+}
 
 // Run until Loop_stop is called (usually from inside the tick).
 void Loop_run(Loop *loop);

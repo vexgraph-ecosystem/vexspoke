@@ -173,15 +173,8 @@ void Struct_setSize(Struct *self, uint32_t size) {
 
 // GETTERS
 
-int Struct_getName(const Struct *self, char *out, size_t outCap) {
-    if (self == nullptr || out == nullptr || outCap == 0u)
-        return -1;
-    const char *src = (*self).name;
-    size_t len = strlen(src);
-    if (len + 1u > outCap)
-        return -1;
-    memcpy(out, src, len + 1u);
-    return (int) len;
+const char *Struct_getName(const Struct *self) {
+    return self ? (*self).name : nullptr;
 }
 
 uint32_t Struct_count(const Struct *self) {

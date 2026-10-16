@@ -64,7 +64,7 @@ void *Field_read(Field *self, void *receiver);
 void Field_write(Field *self, void *receiver, void *value);
 
 bool Field_setName(Field *self, const char *name);
-int Field_getName(const Field *self, char *out, size_t outCap);
+const char *Field_getName(const Field *self);
 void Field_setRead(Field *self, VariableReadFn read);
 VariableReadFn Field_getRead(const Field *self);
 void Field_setSet(Field *self, FieldSetFn set);

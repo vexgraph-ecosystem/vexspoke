@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
 #include "regex/charclass.h"
 #include "regex/nodelist.h"
 
@@ -44,8 +45,9 @@ typedef struct RegexParser {
     const char     *error;         // first rejection reason (static text)
 } RegexParser;
 
-// Prepare a parser over a borrowed pattern. Allocates nothing.
-void RegexParser_init(RegexParser *parser, const char *pattern, size_t length, bool ignoreCase);
+// Create a parser over a borrowed pattern. Allocates nothing.
+RegexParser RegexParser_3(const char *pattern, size_t length, bool ignoreCase);
+#define RegexParser(...) CONSTRUCTOR_DISPATCH(RegexParser, __VA_ARGS__)
 
 // Parse the whole pattern. Returns the root node index, or REGEX_NODE_NONE
 // when the pattern is malformed or a ceiling was reached.

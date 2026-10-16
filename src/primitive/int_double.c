@@ -56,7 +56,8 @@
 BitPool g_int_doublePool;
 
 bool IntDouble_init(void) {
-    return BitPool_init(&g_int_doublePool, 16, 1024);
+    g_int_doublePool = BitPool(16, 1024);
+    return g_int_doublePool.arena != nullptr;
 }
 
 void IntDouble_shutdown(void) {

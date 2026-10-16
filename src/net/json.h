@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // net/json.h — off-heap JSON documents (Legacy: net/JSON.java).
 //
@@ -33,6 +34,11 @@ typedef enum {
 } JsonType;
 
 typedef int32_t JsonRef; // index into the doc's node pool; <0 = none
+
+typedef struct JsonStringView {
+    const char *data;
+    uint32_t length;
+} JsonStringView;
 
 typedef struct JsonNode {
     JsonType type;
@@ -89,9 +95,9 @@ JsonRef Json_path(const JsonDoc *doc, JsonRef root, const char *path);
 // Value getters with JS `??` defaults: wrong-type/missing ref -> def.
 bool Json_getBool(const JsonDoc *doc, JsonRef ref, bool def);
 double Json_getNumber(const JsonDoc *doc, JsonRef ref, double def);
-// Copies a JSON_STRING view into dest (NUL-terminated, dest-last).
-// False on type mismatch, NULL dest, zero cap, or truncation.
-bool Json_getString(const JsonDoc *doc, JsonRef ref, char *dest, size_t cap);
+// Borrow a JSON_STRING view. The data is length-delimited, not necessarily NUL
+// terminated. Invalid refs and wrong types return {nullptr, 0}.
+JsonStringView Json_getString(const JsonDoc *doc, JsonRef ref);
 
 // --- Writer ---
 // Appends a JSON rendering of value into _out (NUL-terminated). Strings are
@@ -111,7 +117,8 @@ typedef struct JsonWriter {
     bool needComma[JSON_MAX_DEPTH];
 } JsonWriter;
 
-void JsonWriter_init(JsonWriter *w, char *out, size_t cap);
+JsonWriter JsonWriter_2(char *out, size_t cap);
+#define JsonWriter(...) CONSTRUCTOR_DISPATCH(JsonWriter, __VA_ARGS__)
 bool JsonWriter_ok(const JsonWriter *w);
 size_t JsonWriter_used(const JsonWriter *w);
 bool Json_beginObject(JsonWriter *w);

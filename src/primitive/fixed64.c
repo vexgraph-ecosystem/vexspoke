@@ -57,7 +57,8 @@
 BitPool g_fixed64Pool;
 
 bool Fixed64_init(void) {
-    return BitPool_init(&g_fixed64Pool, 8, 1024);
+    g_fixed64Pool = BitPool(8, 1024);
+    return g_fixed64Pool.arena != nullptr;
 }
 
 void Fixed64_shutdown(void) {

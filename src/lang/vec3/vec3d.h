@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
+#include "c23/constructor.h"
 #include <stdbool.h>
 
 #include "math/coord_frame.h"
@@ -28,6 +30,7 @@ typedef struct Vec3d {
 Vec3d *Vec3d_0(void);
 Vec3d *Vec3d_3(double horizontal, double vertical, double depth);
 Vec3d *Vec3d_4(double horizontal, double vertical, double depth, CoordFrame frame);
+#define Vec3d(...) CONSTRUCTOR_DISPATCH(Vec3d, __VA_ARGS__)
 void Vec3d_free(Vec3d *v);
 
 // Spatial Directional Getters & Setters

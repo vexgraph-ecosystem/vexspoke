@@ -16,7 +16,7 @@
  * Exists because raw event deltas are noisy; the engine accumulates
  * scale/rotation with clamping and decays scroll velocity with exponential
  * friction. memory: caller-owned GestureState value struct, zero allocation,
- * zero threads. Lifetime: caller-managed via GestureState_init;
+ * zero threads. Lifetime: caller owns the `GestureState()` value;
  * processEvent/tick mutate the state in place.
  * ============================================================================
  */
@@ -52,23 +52,17 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - GestureState_init(state)
+ *   - GestureState()
  *   - GestureState_processEvent(state, event)
  *   - GestureState_tick(state, deltaSeconds)
  * ============================================================================
  */
 
-void GestureState_init(GestureState *state) {
-    if (state == nullptr) return;
-    memset(state, 0, sizeof(GestureState));
-    (*state).currentScale = 1.0f;
-    (*state).currentRotationRad = 0.0f;
-    (*state).focalPoint.x = 0.0f;
-    (*state).focalPoint.y = 0.0f;
-    (*state).scrollVelocity.x = 0.0f;
-    (*state).scrollVelocity.y = 0.0f;
-    (*state).isPinching = false;
-    (*state).isRotating = false;
+GestureState GestureState_0(void) {
+    GestureState state;
+    memset(&state, 0, sizeof state);
+    state.currentScale = 1.0f;
+    return state;
 }
 
 void GestureState_processEvent(GestureState *state, GestureEvent event) {

@@ -17,7 +17,7 @@
  * acceleration and deceleration friction). The model is deterministic and
  * allocation-free — playheadSeconds integrates angular velocity so scratch
  * deltas and motor motion compose on the same timeline. Crossfader curves
- * are pure functions writing dest-last volume outputs.
+ * are pure functions returning both channel volumes by value.
  * ============================================================================
  */
 
@@ -46,27 +46,28 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - TurntableState_init(state, deckIndex)
+ *   - TurntableState(deckIndex)
  *   - TurntableState_processEvent(state, event)
  *   - TurntableState_tick(state, deltaSeconds)
- *   - Turntable_calculateCrossfade(position, curve, outLeft, outRight)
+ *   - Turntable_calculateCrossfade(position, curve)
  * ============================================================================
  */
 
-void TurntableState_init(TurntableState *state, uint8_t deckIndex) {
-    if (state == nullptr) return;
-    memset(state, 0, sizeof(TurntableState));
-    (*state).deckIndex = deckIndex;
-    (*state).platterTouched = false;
-    (*state).isPlaying = false;
-    (*state).targetRpm = TURNTABLE_RPM_33;
-    (*state).currentAngularVelocityRadPerSec = 0.0f;
-    (*state).pitchFader = 0.0f;
-    (*state).playheadSeconds = 0.0f;
-    (*state).cuePositionSeconds = 0.0f;
+TurntableState TurntableState_1(uint8_t deckIndex) {
+    TurntableState state;
+    memset(&state, 0, sizeof state);
+    state.deckIndex = deckIndex;
+    state.platterTouched = false;
+    state.isPlaying = false;
+    state.targetRpm = TURNTABLE_RPM_33;
+    state.currentAngularVelocityRadPerSec = 0.0f;
+    state.pitchFader = 0.0f;
+    state.playheadSeconds = 0.0f;
+    state.cuePositionSeconds = 0.0f;
     for (int i = 0; i < 8; i++) {
-        (*state).hotCues[i] = -1.0f;
+        state.hotCues[i] = -1.0f;
     }
+    return state;
 }
 
 void TurntableState_processEvent(TurntableState *state, TurntableEvent event) {
@@ -146,35 +147,35 @@ void TurntableState_tick(TurntableState *state, float deltaSeconds) {
     }
 }
 
-void Turntable_calculateCrossfade(float position, CrossfaderCurve curve, float *outLeft, float *outRight) {
-    if (outLeft == nullptr || outRight == nullptr) return;
-
+TurntableCrossfade Turntable_calculateCrossfade(float position, CrossfaderCurve curve) {
     // Clamp position to [-1.0, 1.0] (Left to Right)
     if (position < -1.0f) position = -1.0f;
     if (position > 1.0f) position = 1.0f;
 
     // Normalized [0.0, 1.0]
     float t = (position + 1.0f) * 0.5f;
+    TurntableCrossfade volumes;
 
     switch (curve) {
         case CROSSFADER_LINEAR:
-            *outLeft  = 1.0f - t;
-            *outRight = t;
+            volumes.left = 1.0f - t;
+            volumes.right = t;
             break;
 
         case CROSSFADER_SHARP_CUT:
             // Fast DJ scratch cut: full volume until tight center
-            *outLeft  = (position >= 0.95f) ? 0.0f : 1.0f;
-            *outRight = (position <= -0.95f) ? 0.0f : 1.0f;
+            volumes.left = (position >= 0.95f) ? 0.0f : 1.0f;
+            volumes.right = (position <= -0.95f) ? 0.0f : 1.0f;
             break;
 
         case CROSSFADER_SMOOTH_DIP:
         default: {
             // Equal-power crossfade (-3dB at center)
             float angle = t * (3.14159265f * 0.5f);
-            *outLeft  = cosf(angle);
-            *outRight = sinf(angle);
+            volumes.left = cosf(angle);
+            volumes.right = sinf(angle);
             break;
         }
     }
+    return volumes;
 }

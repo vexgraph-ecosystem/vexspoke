@@ -168,6 +168,10 @@ Random *Random_1(uint64_t seed) {
     return Random_2(seed, pickEngine(seed));
 }
 
+Random *Random_0(void) {
+    return Random_1(systemSeed());
+}
+
 void Random_free(Random *r) {
     Memory_free(r);
 }

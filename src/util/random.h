@@ -36,6 +36,10 @@ typedef struct Random {
 // New stream; the engine is chosen deterministically from the seed.
 Random *Random_1(uint64_t seed);
 
+// New stream seeded from the monotonic clock for casual, non-reproducible draws.
+// This is not a cryptographic source; use SecureRandom for secrets.
+Random *Random_0(void);
+
 // New stream forced onto a specific engine (tests, deterministic reproduction).
 Random *Random_2(uint64_t seed, RandomEngine engine);
 

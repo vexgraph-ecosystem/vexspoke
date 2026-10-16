@@ -57,7 +57,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - SymbolTable_init(v)
+ *   - SymbolTable_0()
  *   - SymbolTable_shutdown(v)
  *
  * Core Functions:
@@ -73,7 +73,7 @@
  *   - SymbolTable_getId(v, name)
  *   - SymbolTable_getPointer(v, varId)
  *   - SymbolTable_getClassId(v, varId)
- *   - SymbolTable_getName(v, varId, out, outCap)
+ *   - SymbolTable_getName(v, varId)
  *   - SymbolTable_getActiveCount(v)
  * ============================================================================
  */
@@ -138,21 +138,20 @@ static bool ensure_byslot(SymbolTable *v, uint32_t need) {
     return true;
 }
 
-bool SymbolTable_init(SymbolTable *v) {
-    if (!v)
-        return false;
-    memset(v, 0, sizeof(*v));
+SymbolTable SymbolTable_0(void) {
+    SymbolTable v;
+    memset(&v, 0, sizeof v);
     MemoryArena *arena = Memory_defaultArena();
     if (!arena)
-        return false;
+        return v;
     if (!StringPool_init(arena))
-        return false;
-    (*v).rows = (SymbolRow*) malloc(SYMBOL_TABLE_DEFAULT_CAPACITY * sizeof(SymbolRow));
-    if (!(*v).rows)
-        return false;
-    (*v).capacity = SYMBOL_TABLE_DEFAULT_CAPACITY;
-    (*v).active = true;
-    return true;
+        return v;
+    v.rows = (SymbolRow*) malloc(SYMBOL_TABLE_DEFAULT_CAPACITY * sizeof(SymbolRow));
+    if (!v.rows)
+        return v;
+    v.capacity = SYMBOL_TABLE_DEFAULT_CAPACITY;
+    v.active = true;
+    return v;
 }
 
 void SymbolTable_shutdown(SymbolTable *v) {
@@ -321,18 +320,11 @@ uint32_t SymbolTable_getClassId(SymbolTable *v, int32_t varId) {
     return row ? (*row).classId : 0;
 }
 
-int SymbolTable_getName(SymbolTable *v, int32_t varId, char *out, size_t outCap) {
-    SymbolRow *row = row_at(v, varId);
-    if (!row || !out)
-        return -1;
-    const char *name = StringPool_name((uint32_t) (*row).slot);
-    if (!name)
-        return -1;
-    size_t len = strlen(name);
-    if (outCap < len + 1)
-        return -1;
-    memcpy(out, name, len + 1);
-    return (int)len;
+const char *SymbolTable_getName(const SymbolTable *v, int32_t varId) {
+    const SymbolRow *row = row_at((SymbolTable*) v, varId);
+    if (!row)
+        return nullptr;
+    return StringPool_name((uint32_t) (*row).slot);
 }
 
 size_t SymbolTable_getActiveCount(SymbolTable *v) {

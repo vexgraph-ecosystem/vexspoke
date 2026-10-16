@@ -2,6 +2,7 @@
 #define TIME_DATETIME_H
 
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // time/datetime.h — UTC date/time breakdown (Legacy: time/DateTime.java).
 //
@@ -20,6 +21,9 @@ typedef struct DateTime {
     int32_t millisecond;// 0-999
     int32_t dayOfWeek;  // 1=Monday .. 7=Sunday
 } DateTime;
+
+static inline DateTime DateTime_0(void) { return (DateTime) {0}; }
+#define DateTime(...) CONSTRUCTOR_DISPATCH(DateTime, __VA_ARGS__)
 
 // Set from the current system wall clock.
 void DateTime_set(DateTime *dt);

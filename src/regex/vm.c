@@ -32,7 +32,7 @@
  * regions that are fully rewritten every position, so memory is bounded and
  * nothing is carried by reference across a reallocation.
  *
- * memory: everything is allocated once in RegexVm_init and freed in
+ * memory: everything is allocated once in RegexVm(...) and freed in
  * RegexVm_free — a run allocates nothing (the hot path is a plain byte loop).
  * The subject is borrowed for the duration of the run and never retained.
  * ============================================================================
@@ -79,7 +79,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - RegexVm_init(vm, program, groupCount)
+ *   - RegexVm(program, groupCount)
  *   - RegexVm_free(vm)
  *   - RegexVm_run(vm, classes, subject, length, anchored, options)
  *   - RegexVm_runFull(vm, classes, subject, length, options)
@@ -224,7 +224,7 @@ static void addThread(RegexVm *vm, RegexList *list, uint32_t pc0, const size_t *
     }
 }
 
-bool RegexVm_init(RegexVm *vm, const RegexProgram *program, uint32_t groupCount) {
+static bool vmInitialize(RegexVm *vm, const RegexProgram *program, uint32_t groupCount) {
     memset(vm, 0, sizeof(RegexVm));
     uint32_t n = RegexProgram_count(program);
     if (n == 0)
@@ -257,6 +257,14 @@ bool RegexVm_init(RegexVm *vm, const RegexProgram *program, uint32_t groupCount)
     memset((*vm).seed, 0xFF, (size_t)(*vm).capStride * sizeof(size_t));
     memset((*vm).best, 0xFF, (size_t)(*vm).capStride * sizeof(size_t));
     return true;
+}
+
+RegexVm RegexVm_2(const RegexProgram *program, uint32_t groupCount) {
+    RegexVm vm;
+    memset(&vm, 0, sizeof vm);
+    if (!vmInitialize(&vm, program, groupCount))
+        RegexVm_free(&vm);
+    return vm;
 }
 
 void RegexVm_free(RegexVm *vm) {

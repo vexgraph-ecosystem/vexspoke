@@ -53,7 +53,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - KeyMap_create(arena)                            : KeyMap_create()
+ *   - KeyMap(arena)                            : KeyMap()
  *
  * Core Functions:
  *   - KeyMap_destroy(map)                             : free bindings + map
@@ -246,7 +246,7 @@ static void consumeGesture(int64_t combo)
 // CONSTRUCTORS
 // ═══════════════════════════════════════════════════════════
 
-KeyMap *KeyMap_create(void *arena)
+KeyMap *KeyMap_1(void *arena)
 {
     MemoryArena *a = (MemoryArena*) arena;
     if (a == nullptr)

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
 #include "atomic/spin.h"
 
 // thread/ring.h — MPMC ring buffer API (Legacy: thread/RingBuffer.java).
@@ -23,9 +24,12 @@ typedef struct RingBuffer {
     uint8_t *slots;         // capacity * elem_size arena
 } RingBuffer;
 
-// Set up a ring for elem_size-byte elements, capacity slots (rounded up to
-// pow2). Returns false on bad args/OOM.
-bool RingBuffer_init(RingBuffer *ring, size_t elem_size, size_t capacity);
+// Construct a ring for elem_size-byte elements, capacity slots (rounded up to
+// pow2). A null slots pointer means invalid arguments or allocation failure.
+RingBuffer RingBuffer_0(void);
+RingBuffer RingBuffer_2(size_t elem_size, size_t capacity);
+#define RingBuffer(...) CONSTRUCTOR_DISPATCH(RingBuffer, __VA_ARGS__)
+
 void RingBuffer_shutdown(RingBuffer *ring);
 
 // Copy item into the ring. Returns false if full (caller retries/spins).

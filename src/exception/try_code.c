@@ -13,7 +13,7 @@
  * pointers). Every code maps to a static symbolic name and a static sentence, so
  * a Try reports a reason without allocating and without a lookup table that can
  * drift (the Cold-Strict, Hot-Minimal Validation Law). TRY_OK is the one success
- * code; TryCode_isOk is the single success test used across the ecosystem.
+ * code; TryCode_isOk is the single success test used across the vexgraph-ecosystem-gitrepo.
  * ============================================================================
  */
 

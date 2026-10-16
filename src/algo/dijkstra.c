@@ -51,7 +51,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - Dijkstra_create(nodeCount)
+ *   - Dijkstra(nodeCount) / Dijkstra_1(nodeCount)
  *
  * Public Core Functions: (.h)
  *   - Dijkstra_free(graph)
@@ -65,7 +65,7 @@
  * ============================================================================
  */
 
-DijkstraGraph *Dijkstra_create(uint32_t nodeCount) {
+DijkstraGraph *Dijkstra_1(uint32_t nodeCount) {
     if (nodeCount == 0) return nullptr;
 
     DijkstraGraph *graph = (DijkstraGraph*) Memory_alloc(TYPE_BYTE_ARRAY, sizeof(DijkstraGraph));

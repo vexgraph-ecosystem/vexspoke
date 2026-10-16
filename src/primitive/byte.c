@@ -56,7 +56,8 @@
 BitPool g_bytePool;
 
 bool Byte_init(void) {
-    return BitPool_init(&g_bytePool, 1, 1024);
+    g_bytePool = BitPool(1, 1024);
+    return g_bytePool.arena != nullptr;
 }
 
 void Byte_shutdown(void) {

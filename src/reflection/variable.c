@@ -151,15 +151,8 @@ void Variable_setTarget(Variable *self, void *target) {
 
 // GETTERS
 
-int Variable_getName(const Variable *self, char *out, size_t outCap) {
-    if (self == nullptr || out == nullptr || outCap == 0u)
-        return -1;
-    const char *src = (*self).name;
-    size_t len = strlen(src);
-    if (len + 1u > outCap)
-        return -1;
-    memcpy(out, src, len + 1u);
-    return (int) len;
+const char *Variable_getName(const Variable *self) {
+    return self ? (*self).name : nullptr;
 }
 
 VariableReadFn Variable_getRead(const Variable *self) {

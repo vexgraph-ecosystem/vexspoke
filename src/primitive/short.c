@@ -56,7 +56,8 @@
 BitPool g_shortPool;
 
 bool Short_init(void) {
-    return BitPool_init(&g_shortPool, 2, 1024);
+    g_shortPool = BitPool(2, 1024);
+    return g_shortPool.arena != nullptr;
 }
 
 void Short_shutdown(void) {

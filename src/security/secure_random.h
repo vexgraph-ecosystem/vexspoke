@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // security/secure_random.h — OS-backed cryptographically secure randomness.
 //
 // SecureRandom sources entropy from the operating system's CSPRNG and NEVER
@@ -26,6 +28,7 @@ typedef struct SecureRandom SecureRandom;
 
 // New generator handle (no seed argument — entropy comes from the OS).
 SecureRandom *SecureRandom_0(void);
+#define SecureRandom(...) CONSTRUCTOR_DISPATCH(SecureRandom, __VA_ARGS__)
 void SecureRandom_free(SecureRandom *self);
 
 // Fill dest[0..len) with cryptographically secure Bytes. Returns false when the

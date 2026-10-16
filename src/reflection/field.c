@@ -183,11 +183,11 @@ void Field_setTarget(Field *self, void *target) {
 
 // GETTERS
 
-int Field_getName(const Field *self, char *out, size_t outCap) {
+const char *Field_getName(const Field *self) {
     if (self == nullptr)
-        return -1;
+        return nullptr;
     const Variable *variable = &(*self).variable;
-    return Variable_getName(variable, out, outCap);
+    return Variable_getName(variable);
 }
 
 VariableReadFn Field_getRead(const Field *self) {

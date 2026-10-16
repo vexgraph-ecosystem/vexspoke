@@ -51,7 +51,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - RegexProgram_init(program)
+ *   - RegexProgram() creates an empty program value
  *   - RegexProgram_build(program, nodes, root)
  *   - RegexProgram_count(program)
  *   - RegexProgram_at(program, index)
@@ -228,10 +228,12 @@ static bool emitNode(RegexProgram *program, const RegexNodeList *nodes, uint32_t
     }
 }
 
-void RegexProgram_init(RegexProgram *program) {
-    (*program).insts = nullptr;
-    (*program).count = 0;
-    (*program).capacity = 0;
+RegexProgram RegexProgram_0(void) {
+    RegexProgram program;
+    program.insts = nullptr;
+    program.count = 0u;
+    program.capacity = 0u;
+    return program;
 }
 
 bool RegexProgram_build(RegexProgram *program, const RegexNodeList *nodes, uint32_t root) {
@@ -259,5 +261,5 @@ const RegexInst *RegexProgram_at(const RegexProgram *program, uint32_t index) {
 void RegexProgram_free(RegexProgram *program) {
     if ((*program).insts)
         Memory_free((*program).insts);
-    RegexProgram_init(program);
+    *program = RegexProgram();
 }

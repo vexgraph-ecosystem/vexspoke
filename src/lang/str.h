@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // lang/str.h — the bounded string builder (the toString Law's engine).
 //
@@ -23,7 +24,8 @@ typedef struct Str {
 // --- Constructors ---
 // Bind a destination. cap 0 (or a null dest) makes every write a no-op that
 // flags truncated.
-void Str_init(Str *s, char *dest, size_t cap);
+Str Str_2(char *dest, size_t cap);
+#define Str(...) CONSTRUCTOR_DISPATCH(Str, __VA_ARGS__)
 
 // --- Core functions (all bounded) ---
 void Str_put(Str *s, const char *text);       // append a C string

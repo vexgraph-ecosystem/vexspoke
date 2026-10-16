@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // regex/nodelist.h — the RegexNodeList: the flat AST a parse produces and the
 // program builder walks. Single Class Per File Law: RegexNodeList (owning the
 // behaviorless RegexNode slot records).
@@ -57,8 +59,9 @@ typedef struct RegexNodeList {
     uint32_t   capacity; // nodes allocated
 } RegexNodeList;
 
-// Zero the list; allocates nothing.
-void RegexNodeList_init(RegexNodeList *list);
+// Create an empty list; allocates nothing.
+RegexNodeList RegexNodeList_0(void);
+#define RegexNodeList(...) CONSTRUCTOR_DISPATCH(RegexNodeList, __VA_ARGS__)
 
 // Append a zeroed node of the given kind. Returns its index, or
 // REGEX_NODE_NONE when the arena refused growth.

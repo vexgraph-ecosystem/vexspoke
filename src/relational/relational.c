@@ -93,7 +93,7 @@
  *
  * Getters:
  *   - Relational_getId(scope, name)
- *   - Relational_getName(scope, varId, out, outCap)
+ *   - Relational_getName(scope, varId)
  *   - Relational_getValue(scope, name)
  *   - Relational_getValueById(scope, varId)
  *   - Relational_getString(scope, name)
@@ -148,10 +148,8 @@ int32_t Relational_getId(SymbolTable *scope, const char *name) {
     return SymbolTable_getId(scope, name);
 }
 
-int Relational_getName(SymbolTable *scope, int32_t varId, char *out, size_t outCap) {
-    if (!scope || !out)
-        return -1;
-    return SymbolTable_getName(scope, varId, out, outCap);
+const char *Relational_getName(const SymbolTable *scope, int32_t varId) {
+    return SymbolTable_getName(scope, varId);
 }
 
 bool Relational_setName(SymbolTable *scope, const char *oldName, const char *newName) {
@@ -254,11 +252,10 @@ static size_t searchOne(SymbolTable *scope, const char *query, int32_t *outIds, 
         if (filled >= cap)
             break;
         int32_t varId = (int32_t) i;
-        char nameBuf[33];
-        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
-        if (len < 0)
+        const char *name = SymbolTable_getName(scope, varId);
+        if (!name)
             continue;
-        if (equalsCaseInsensitive(nameBuf, query)) {
+        if (equalsCaseInsensitive(name, query)) {
             // avoid duplicate if already added
             bool dup = false;
             for (size_t k = 0; k < filled; k++) {
@@ -277,13 +274,12 @@ static size_t searchOne(SymbolTable *scope, const char *query, int32_t *outIds, 
         if (filled >= cap)
             break;
         int32_t varId = (int32_t) i;
-        char nameBuf[33];
-        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
-        if (len < 0)
+        const char *name = SymbolTable_getName(scope, varId);
+        if (!name)
             continue;
-        if (!prefixCaseInsensitive(nameBuf, query))
+        if (!prefixCaseInsensitive(name, query))
             continue;
-        if (equalsCaseInsensitive(nameBuf, query))
+        if (equalsCaseInsensitive(name, query))
             continue;
         bool dup = false;
         for (size_t k = 0; k < filled; k++) {
@@ -301,15 +297,14 @@ static size_t searchOne(SymbolTable *scope, const char *query, int32_t *outIds, 
         if (filled >= cap)
             break;
         int32_t varId = (int32_t) i;
-        char nameBuf[33];
-        int len = SymbolTable_getName(scope, varId, nameBuf, sizeof(nameBuf));
-        if (len < 0)
+        const char *name = SymbolTable_getName(scope, varId);
+        if (!name)
             continue;
-        if (!containsCaseInsensitive(nameBuf, query))
+        if (!containsCaseInsensitive(name, query))
             continue;
-        if (equalsCaseInsensitive(nameBuf, query))
+        if (equalsCaseInsensitive(name, query))
             continue;
-        if (prefixCaseInsensitive(nameBuf, query))
+        if (prefixCaseInsensitive(name, query))
             continue;
         bool dup = false;
         for (size_t k = 0; k < filled; k++) {

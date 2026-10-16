@@ -59,7 +59,7 @@
  *   - PianoKey_pitchClass(note)
  *   - PianoKey_octave(note)
  *   - PianoKey_noteName(note, dest, maxLen)
- *   - PianoState_init(state)
+ *   - PianoState()
  *   - PianoState_processEvent(state, event)
  *   - PianoState_isNoteOn(state, note)
  *   - PianoState_noteVelocity(state, note)
@@ -95,14 +95,10 @@ void PianoKey_noteName(uint8_t note, char *dest, size_t maxLen) {
     snprintf(dest, maxLen, "%s%d", PITCH_NAMES[pc], oct);
 }
 
-void PianoState_init(PianoState *state) {
-    if (state == nullptr) return;
-    memset((*state).velocities, 0, sizeof((*state).velocities));
-    memset((*state).pressures, 0, sizeof((*state).pressures));
-    (*state).activeNotesCount = 0;
-    (*state).pitchBend = 0.0f;
-    (*state).modWheel = 0.0f;
-    (*state).sustainPedal = false;
+PianoState PianoState_0(void) {
+    PianoState state;
+    memset(&state, 0, sizeof state);
+    return state;
 }
 
 void PianoState_processEvent(PianoState *state, PianoKeyEvent event) {

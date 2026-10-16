@@ -41,8 +41,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Rectangle()                : Rectangle_0()
- *   - Rectangle(x, y, w, h)      : Rectangle_4(x, y, w, h)
+ *   - Rectangle()                : constructor chooser for the zero-argument form
+ *   - Rectangle(x, y, w, h)      : constructor chooser for the four-argument form
  *
  * Setters:
  *   - Rectangle_setX(r, x)

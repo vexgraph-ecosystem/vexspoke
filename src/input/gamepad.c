@@ -16,7 +16,8 @@
  * filtered stick vectors, trigger squeezes, rumble intensities, and the
  * connection flag; callers own it on the stack or in a device slot. The
  * deadzone filter rescales stick vectors from (deadzone..1.0) to (0.0..1.0)
- * with dest-last output, keeping the analog model consistent across platforms.
+ * and returns the filtered vector by value, keeping the analog model consistent
+ * across platforms.
  * ============================================================================
  */
 
@@ -44,16 +45,17 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - GamepadState_init(state)
+ *   - GamepadState()
  *   - GamepadState_isDown(state, buttonMask)
- *   - Gamepad_applyCircularDeadzone(rawStick, deadzone, outFiltered)
+ *   - Gamepad_applyCircularDeadzone(rawStick, deadzone)
  * ============================================================================
  */
 
-void GamepadState_init(GamepadState *state) {
-    if (state == nullptr) return;
-    memset(state, 0, sizeof(GamepadState));
-    (*state).isConnected = false;
+GamepadState GamepadState_0(void) {
+    GamepadState state;
+    memset(&state, 0, sizeof state);
+    state.isConnected = false;
+    return state;
 }
 
 bool GamepadState_isDown(const GamepadState *state, uint32_t buttonMask) {
@@ -61,13 +63,9 @@ bool GamepadState_isDown(const GamepadState *state, uint32_t buttonMask) {
     return ((*state).buttons & buttonMask) == buttonMask;
 }
 
-void Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone, Vec2 *outFiltered) {
-    if (outFiltered == nullptr) return;
-
-    if (deadzone <= 0.0f) {
-        *outFiltered = rawStick;
-        return;
-    }
+Vec2 Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone) {
+    if (deadzone <= 0.0f)
+        return rawStick;
     if (deadzone >= 0.99f) {
         deadzone = 0.99f;
     }
@@ -75,10 +73,10 @@ void Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone, Vec2 *outFilte
     float mag = sqrtf(rawStick.horizontal * rawStick.horizontal +
                       rawStick.vertical   * rawStick.vertical);
 
+    Vec2 filtered;
     if (mag <= deadzone) {
-        (*outFiltered).horizontal = 0.0f;
-        (*outFiltered).vertical   = 0.0f;
-        return;
+        Vec2_set(&filtered, 0.0f, 0.0f);
+        return filtered;
     }
 
     // Rescale vector smoothly from (deadzone..1.0) to (0.0..1.0)
@@ -88,6 +86,6 @@ void Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone, Vec2 *outFilte
     }
 
     float scale = normalizedMag / mag;
-    (*outFiltered).horizontal = rawStick.horizontal * scale;
-    (*outFiltered).vertical   = rawStick.vertical   * scale;
+    Vec2_set(&filtered, rawStick.horizontal * scale, rawStick.vertical * scale);
+    return filtered;
 }

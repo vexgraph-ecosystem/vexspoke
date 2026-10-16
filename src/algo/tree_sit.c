@@ -19,7 +19,7 @@
  * (R4/R5) need a stable, allocation-friendly syntax tree that hot-reloadable
  * modules can build and walk. memory: the node array doubles exponentially
  * (the Dynamic Scalability & Anti-Hardcoding Law); the root is a signed index
- * (-1 when empty). Lifetime: the TreeSitTree_init/TreeSitTree_destroy pair;
+ * (-1 when empty). Lifetime: the TreeSitTree(...)/TreeSitTree_destroy pair;
  * symbol names are borrowed, never owned.
  * ============================================================================
  */
@@ -40,7 +40,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Tree Lifecycle:
- *   - TreeSitTree_init(initial_capacity, tree)
+ *   - TreeSitTree_0()
+ *   - TreeSitTree_1(initial_capacity)
  *   - TreeSitTree_destroy(tree)
  *   - TreeSitTree_add_node(parent_idx, kind, symbol_name, span, tree)
  * Traversal & Search:
@@ -53,22 +54,19 @@
 
 ;;INTENTION("AST node graph representation and hierarchy traversal")
 
-bool TreeSitTree_init(uint32_t initial_capacity, TreeSitTree *tree) {
-    if (!tree) {
-        return false;
-    }
+TreeSitTree TreeSitTree_0(void) {
+    return TreeSitTree_1(16u);
+}
+
+TreeSitTree TreeSitTree_1(uint32_t initial_capacity) {
+    TreeSitTree tree;
+    memset(&tree, 0, sizeof tree);
     uint32_t cap = (initial_capacity < 16) ? 16 : initial_capacity;
-    (*tree).nodes = (TreeSitNode*) malloc(cap * sizeof(TreeSitNode));
-    if (!(*tree).nodes) {
-        (*tree).node_count = 0;
-        (*tree).node_capacity = 0;
-        (*tree).root = -1;
-        return false;
-    }
-    (*tree).node_count = 0;
-    (*tree).node_capacity = cap;
-    (*tree).root = -1;
-    return true;
+    tree.root = -1;
+    tree.nodes = (TreeSitNode*) malloc(cap * sizeof(TreeSitNode));
+    if (tree.nodes != nullptr)
+        tree.node_capacity = cap;
+    return tree;
 }
 
 void TreeSitTree_destroy(TreeSitTree *tree) {

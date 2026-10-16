@@ -21,7 +21,7 @@
  * accrual while the real reading keeps advancing — so unpausing never dumps
  * a backlog of phantom milliseconds into the simulation. Accrual reads a
  * monotonic clock; the baseRealMillis anchor uses the realtime clock for
- * informational wall time. Clock is a value struct returned by Clock_create
+ * informational wall time. Clock is a value struct returned by Clock()
  * and mutated in place by pointer; reset re-anchors both readings and zeroes
  * the virtual timeline.
  * ============================================================================
@@ -47,7 +47,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Clock_create(void)
+ *   - Clock(void)
  *
  * Core Functions:
  *   - Clock_tick(clock)
@@ -81,7 +81,7 @@ static uint64_t monoMillis(void) {
 }
 
 // Returns a value-initialized clock anchored to current real and monotonic time.
-Clock Clock_create(void) {
+Clock Clock_0(void) {
     Clock c;
     c.timeScale = 1.0;
     c.baseRealMillis = currentTimeMillis();

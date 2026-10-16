@@ -143,7 +143,7 @@ bool Collection_reportExhaustion(Collection *c, size_t requestedBytes) {
         THROW("collection: grow refused on a null collection (%zu bytes)", requestedBytes);
         return false;
     }
-    // One implementation for the whole ecosystem: the shared owner-agnostic seam.
+    // One implementation for the whole vexgraph-ecosystem-gitrepo: the shared owner-agnostic seam.
     return Struct_reportExhaustion(&(*c).exhaustionCount, &(*c).exhaustionReported,
                                    "collection", requestedBytes,
                                    (size_t) (*c).capacity * (*c).stride);

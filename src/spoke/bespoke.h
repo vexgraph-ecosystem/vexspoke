@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // spoke/bespoke.h — R2 Behavior: Unified Bespoke Bridge Hub.
 //
@@ -56,7 +57,8 @@ BespokeState bridgeBespokeNetworkingState(void);
 BespokeState bridgeBespokeSmthState(void);
 
 // --- Class Functions ---
-Bespoke     *Bespoke_default(void);
+Bespoke     *Bespoke_0(void);
+#define Bespoke(...) CONSTRUCTOR_DISPATCH(Bespoke, __VA_ARGS__)
 void         Bespoke_bridge(Bespoke *self);
 bool         Bespoke_check(Bespoke *self);
 

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 // lang/vec4/vec4d.h — 32-byte SIMD 4D Double-Precision Vector.
 //
 // Single Class Per File Law: Vec4d.
@@ -21,6 +23,7 @@ typedef struct Vec4d {
 
 Vec4d *Vec4d_0(void);
 Vec4d *Vec4d_4(double horizontal, double vertical, double depth, double w);
+#define Vec4d(...) CONSTRUCTOR_DISPATCH(Vec4d, __VA_ARGS__)
 void Vec4d_free(Vec4d *v);
 
 double Vec4d_getRight(const Vec4d *v);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // input/turntable.h — DJ Turntable & Jog Wheel Hardware Model.
 //
@@ -21,6 +22,11 @@ typedef enum CrossfaderCurve {
     CROSSFADER_SMOOTH_DIP  // Equal-power crossfade (-3dB center)
 } CrossfaderCurve;
 
+typedef struct TurntableCrossfade {
+    float left;
+    float right;
+} TurntableCrossfade;
+
 typedef struct TurntableEvent {
     uint8_t  deckIndex;         // 0 = Deck A, 1 = Deck B, etc.
     bool     platterTouched;    // True if DJ's hand is contacting the touch platter
@@ -32,6 +38,19 @@ typedef struct TurntableEvent {
     uint8_t  hotCueIndex;       // 1..8 hot cue button triggered (0 = none)
     uint64_t timestampUs;
 } TurntableEvent;
+
+static inline TurntableEvent TurntableEvent_3(uint8_t deckIndex, bool platterTouched,
+                                               float angularDeltaRadians) {
+    return (TurntableEvent) { .deckIndex = deckIndex, .platterTouched = platterTouched,
+        .angularDeltaRad = angularDeltaRadians };
+}
+#define TurntableEvent(...) CONSTRUCTOR_DISPATCH(TurntableEvent, __VA_ARGS__)
+static inline void TurntableEvent_setPlatterTouched(TurntableEvent *event, bool touched) {
+    if (event) (*event).platterTouched = touched;
+}
+static inline void TurntableEvent_setAngularDelta(TurntableEvent *event, float radians) {
+    if (event) (*event).angularDeltaRad = radians;
+}
 
 typedef struct TurntableState {
     uint8_t      deckIndex;
@@ -45,11 +64,12 @@ typedef struct TurntableState {
     float        hotCues[8];         // Saved hot cue positions in seconds (-1 = unset)
 } TurntableState;
 
-void TurntableState_init(TurntableState *state, uint8_t deckIndex);
+TurntableState TurntableState_1(uint8_t deckIndex);
+#define TurntableState(...) CONSTRUCTOR_DISPATCH(TurntableState, __VA_ARGS__)
 void TurntableState_processEvent(TurntableState *state, TurntableEvent event);
 void TurntableState_tick(TurntableState *state, float deltaSeconds);
 
-// Crossfader volume calculation: dest-last order (writes volumeLeft and volumeRight)
-void Turntable_calculateCrossfade(float position, CrossfaderCurve curve, float *outLeft, float *outRight);
+// Crossfader volume calculation; returns both channel volumes by value.
+TurntableCrossfade Turntable_calculateCrossfade(float position, CrossfaderCurve curve);
 
 #endif

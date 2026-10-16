@@ -279,7 +279,8 @@ static const char *const s_names[KEY_COUNT] = {
 void Key_init(void) {
     if (s_ready) return;
     NanoTime_init();
-    if (!RingBuffer_init(&s_queue, sizeof(InputEvent), QUEUE_CAPACITY)) return;
+    s_queue = RingBuffer(sizeof(InputEvent), QUEUE_CAPACITY);
+    if (s_queue.slots == nullptr) return;
     memset(s_slots, 0, sizeof(s_slots));
     s_ready = true;
 }

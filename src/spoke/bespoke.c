@@ -25,7 +25,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - Bespoke_default()
+ *   - Bespoke()
  * Core Functions:
  *   - bridgeBespoke()
  *   - bridgeBespokeCheck()
@@ -55,7 +55,7 @@ static Bespoke s_defaultBespoke = {
     .checks = 0
 };
 
-Bespoke *Bespoke_default(void) {
+Bespoke *Bespoke_0(void) {
     return &s_defaultBespoke;
 }
 
@@ -80,7 +80,7 @@ void Bespoke_bridge(Bespoke *self) {
         (*self).networkingState = BESPOKE_ABSENT;
     }
 
-    // 2. Custom / doSmth (darkbase or other)
+    // 2. Custom / doSmth (darkbase-engine or other)
     if (doSmth != nullptr) {
         BespokeState state = checkSmth ? checkSmth() : BESPOKE_READY;
         if (state == BESPOKE_READY) {

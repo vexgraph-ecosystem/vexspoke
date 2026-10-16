@@ -44,7 +44,7 @@ extern char **environ;
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Options & Lifecycle:
- *   - DownloadOptions_default()
+ *   - DownloadOptions()
  *   - DownloadResponse_free(resources)
  * Execution:
  *   - Download_to_file(url, output_file, opts)
@@ -53,15 +53,6 @@ extern char **environ;
  */
 
 ;;INTENTION("Reliable download manager leveraging system curl and HTTP/TLS stacks")
-
-DownloadOptions DownloadOptions_default(void) {
-    DownloadOptions opts;
-    opts.timeout_seconds = 30;
-    opts.follow_redirects = true;
-    opts.silent = true;
-    opts.user_agent = "vexgraph/1.0 (Homebrew/Tooling Client)";
-    return opts;
-}
 
 void DownloadResponse_free(DownloadResponse *res) {
     if (!res) {
@@ -81,7 +72,7 @@ bool Download_to_file(const char *url, const char *output_file, const DownloadOp
         return false;
     }
 
-    DownloadOptions local_opts = opts ? (*opts) : DownloadOptions_default();
+    DownloadOptions local_opts = opts ? (*opts) : DownloadOptions();
 
     char timeout_str[16];
     snprintf(timeout_str, sizeof(timeout_str), "%u", local_opts.timeout_seconds);

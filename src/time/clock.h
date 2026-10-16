@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 // time/clock.h — the virtual clock (Legacy: time/Clock.java).
 //
@@ -24,7 +25,8 @@ typedef struct Clock {
 } Clock;
 
 // New clock: scale 1.0, unpaused, virtual time zeroed at now.
-Clock Clock_create(void);
+Clock Clock_0(void);
+#define Clock(...) CONSTRUCTOR_DISPATCH(Clock, __VA_ARGS__)
 
 // Advance: reads real elapsed since last tick and adds it scaled to the
 // virtual timeline. While paused, the real reading still advances (so no

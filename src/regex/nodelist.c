@@ -58,7 +58,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Core Functions: (.h)
- *   - RegexNodeList_init(list)
+ *   - RegexNodeList() creates an empty list value
  *   - RegexNodeList_add(list, kind)
  *   - RegexNodeList_get(list, index)
  *   - RegexNodeList_at(list, index)
@@ -98,10 +98,12 @@ static bool growToOneMore(RegexNodeList *list) {
     return true;
 }
 
-void RegexNodeList_init(RegexNodeList *list) {
-    (*list).nodes = nullptr;
-    (*list).count = 0;
-    (*list).capacity = 0;
+RegexNodeList RegexNodeList_0(void) {
+    RegexNodeList list;
+    list.nodes = nullptr;
+    list.count = 0u;
+    list.capacity = 0u;
+    return list;
 }
 
 uint32_t RegexNodeList_add(RegexNodeList *list, uint8_t kind) {
@@ -128,5 +130,5 @@ const RegexNode *RegexNodeList_at(const RegexNodeList *list, uint32_t index) {
 void RegexNodeList_free(RegexNodeList *list) {
     if ((*list).nodes)
         Memory_free((*list).nodes);
-    RegexNodeList_init(list);
+    *list = RegexNodeList();
 }

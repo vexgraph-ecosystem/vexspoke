@@ -58,7 +58,8 @@
 BitPool g_long_doublePool;
 
 bool LongDouble_init(void) {
-    return BitPool_init(&g_long_doublePool, 16, 1024);
+    g_long_doublePool = BitPool(16, 1024);
+    return g_long_doublePool.arena != nullptr;
 }
 
 void LongDouble_shutdown(void) {

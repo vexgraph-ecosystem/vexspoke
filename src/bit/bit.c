@@ -31,7 +31,7 @@
  * primitives (Double, IntFloat, ...) need thread-safe slot recycling without
  * malloc on hot paths. memory: one calloc'd arena, never grows; each slot is
  * a BitSlot header (type_id, length, tagged next) plus payload. Lifetime:
- * the BitPool_init/BitPool_shutdown pair; the 16-bit tag bump defeats the ABA
+ * the BitPool(...)/BitPool_shutdown pair; the 16-bit tag bump defeats the ABA
  * problem on concurrent push/pop.
  * ============================================================================
  */
@@ -60,7 +60,8 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Constructors:
- *   - BitPool_init(pool, element_size, capacity)
+ *   - BitPool_0()
+ *   - BitPool_2(element_size, capacity)
  *
  * Core Functions:
  *   - BitPool_shutdown(pool)
@@ -91,29 +92,37 @@ static uint64_t pack(uint16_t tag, uintptr_t ptr) {
     return (uint64_t) tag << 48 | ((uint64_t) ptr & 0x0000FFFFFFFFFFFFull);
 }
 
+BitPool BitPool_0(void) {
+    BitPool pool;
+    memset(&pool, 0, sizeof pool);
+    atomic_init(&pool.free_head, 0u);
+    return pool;
+}
+
 // Carve one arena and thread every slot onto the free list.
-bool BitPool_init(BitPool *pool, size_t element_size, size_t capacity) {
-    if (!pool || element_size == 0 || capacity == 0) return false;
+BitPool BitPool_2(size_t element_size, size_t capacity) {
+    BitPool pool = BitPool_0();
+    if (element_size == 0 || capacity == 0) return pool;
 
     size_t stride = SLOT_SIZE(element_size);
-    (*pool).element_size = element_size;
-    (*pool).capacity = capacity;
-    (*pool).arena = (uint8_t*) calloc(capacity, stride);
-    if (!(*pool).arena) return false;
+    pool.element_size = element_size;
+    pool.capacity = capacity;
+    pool.arena = (uint8_t*) calloc(capacity, stride);
+    if (!pool.arena) return BitPool_0();
 
     // build the free list, chaining every slot through its header
     uint16_t tag = 1;
     uintptr_t head = 0;
     for (size_t i = capacity; i > 0; i--) {
-        BitSlot *slot = (BitSlot*) ((*pool).arena + (i - 1) * stride);
+        BitSlot *slot = (BitSlot*) (pool.arena + (i - 1) * stride);
         (*slot).type_id = 0;
         (*slot).length = 0;
         atomic_store_explicit(&(*slot).next, pack(tag, head), memory_order_relaxed);
         head = (uintptr_t) slot;
         tag++;
     }
-    atomic_store_explicit(&(*pool).free_head, pack(tag, head), memory_order_release);
-    return true;
+    atomic_store_explicit(&pool.free_head, pack(tag, head), memory_order_release);
+    return pool;
 }
 
 void BitPool_shutdown(BitPool *pool) {

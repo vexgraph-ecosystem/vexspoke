@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 #include "lang/vec2.h"
 
 // input/gesture.h — Multi-Touch Trackpad & Gesture Hardware Model.
@@ -38,6 +39,17 @@ typedef struct GestureEvent {
     uint64_t       timestampUs;
 } GestureEvent;
 
+static inline GestureEvent GestureEvent_2(GesturePhase phase, float magnificationDelta) {
+    return (GestureEvent) { .phase = phase, .magnificationDelta = magnificationDelta };
+}
+#define GestureEvent(...) CONSTRUCTOR_DISPATCH(GestureEvent, __VA_ARGS__)
+static inline void GestureEvent_setPhase(GestureEvent *event, GesturePhase phase) {
+    if (event) (*event).phase = phase;
+}
+static inline void GestureEvent_setMagnificationDelta(GestureEvent *event, float delta) {
+    if (event) (*event).magnificationDelta = delta;
+}
+
 typedef struct GestureState {
     float  currentScale;       // Absolute accumulated zoom scale (default 1.0)
     float  currentRotationRad; // Absolute accumulated rotation
@@ -47,7 +59,8 @@ typedef struct GestureState {
     bool   isRotating;
 } GestureState;
 
-void GestureState_init(GestureState *state);
+GestureState GestureState_0(void);
+#define GestureState(...) CONSTRUCTOR_DISPATCH(GestureState, __VA_ARGS__)
 void GestureState_processEvent(GestureState *state, GestureEvent event);
 void GestureState_tick(GestureState *state, float deltaSeconds);
 

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <pthread.h>
+#include "c23/constructor.h"
 
 // net/http.h — HTTP/1.1 client & micro server over BSD sockets
 // (Legacy: net/HTTPClient.java, net/HTTPServer.java, net/PollRequest.java).
@@ -34,6 +35,28 @@ typedef struct HttpRequest {
     uint32_t timeoutMs;   // connect+read budget, default 5000
 } HttpRequest;
 
+static inline HttpRequest HttpRequest_3(const char *host, int port, const char *path) {
+    return (HttpRequest) { .scheme = "http", .method = "GET", .host = host,
+        .port = port, .path = path, .timeoutMs = 5000u };
+}
+#define HttpRequest(...) CONSTRUCTOR_DISPATCH(HttpRequest, __VA_ARGS__)
+static inline void HttpRequest_setScheme(HttpRequest *request, const char *scheme) {
+    if (request) (*request).scheme = scheme;
+}
+static inline void HttpRequest_setMethod(HttpRequest *request, const char *method) {
+    if (request) (*request).method = method;
+}
+static inline void HttpRequest_setHeaders(HttpRequest *request,
+                                          const HttpHeader *headers, uint32_t count) {
+    if (request) { (*request).headers = headers; (*request).headerCount = count; }
+}
+static inline void HttpRequest_setBody(HttpRequest *request, const char *body, size_t length) {
+    if (request) { (*request).body = body; (*request).bodyLen = length; }
+}
+static inline void HttpRequest_setTimeout(HttpRequest *request, uint32_t timeoutMilliseconds) {
+    if (request) (*request).timeoutMs = timeoutMilliseconds;
+}
+
 typedef struct HttpResponse {
     bool ok;              // transport-level success; status may still be 4xx
     int status;
@@ -42,6 +65,11 @@ typedef struct HttpResponse {
     size_t bodyCap;
     size_t bodyLen;
 } HttpResponse;
+
+static inline HttpResponse HttpResponse_2(char *body, size_t capacity) {
+    return (HttpResponse) { .status = -1, .body = body, .bodyCap = capacity };
+}
+#define HttpResponse(...) CONSTRUCTOR_DISPATCH(HttpResponse, __VA_ARGS__)
 
 // Execute one request. Fills resp; body is written into (*resp).body up to
 // bodyCap and NUL-terminated when it fits.

@@ -46,7 +46,7 @@
  * FUNCTION REGISTRY:
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
- *   - Str_init(s, dest, cap)
+ *   - Str(dest, cap)
  *
  * Public Core Functions: (.h)
  *   - Str_put(s, text) / Str_putc(s, c) / Str_putQuoted(s, text) / Str_printf(s, fmt, ...)
@@ -63,15 +63,15 @@ static size_t room(const Str *s) {
     return ((*s).len < (*s).cap - 1u) ? ((*s).cap - 1u - (*s).len) : 0u;
 }
 
-void Str_init(Str *s, char *dest, size_t cap) {
-    if (s == nullptr)
-        return;
-    (*s).dest = dest;
-    (*s).cap = cap;
-    (*s).len = 0;
-    (*s).truncated = false;
-    if (dest != nullptr && cap > 0)
+Str Str_2(char *dest, size_t cap) {
+    Str result;
+    result.dest = dest;
+    result.cap = cap;
+    result.len = 0u;
+    result.truncated = false;
+    if (dest != nullptr && cap > 0u)
         dest[0] = '\0';
+    return result;
 }
 
 void Str_putc(Str *s, char c) {

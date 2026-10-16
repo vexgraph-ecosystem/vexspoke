@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
 #include "atomic/ring.h"
 
 // thread/thread.h — the worker-thread engine (Legacy: the six *Thread.java
@@ -29,8 +30,9 @@ typedef void (*Thread_Job)(Thread *self, void *task);
 // Create a stopped handle. typeId stamps the block header (one of the
 // ID_THREAD_* classes); queueCapacity holds void* tasks. Core handles reject
 // stop/free like legacy ROLE_CORE. nullptr on OOM/bad args.
-Thread *Thread_new(uint64_t typeId, Thread_Job job, size_t queueCapacity,
-                   bool tickWhenIdle, bool core);
+Thread *Thread_5(uint64_t typeId, Thread_Job job, size_t queueCapacity,
+                 bool tickWhenIdle, bool core);
+#define Thread(...) CONSTRUCTOR_DISPATCH(Thread, __VA_ARGS__)
 
 // Spawn the platform thread. True on success or if already running.
 bool Thread_run(Thread *self);

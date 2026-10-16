@@ -41,6 +41,7 @@ typedef struct Vec3 {
 Vec3 *Vec3_0(void);
 Vec3 *Vec3_3(float horizontal, float vertical, float depth);
 Vec3 *Vec3_4(float horizontal, float vertical, float depth, CoordFrame frame);
+#define Vec3(...) CONSTRUCTOR_DISPATCH(Vec3, __VA_ARGS__)
 void Vec3_free(Vec3 *v);
 
 // Spatial Directional Getters & Setters

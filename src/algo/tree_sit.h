@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "c23/constructor.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,6 +19,15 @@ typedef struct TreeSitSpan {
     uint32_t end_row;
     uint32_t end_col;
 } TreeSitSpan;
+
+static inline TreeSitSpan TreeSitSpan_6(uint32_t startByte, uint32_t endByte,
+                                        uint32_t startRow, uint32_t startColumn,
+                                        uint32_t endRow, uint32_t endColumn) {
+    return (TreeSitSpan) { .start_byte = startByte, .end_byte = endByte,
+        .start_row = startRow, .start_col = startColumn,
+        .end_row = endRow, .end_col = endColumn };
+}
+#define TreeSitSpan(...) CONSTRUCTOR_DISPATCH(TreeSitSpan, __VA_ARGS__)
 
 typedef struct TreeSitNode {
     uint32_t id;
@@ -40,7 +51,9 @@ typedef struct TreeSitTree {
 
 typedef bool (*TreeSitVisitorFn)(const TreeSitTree *tree, int32_t node_idx, int depth, void *user_data);
 
-bool TreeSitTree_init(uint32_t initial_capacity, TreeSitTree *tree);
+TreeSitTree TreeSitTree_0(void);
+TreeSitTree TreeSitTree_1(uint32_t initial_capacity);
+#define TreeSitTree(...) CONSTRUCTOR_DISPATCH(TreeSitTree, __VA_ARGS__)
 void TreeSitTree_destroy(TreeSitTree *tree);
 int32_t TreeSitTree_add_node(
     int32_t parent_idx,

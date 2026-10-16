@@ -2,6 +2,7 @@
 #define INPUT_KEY_MAP_H
 
 #include <stdint.h>
+#include "c23/constructor.h"
 #include <stdbool.h>
 
 #include "annotation/draft.h"
@@ -83,7 +84,8 @@ typedef struct KeyMap {
            "mask) planned for any-modifier/any-key binds; do not harden the "
            "public surface until a real Frame consumer proves it")
 
-KeyMap *KeyMap_create(void *arena);
+KeyMap *KeyMap_1(void *arena);
+#define KeyMap(...) CONSTRUCTOR_DISPATCH(KeyMap, __VA_ARGS__)
 void    KeyMap_destroy(KeyMap *map);
 
 // ── Binding ───────────────────────────────────────────────

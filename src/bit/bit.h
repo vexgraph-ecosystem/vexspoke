@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "c23/constructor.h"
+
 // bit/bit.h — lockless bit-width pool API (Legacy: bit/Bit64.java).
 //
 // A pool owns one fixed arena of equal-sized slots. Alloc/free are lock-free
@@ -32,8 +34,12 @@ typedef struct BitPool {
     _Atomic uint64_t free_head;  // tagged head of the free list
 } BitPool;
 
-// Carve capacity slots of element_size Bytes. Returns false on bad args/OOM.
-bool BitPool_init(BitPool *pool, size_t element_size, size_t capacity);
+// Carve capacity slots of element_size Bytes. A null arena means invalid
+// arguments or allocation failure.
+BitPool BitPool_0(void);
+BitPool BitPool_2(size_t element_size, size_t capacity);
+#define BitPool(...) CONSTRUCTOR_DISPATCH(BitPool, __VA_ARGS__)
+
 void BitPool_shutdown(BitPool *pool);
 
 // Pop a slot from the free list and stamp type_id into its header.

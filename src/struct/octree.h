@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 
 #include "struct/exhaustion.h"
 
@@ -21,6 +22,14 @@ typedef struct OctreePoint {
     float z;
 } OctreePoint;
 
+static inline OctreePoint OctreePoint_3(float x, float y, float z) {
+    return (OctreePoint) { .x = x, .y = y, .z = z };
+}
+#define OctreePoint(...) CONSTRUCTOR_DISPATCH(OctreePoint, __VA_ARGS__)
+static inline void OctreePoint_set(OctreePoint *point, float x, float y, float z) {
+    if (point) { (*point).x = x; (*point).y = y; (*point).z = z; }
+}
+
 typedef struct OctreeAABB {
     float minX;
     float minY;
@@ -29,6 +38,19 @@ typedef struct OctreeAABB {
     float maxY;
     float maxZ;
 } OctreeAABB;
+
+static inline OctreeAABB OctreeAABB_6(float minX, float minY, float minZ,
+                                      float maxX, float maxY, float maxZ) {
+    return (OctreeAABB) { .minX = minX, .minY = minY, .minZ = minZ,
+        .maxX = maxX, .maxY = maxY, .maxZ = maxZ };
+}
+#define OctreeAABB(...) CONSTRUCTOR_DISPATCH(OctreeAABB, __VA_ARGS__)
+static inline void OctreeAABB_setMin(OctreeAABB *box, float x, float y, float z) {
+    if (box) { (*box).minX = x; (*box).minY = y; (*box).minZ = z; }
+}
+static inline void OctreeAABB_setMax(OctreeAABB *box, float x, float y, float z) {
+    if (box) { (*box).maxX = x; (*box).maxY = y; (*box).maxZ = z; }
+}
 
 typedef struct OctreeItem {
     OctreePoint point;
@@ -55,7 +77,8 @@ typedef struct Octree {
     bool        exhaustionReported;
 } Octree;
 
-Octree *Octree_create(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode);
+Octree *Octree_3(OctreeAABB bounds, uint32_t maxDepth, uint32_t maxItemsPerNode);
+#define Octree(...) CONSTRUCTOR_DISPATCH(Octree, __VA_ARGS__)
 void Octree_free(Octree *self);
 
 bool Octree_insert(Octree *self, OctreePoint point, uint64_t payload);

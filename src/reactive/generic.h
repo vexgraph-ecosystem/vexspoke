@@ -24,9 +24,10 @@
 //          // reactive_buffer.c
 //          IMPLEMENT_REACTIVE(Buffer);    // stamps the bodies
 //
-// A macro cannot define a macro, so neither form can emit the per-class arity
-// chooser: construction is explicit (ReactiveBuffer_1(value)) or the header
-// writes `#define ReactiveBuffer(...)` by hand.
+// A macro cannot define another macro, so each public family header supplies
+// its class constructor chooser beside the generated declarations. Consumers
+// use the same type spelling for both the class and its constructor:
+// `Reactive(Vec4) *position = Reactive(Vec4)(initialPosition);`.
 
 #define VEX_CAT_(a, b) a##b
 #define VEX_CAT(a, b)  VEX_CAT_(a, b)

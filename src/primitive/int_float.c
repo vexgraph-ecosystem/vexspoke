@@ -56,7 +56,8 @@
 BitPool g_int_floatPool;
 
 bool IntFloat_init(void) {
-    return BitPool_init(&g_int_floatPool, 8, 1024);
+    g_int_floatPool = BitPool(8, 1024);
+    return g_int_floatPool.arena != nullptr;
 }
 
 void IntFloat_shutdown(void) {

@@ -83,11 +83,11 @@
  *   - Json_path(doc, root, path)
  *   - Json_getBool(doc, ref, def)
  *   - Json_getNumber(doc, ref, def)
- *   - Json_getString(doc, ref, dest)
+ *   - Json_getString(doc, ref)
  *   - Json_writeNumber(out, cap, v)
  *   - Json_writeString(out, cap, s)
  *   - Json_writeBool(out, cap, v)
- *   - JsonWriter_init(w, out, cap) + JsonWriter_ok/used
+ *   - JsonWriter(out, cap) + JsonWriter_ok/used
  *   - Json_beginObject/endObject, Json_beginArray/endArray
  *   - Json_addKey(w, k) + Json_stringVal/numberVal/boolVal/nullVal/rawVal
  * ============================================================================
@@ -566,18 +566,15 @@ double Json_getNumber(const JsonDoc *doc, JsonRef ref, double def) {
     return (*doc).nodes[ref].number;
 }
 
-bool Json_getString(const JsonDoc *doc, JsonRef ref, char *dest, size_t cap) {
-    if (!doc || !dest || cap == 0)
-        return false;
+JsonStringView Json_getString(const JsonDoc *doc, JsonRef ref) {
+    JsonStringView empty = { nullptr, 0u };
+    if (!doc)
+        return empty;
     if (ref < 0 || (*doc).nodes[ref].type != JSON_STRING)
-        return false;
-    uint32_t len = 0;
-    const char *view = Json_string(doc, ref, &len);
-    if ((size_t)len + 1 > cap)
-        return false;
-    memcpy(dest, view, len);
-    dest[len] = '\0';
-    return true;
+        return empty;
+    JsonStringView view;
+    view.data = Json_string(doc, ref, &view.length);
+    return view;
 }
 
 // --- Streaming builder (~ JSON.stringify) ---
@@ -639,18 +636,18 @@ static bool writerStringBody(JsonWriter *w, const char *s) {
     return true;
 }
 
-void JsonWriter_init(JsonWriter *w, char *out, size_t cap) {
-    if (!w)
-        return;
-    (*w).out = out;
-    (*w).cap = cap;
-    (*w).used = 0;
-    (*w).ok = (out != nullptr && cap > 0);
-    (*w).depth = 0;
+JsonWriter JsonWriter_2(char *out, size_t cap) {
+    JsonWriter result;
+    memset(&result, 0, sizeof result);
+    result.out = out;
+    result.cap = cap;
+    result.used = 0u;
+    result.ok = (out != nullptr && cap > 0u);
     for (int i = 0; i < JSON_MAX_DEPTH; i++)
-        (*w).needComma[i] = false;
-    if ((*w).ok)
+        result.needComma[i] = false;
+    if (result.ok)
         out[0] = '\0';
+    return result;
 }
 
 bool JsonWriter_ok(const JsonWriter *w) {

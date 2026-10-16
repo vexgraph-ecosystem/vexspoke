@@ -15,9 +15,9 @@
  * Bounding Volume Hierarchy (BVH) for accelerated 3D ray tracing and spatial
  * queries. The tree stores AABB nodes over primitive index ranges; rays are
  * tested against node boxes in front-to-back order so early misses prune
- * whole subtrees. All state lives in caller-owned structs (BvhAabb, BvhRay,
- * BvhTree) — zero allocation, zero global state, so the same tree can be
- * built, queried, and destroyed on any thread without locks. Cold build
+ * whole subtrees. BvhTree(...) allocates node and primitive-index arrays;
+ * it borrows the primitive array while built. There is no global state, so
+ * independent trees can be built and queried on separate threads. Cold build
  * paths validate primitive counts; hot intersect paths guard only null
  * pointers per the Cold-Strict, Hot-Minimal Validation Law.
  * ============================================================================
@@ -44,7 +44,8 @@
  *   - BvhAabb_merge(other, dest)
  *   - BvhAabb_intersect_ray(ray, box, t_near_out)
  * Tree Operations:
- *   - BvhTree_init(primitive_count, tree)
+ *   - BvhTree_0()
+ *   - BvhTree_1(primitive_count)
  *   - BvhTree_destroy(tree)
  *   - BvhTree_build(prims, count, tree)
  *   - BvhTree_intersect_ray(tree, ray, hit_out)
@@ -137,36 +138,37 @@ bool BvhAabb_intersect_ray(const BvhRay *ray, const BvhAabb *box, float *t_near_
     return true;
 }
 
-bool BvhTree_init(uint32_t primitive_count, BvhTree *tree) {
-    if (!tree) {
-        return false;
-    }
-    (*tree).primitive_count = primitive_count;
-    (*tree).node_count = 0;
-    (*tree).primitives = nullptr;
+BvhTree BvhTree_0(void) {
+    BvhTree tree;
+    tree.nodes = nullptr;
+    tree.primitive_indices = nullptr;
+    tree.primitives = nullptr;
+    tree.node_count = 0u;
+    tree.node_capacity = 0u;
+    tree.primitive_count = 0u;
+    return tree;
+}
 
-    if (primitive_count == 0) {
-        (*tree).nodes = nullptr;
-        (*tree).primitive_indices = nullptr;
-        (*tree).node_capacity = 0;
-        return true;
-    }
+BvhTree BvhTree_1(uint32_t primitive_count) {
+    BvhTree tree = BvhTree_0();
+    if (primitive_count == 0u)
+        return tree;
+    if (primitive_count > (UINT32_MAX - 1u) / 2u)
+        return tree;
 
     uint32_t max_nodes = (2u * primitive_count) + 1u;
-    (*tree).nodes = (BvhNode*) malloc(max_nodes * sizeof(BvhNode));
-    (*tree).primitive_indices = (uint32_t*) malloc(primitive_count * sizeof(uint32_t));
-    if (!(*tree).nodes || !(*tree).primitive_indices) {
-        free((*tree).nodes);
-        free((*tree).primitive_indices);
-        (*tree).nodes = nullptr;
-        (*tree).primitive_indices = nullptr;
-        return false;
+    tree.nodes = (BvhNode*) malloc((size_t) max_nodes * sizeof(BvhNode));
+    tree.primitive_indices = (uint32_t*) malloc((size_t) primitive_count * sizeof(uint32_t));
+    if (!tree.nodes || !tree.primitive_indices) {
+        free(tree.nodes);
+        free(tree.primitive_indices);
+        return BvhTree_0();
     }
-    (*tree).node_capacity = max_nodes;
-    for (uint32_t i = 0; i < primitive_count; i++) {
-        (*tree).primitive_indices[i] = i;
-    }
-    return true;
+    tree.node_capacity = max_nodes;
+    tree.primitive_count = primitive_count;
+    for (uint32_t i = 0; i < primitive_count; i++)
+        tree.primitive_indices[i] = i;
+    return tree;
 }
 
 void BvhTree_destroy(BvhTree *tree) {
@@ -273,17 +275,22 @@ static int32_t bvh_build_recursive(
 }
 
 bool BvhTree_build(const BvhPrimitive *prims, uint32_t count, BvhTree *tree) {
-    if (!tree || !prims) {
+    if (!tree || (count > 0u && !prims)) {
         return false;
     }
-    if (!BvhTree_init(count, tree)) {
+    if ((*tree).primitive_count != count
+        || (count > 0u && (!(*tree).nodes || !(*tree).primitive_indices))) {
         return false;
     }
+    (*tree).node_count = 0u;
+    (*tree).primitives = nullptr;
     if (count == 0) {
         return true;
     }
 
     (*tree).primitives = prims;
+    for (uint32_t i = 0; i < count; i++)
+        (*tree).primitive_indices[i] = i;
     bvh_build_recursive(tree, 0, count, 2);
     return true;
 }

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "c23/constructor.h"
 #include "lang/vec2.h"
 
 // input/gamepad.h — Game Controller & Joystick Hardware Model.
@@ -43,10 +44,14 @@ typedef struct GamepadState {
     bool     isConnected;
 } GamepadState;
 
-void GamepadState_init(GamepadState *state);
+GamepadState GamepadState_0(void);
+#define GamepadState(...) CONSTRUCTOR_DISPATCH(GamepadState, __VA_ARGS__)
 bool GamepadState_isDown(const GamepadState *state, uint32_t buttonMask);
+static inline void GamepadState_setButtons(GamepadState *state, uint32_t buttons) {
+    if (state) (*state).buttons = buttons;
+}
 
-// Circular deadzone math: dest-last order (writes to outFiltered)
-void Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone, Vec2 *outFiltered);
+// Circular deadzone math; returns the filtered vector by value.
+Vec2 Gamepad_applyCircularDeadzone(Vec2 rawStick, float deadzone);
 
 #endif

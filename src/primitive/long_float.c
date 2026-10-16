@@ -59,7 +59,8 @@
 BitPool g_long_floatPool;
 
 bool LongFloat_init(void) {
-    return BitPool_init(&g_long_floatPool, 16, 1024);
+    g_long_floatPool = BitPool(16, 1024);
+    return g_long_floatPool.arena != nullptr;
 }
 
 void LongFloat_shutdown(void) {

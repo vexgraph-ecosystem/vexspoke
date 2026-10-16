@@ -43,7 +43,7 @@
  * ----------------------------------------------------------------------------
  * Public Constructors: (.h)
  *   - Vec3LongDouble_0(void)
- *   - Vec3LongDouble_create(sH, lH, sV, lV, sD, lD, frame)
+ *   - Vec3LongDouble(sectorH, localH, sectorV, localV, sectorD, localD, frame)
  * Public Core Functions: (.h)
  *   - Vec3LongDouble_free(v)
  *   - Vec3LongDouble_rebalance(v, sectorSize)
@@ -72,15 +72,16 @@ Vec3LongDouble *Vec3LongDouble_0(void) {
     return v;
 }
 
-Vec3LongDouble *Vec3LongDouble_create(int64_t sH, double lH, int64_t sV, double lV, int64_t sD, double lD, CoordFrame frame) {
+Vec3LongDouble *Vec3LongDouble_7(int64_t sectorH, double localH, int64_t sectorV, double localV,
+                                 int64_t sectorD, double localD, CoordFrame frame) {
     Vec3LongDouble *v = (Vec3LongDouble*) Memory_alloc(ID_VEC3, sizeof(Vec3LongDouble));
     if (!v) return nullptr;
-    (*v).horizontal.sector = sH;
-    (*v).horizontal.local = lH;
-    (*v).vertical.sector = sV;
-    (*v).vertical.local = lV;
-    (*v).depth.sector = sD;
-    (*v).depth.local = lD;
+    (*v).horizontal.sector = sectorH;
+    (*v).horizontal.local = localH;
+    (*v).vertical.sector = sectorV;
+    (*v).vertical.local = localV;
+    (*v).depth.sector = sectorD;
+    (*v).depth.local = localD;
     (*v).frame = CoordFrame_isValid(frame) ? (uint64_t) frame : (uint64_t) COORD_FRAME_DEFAULT;
     return v;
 }
