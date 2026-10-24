@@ -1,15 +1,15 @@
 # vexspoke — Repo-Local Living Preferences
 > Repo-local preferences governed by the Living Documentation Law.
-> Universal Supreme Constitution: workspace gist/PREFERENCES.md, published on Gist.
+> Universal constitution: `gist.md` is the compressed law list; `PREFERENCES.md` is its rationale.
 
 ## 0. Constitution Link (supreme)
-- [preferences.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a) — real, Git-ignored workspace file at `../../gist/PREFERENCES.md`, not a tracked Vexspoke file or symlink.
-- All universal laws in `../../gist/PREFERENCES.md` are mandatory and binding across the ecosystem.
+- [gist.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a#file-gist-md) — the compressed law list, mirrored in this workspace at `../../../metadata/gists/preferences/gist.md`. It is the only normative law text; `../../../PREFERENCES.md` carries the rationale and is never ingested whole. Numbers are slice addresses inside one file, never law identity: cite by Title.
+- All universal laws bind this repository. Read one on demand from the workspace root: `./tools/prefs law "<title>"`, `./tools/prefs section "<section>"`, `./tools/prefs repo <name>`.
 - This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation, behavior, and network protocols). Relational Engine owns filesystem IO/NIO and the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke `net/` owns network protocol clients and servers, including BSD socket-backed HTTP. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
 
 ## 1. Repo-Local Law Index (Binding Matrix)
 
-Universal laws are inherited from the canonical `../../gist/PREFERENCES.md` Index; this table indexes the additional laws specific to this repository.
+Universal laws are inherited from the compressed constitution (`../../../metadata/gists/preferences/gist.md`); this table indexes the additional laws specific to this repository.
 
 | Law Title | Scope | Enforcement |
 | :--- | :--- | :--- |
@@ -50,7 +50,7 @@ _Rule._
 
 ### BitPool Slot Segregation Law
 
-**Definition.** Equal-stride data structures (primitives, relational rows, ring buffer cells, tokens) allocate strictly from parameterized `BitPool` pools: ABA-safe generational bitmasks vend slots with $O(1)$ allocation/deallocation, zero heap fragmentation. *Why:* general-purpose `malloc` degrades cache coherence; the R2 core must stay predictable, linear and cache-aligned.
+**Definition.** Equal-stride data structures (primitives, relational rows, ring buffer cells, tokens) carve their backing once from the engine arena (`MemoryArena_alloc`) and vend slots from a parameterized `BitPool`: ABA-safe generational bitmasks give $O(1)$ claim/return with no per-object allocator call. *Why:* slab locality keeps the R2 core predictable, linear and cache-aligned while the engine stays the single owner — a `BitPool` is a layout over engine bytes, never a second heap (the `calloc`/`free` in `src/bit/bit.c` today is a Relational Memory Law defect to retire).
 
 _Rule._
 
@@ -59,7 +59,7 @@ _Rule._
 
 ### 24-Byte Variable Slot Law (The 23+1 Rule)
 
-**Definition.** Every interned variable name is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 Bytes total), paired with an 8-byte intrusive self-pointer (`uint64_t self`) as the cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`); two slots pack byte-perfect into a single 64-byte CPU cache line. *Why:* the 23-byte pin keeps slots uniform, identity stated once per process, lookups branchless binary search over direct 24-byte compares — overlong names reject cold, silent truncation would corrupt identity.
+**Definition.** Every interned variable name is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 Bytes total), paired with an 8-byte intrusive self-pointer (`uint64_t self`) as the cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`); two slots pack byte-perfect into a single 64-byte CPU cache line. *Why:* the 23-byte pin keeps slots uniform, identity stated once per process, lookups branchless binary search over direct 24-byte compares — overlong names reject cold, silent truncation would corrupt identity. Backing comes from the engine arena (`MemoryArena_alloc` in `relational/variable_pool.c`); the engine's Rust `VariableSlot` is a different record (`[name 24B][value 8B]`) and the two are never conflated.
 
 _Rule._
 
