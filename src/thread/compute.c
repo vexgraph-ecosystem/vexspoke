@@ -62,17 +62,17 @@ static void compute_job(Thread *self, void *task) {
 
 bool ComputeJob_isJob(const void *task) {
     const ComputeJob *job = (const ComputeJob*) task;
-    return job != nullptr && job->tag == COMPUTE_JOB_TAG;
+    return job != nullptr && (*job).tag == COMPUTE_JOB_TAG;
 }
 
 bool ComputeJob_run(void *task) {
     ComputeJob *job = (ComputeJob*) task;
     if (!ComputeJob_isJob(job))
         return false;
-    if (job->run != nullptr)
-        job->run(job->ctx);
-    if (job->onDone != nullptr)
-        job->onDone(job->ctx);               // fire-and-forget; same worker
+    if ((*job).run != nullptr)
+        (*job).run((*job).ctx);
+    if ((*job).onDone != nullptr)
+        (*job).onDone((*job).ctx);               // fire-and-forget; same worker
     return true;
 }
 

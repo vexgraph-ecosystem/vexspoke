@@ -21,7 +21,7 @@
 #define REFLECT_VARIABLE_NAME_BYTES VARIABLE_SLOT_NAME_BYTES
 #define REFLECT_VARIABLE_NAME_MAX VARIABLE_SLOT_NAME_MAX
 
-typedef void *(*VariableReadFn)(void *);
+typedef void *(*VariableReadFn)(void*);
 
 typedef struct Variable {
     char name[REFLECT_VARIABLE_NAME_BYTES]; // folded name (atom grammar)

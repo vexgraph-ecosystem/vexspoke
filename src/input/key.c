@@ -188,10 +188,10 @@ static bool growSegment(const KeyHandler ***items, int *cap, int needed) {
     int newCap = (*cap == 0) ? 16 : *cap * 2;
     while (newCap < needed) newCap *= 2;
     const KeyHandler **nb = (const KeyHandler**) Memory_alloc(
-        TYPE_INT_POINTER, (size_t) newCap * sizeof(KeyHandler *));
+        TYPE_INT_POINTER, (size_t) newCap * sizeof(KeyHandler*));
     if (nb == nullptr) return false;
     if (*items != nullptr && *cap > 0)
-        memcpy(nb, *items, (size_t) *cap * sizeof(KeyHandler *));
+        memcpy(nb, *items, (size_t) *cap * sizeof(KeyHandler*));
     *items = nb;
     *cap = newCap;
     return true;

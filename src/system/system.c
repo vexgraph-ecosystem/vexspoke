@@ -120,7 +120,7 @@ bool System_getEnvironment(const char *debugpath, const char *exportpath) {
     size_t count = 0;
     while (environ != nullptr && environ[count] != nullptr)
         ++count;
-    char **entries = count == 0 ? nullptr : calloc(count, sizeof(char *));
+    char **entries = count == 0 ? nullptr : calloc(count, sizeof(char*));
     if (count != 0 && entries == nullptr)
         return false;
     for (size_t i = 0; i < count; ++i) {

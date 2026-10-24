@@ -43,24 +43,24 @@
 // value (the word is the object pointer) prints "null".
 static void vec2_str(const Vec2 *v, char *out, size_t cap) {
     if (v == nullptr) { snprintf(out, cap, "null"); return; }
-    snprintf(out, cap, "(%.3g, %.3g)", (double) v->x, (double) v->y);
+    snprintf(out, cap, "(%.3g, %.3g)", (double) (*v).x, (double) (*v).y);
 }
 
 static void vec3_str(const Vec3 *v, char *out, size_t cap) {
     if (v == nullptr) { snprintf(out, cap, "null"); return; }
-    snprintf(out, cap, "(%.3g, %.3g, %.3g)", (double) v->x, (double) v->y, (double) v->z);
+    snprintf(out, cap, "(%.3g, %.3g, %.3g)", (double) (*v).x, (double) (*v).y, (double) (*v).z);
 }
 
 static void vec4_str(const Vec4 *v, char *out, size_t cap) {
     if (v == nullptr) { snprintf(out, cap, "null"); return; }
     snprintf(out, cap, "(%.3g, %.3g, %.3g, %.3g)",
-             (double) v->x, (double) v->y, (double) v->z, (double) v->w);
+             (double) (*v).x, (double) (*v).y, (double) (*v).z, (double) (*v).w);
 }
 
 static void rectangle_str(const Rectangle *r, char *out, size_t cap) {
     if (r == nullptr) { snprintf(out, cap, "null"); return; }
     snprintf(out, cap, "[%.3g, %.3g, %.3g x %.3g]",
-             (double) r->x, (double) r->y, (double) r->width, (double) r->height);
+             (double) (*r).x, (double) (*r).y, (double) (*r).width, (double) (*r).height);
 }
 
 IMPLEMENT_REACTIVE_STR(Vec2, vec2_str);

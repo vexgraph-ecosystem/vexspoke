@@ -75,7 +75,7 @@ static void exceptionInitializeV(Exception *self,
         va_end(copy);
 
         if (needed >= 0) {
-            char *buf = (char *)malloc((size_t)needed + 1);
+            char *buf = (char*) malloc((size_t)needed + 1);
             if (buf != nullptr) {
                 vsnprintf(buf, (size_t)needed + 1, fmt, args);
                 (*self).message = buf;
@@ -152,7 +152,7 @@ void Exception_setDetailsV(Exception *self, const char *fmt, va_list args) {
 
     if (needed < 0) return;
 
-    char *buf = (char *)malloc((size_t)needed + 1);
+    char *buf = (char*) malloc((size_t)needed + 1);
     if (buf != nullptr) {
         vsnprintf(buf, (size_t)needed + 1, fmt, args);
         if ((*self).details != nullptr) {

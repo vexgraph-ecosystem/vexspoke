@@ -20,7 +20,7 @@
 #define REFLECT_METHOD_NAME_BYTES VARIABLE_SLOT_NAME_BYTES
 #define REFLECT_METHOD_NAME_MAX VARIABLE_SLOT_NAME_MAX
 
-typedef void *(*MethodFn)(void *);
+typedef void *(*MethodFn)(void*);
 
 typedef struct Method {
     char name[REFLECT_METHOD_NAME_BYTES]; // folded name (atom grammar)

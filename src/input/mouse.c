@@ -191,10 +191,10 @@ static bool growSegment(const MouseHandler ***items, int *cap, int needed) {
     int newCap = (*cap == 0) ? 16 : *cap * 2;
     while (newCap < needed) newCap *= 2;
     const MouseHandler **nb = (const MouseHandler**) Memory_alloc(
-        TYPE_INT_POINTER, (size_t) newCap * sizeof(MouseHandler *));
+        TYPE_INT_POINTER, (size_t) newCap * sizeof(MouseHandler*));
     if (nb == nullptr) return false;
     if (*items != nullptr && *cap > 0)
-        memcpy(nb, *items, (size_t) *cap * sizeof(MouseHandler *));
+        memcpy(nb, *items, (size_t) *cap * sizeof(MouseHandler*));
     *items = nb;
     *cap = newCap;
     return true;

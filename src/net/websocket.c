@@ -178,7 +178,7 @@ static int wsConnect(const WsTarget *target, uint32_t timeoutMs) {
         return -1;
 
     int fd = -1;
-    for (struct addrinfo *it = resolved; it != nullptr; it = it->ai_next) {
+    for (struct addrinfo *it = resolved; it != nullptr; it = (*it).ai_next) {
         fd = socket((*it).ai_family, (*it).ai_socktype, (*it).ai_protocol);
         if (fd < 0)
             continue;
@@ -359,8 +359,8 @@ static bool wsParseUrl(const char *url, WsTarget *out) {
         if (hostLength == 0u || hostLength >= WS_HOST_BYTES)
             return false;
         memset(out, 0, sizeof(*out));
-        memcpy(out->host, hostPort + 1, hostLength);
-        out->host[hostLength] = '\0';
+        memcpy((*out).host, hostPort + 1, hostLength);
+        (*out).host[hostLength] = '\0';
     } else {
         const char *colon = strrchr(hostPort, ':');
         if (colon != nullptr) {
@@ -381,16 +381,16 @@ static bool wsParseUrl(const char *url, WsTarget *out) {
         if (hostLength == 0u || hostLength >= WS_HOST_BYTES)
             return false;
         memset(out, 0, sizeof(*out));
-        memcpy(out->host, hostPort, hostLength);
-        out->host[hostLength] = '\0';
+        memcpy((*out).host, hostPort, hostLength);
+        (*out).host[hostLength] = '\0';
     }
 
     const char *path = slash == nullptr ? "/" : slash;
     if (strlen(path) >= WS_PATH_BYTES)
         return false;
-    memcpy(out->path, path, strlen(path) + 1u);
-    out->port = port;
-    out->secure = secure;
+    memcpy((*out).path, path, strlen(path) + 1u);
+    (*out).port = port;
+    (*out).secure = secure;
     return true;
 }
 

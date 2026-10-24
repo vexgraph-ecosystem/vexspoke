@@ -23,7 +23,7 @@
 #define REFLECT_CLASS_NAME_MAX VARIABLE_SLOT_NAME_MAX
 #define REFLECT_CLASS_METHOD_NONE UINT32_MAX
 
-typedef void *(*ClassConstructFn)(void *);
+typedef void *(*ClassConstructFn)(void*);
 
 typedef struct Class {
     char name[REFLECT_CLASS_NAME_BYTES]; // folded name (atom grammar)

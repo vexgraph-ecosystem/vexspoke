@@ -170,10 +170,10 @@ static bool growSegment(const TouchHandler ***items, int *cap, int needed) {
     int newCap = (*cap == 0) ? 16 : *cap * 2;
     while (newCap < needed) newCap *= 2;
     const TouchHandler **nb = (const TouchHandler**) Memory_alloc(
-        TYPE_INT_POINTER, (size_t) newCap * sizeof(TouchHandler *));
+        TYPE_INT_POINTER, (size_t) newCap * sizeof(TouchHandler*));
     if (nb == nullptr) return false;
     if (*items != nullptr && *cap > 0)
-        memcpy(nb, *items, (size_t) *cap * sizeof(TouchHandler *));
+        memcpy(nb, *items, (size_t) *cap * sizeof(TouchHandler*));
     *items = nb;
     *cap = newCap;
     return true;
