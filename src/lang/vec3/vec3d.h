@@ -17,11 +17,11 @@
 // and orbital integration. Aligned to 32 Bytes for AVX2 / Apple NEON pair.
 
 typedef struct Vec3d {
-    alignas(32) union {
+    union {
         struct { double horizontal; double vertical; double depth; uint64_t frame; };
         struct { double x; double y; double z; uint64_t _frame; };
         struct { double right; double up; double front; uint64_t _f; };
-        double data[4];
+        alignas(32) double data[4];
     };
 } Vec3d;
 

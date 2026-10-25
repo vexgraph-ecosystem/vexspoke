@@ -69,6 +69,8 @@ void GestureState_processEvent(GestureState *state, GestureEvent event) {
     if (state == nullptr) return;
 
     (*state).focalPoint = event.focalPoint;
+    Vec2 *velocity = &(*state).scrollVelocity;
+    Vec2 delta = event.scrollDelta;
 
     switch (event.phase) {
         case GESTURE_PHASE_BEGAN:
@@ -90,8 +92,8 @@ void GestureState_processEvent(GestureState *state, GestureEvent event) {
             (*state).currentRotationRad += event.rotationDeltaRad;
 
             // Update scroll velocity
-            (*state).scrollVelocity.horizontal = event.scrollDelta.horizontal;
-            (*state).scrollVelocity.vertical = event.scrollDelta.vertical;
+            (*velocity).horizontal = delta.horizontal;
+            (*velocity).vertical = delta.vertical;
             break;
 
         case GESTURE_PHASE_ENDED:
@@ -102,8 +104,8 @@ void GestureState_processEvent(GestureState *state, GestureEvent event) {
 
         case GESTURE_PHASE_MOMENTUM:
             // Momentum scroll tick
-            (*state).scrollVelocity.horizontal = event.scrollDelta.horizontal;
-            (*state).scrollVelocity.vertical = event.scrollDelta.vertical;
+            (*velocity).horizontal = delta.horizontal;
+            (*velocity).vertical = delta.vertical;
             break;
 
         default:
@@ -116,13 +118,14 @@ void GestureState_tick(GestureState *state, float deltaSeconds) {
 
     // Decay momentum velocity with smooth exponential friction
     float friction = powf(0.1f, deltaSeconds);
-    (*state).scrollVelocity.horizontal *= friction;
-    (*state).scrollVelocity.vertical   *= friction;
+    Vec2 *velocity = &(*state).scrollVelocity;
+    (*velocity).horizontal *= friction;
+    (*velocity).vertical   *= friction;
 
-    if (fabsf((*state).scrollVelocity.horizontal) < 0.001f) {
-        (*state).scrollVelocity.horizontal = 0.0f;
+    if (fabsf((*velocity).horizontal) < 0.001f) {
+        (*velocity).horizontal = 0.0f;
     }
-    if (fabsf((*state).scrollVelocity.vertical) < 0.001f) {
-        (*state).scrollVelocity.vertical = 0.0f;
+    if (fabsf((*velocity).vertical) < 0.001f) {
+        (*velocity).vertical = 0.0f;
     }
 }

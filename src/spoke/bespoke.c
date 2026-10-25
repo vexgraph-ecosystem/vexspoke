@@ -3,6 +3,15 @@
 #include <stddef.h>
 #include "annotation/overview.h"
 #include "annotation/intention.h"
+#include "annotation/definition.h"
+
+;;DEFINITION
+/** The Bespoke bridge hub: the one place where R3 drivers attach themselves
+ * through weak extern hooks instead of being linked in. It exists so a driver can
+ * arrive late or be hot-replaced without the hub knowing its identity — the first
+ * launch resolves what is present, and the periodic check services drivers that
+ * appeared since. The hooks are weak and optional, so a build without a given
+ * driver still links and simply finds it absent. */
 
 ;;OVERVIEW
 /**

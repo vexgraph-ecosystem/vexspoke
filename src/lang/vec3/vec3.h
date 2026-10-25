@@ -27,11 +27,11 @@
 //   getDown() == -getUp()
 
 typedef struct Vec3 {
-    alignas(16) union {
+    union {
         struct { float horizontal; float vertical; float depth; uint32_t frame; };
         struct { float x; float y; float z; uint32_t _frame; };
         struct { float right; float up; float front; uint32_t _f; };
-        float data[4];
+        alignas(16) float data[4];
     };
 } Vec3;
 

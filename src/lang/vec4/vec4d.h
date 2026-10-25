@@ -11,11 +11,11 @@
 // Single Class Per File Law: Vec4d.
 
 typedef struct Vec4d {
-    alignas(32) union {
+    union {
         struct { double horizontal; double vertical; double depth; double w; };
         struct { double x; double y; double z; double _w; };
         struct { double right; double up; double front; double _w2; };
-        double data[4];
+        alignas(32) double data[4];
     };
 } Vec4d;
 

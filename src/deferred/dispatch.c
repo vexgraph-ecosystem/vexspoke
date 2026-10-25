@@ -3,6 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "annotation/overview.h"
+#include "annotation/definition.h"
+
+;;DEFINITION
+/** The deferred-behavior mailbox. It exists so a caller can hand work to another
+ * thread without owning that thread: post appends one (fn, context) slot under a
+ * single-try lock, and drain swaps the pending buffer for a reusable one under
+ * the lock before invoking its snapshot outside it. Admission never spins and
+ * storage grows by checked doubling. Posts made during delivery stay pending for
+ * the next pass, the atomic draining flag rejects nested or concurrent drains,
+ * and payloads are borrowed and opaque — the mailbox schedules nothing and owns
+ * nothing it delivers. */
 
 ;;OVERVIEW
 /**

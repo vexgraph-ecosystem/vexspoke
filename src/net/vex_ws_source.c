@@ -93,11 +93,12 @@ bool VexWsSource_open(VexWsSource *self, const char *url, WebSocketConfig config
     memcpy((*self).url, url, length + 1u);
     (*self).config = config;
     (*self).configured = true;
-    (*self).last.kind = WS_MESSAGE_NONE;
-    (*self).last.closeCode = 1005u;
-    (*self).last.payload = nullptr;
-    (*self).last.length = 0u;
-    (*self).last.error[0] = '\0';
+    WebSocketMessage *last = &(*self).last;
+    (*last).kind = WS_MESSAGE_NONE;
+    (*last).closeCode = 1005u;
+    (*last).payload = nullptr;
+    (*last).length = 0u;
+    (*last).error[0] = '\0';
     return VexWsSource_connect(self);
 }
 
@@ -112,15 +113,16 @@ bool VexWsSource_connect(void *handle) {
         return false;
     }
     if (!WebSocket_open(&(*self).socket, (*self).url, (*self).config)) {
-        (*self).last.kind = WS_MESSAGE_ERROR;
-        (*self).last.payload = nullptr;
-        (*self).last.length = 0u;
-        size_t cap = sizeof((*self).last.error);
+        WebSocketMessage *last = &(*self).last;
+        (*last).kind = WS_MESSAGE_ERROR;
+        (*last).payload = nullptr;
+        (*last).length = 0u;
+        size_t cap = sizeof((*last).error);
         const char *reason = WebSocket_lastError(&(*self).socket);
         size_t reasonLength = strlen(reason);
         size_t copy = reasonLength < cap - 1u ? reasonLength : cap - 1u;
-        memcpy((*self).last.error, reason, copy);
-        (*self).last.error[copy] = '\0';
+        memcpy((*last).error, reason, copy);
+        (*last).error[copy] = '\0';
         return false;
     }
     return true;

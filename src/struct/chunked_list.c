@@ -231,7 +231,8 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
     uint8_t *leaf = leafAtRow(self, index);
     if (!leaf)
         return nullptr;
-    size_t stride = (*self).collection.stride;
+    const Collection *coll = &(*self).collection;
+    size_t stride = (*coll).stride;
     return leaf + (size_t)(index & (*self).rowMask) * stride;
 }
 
@@ -239,7 +240,8 @@ static uint8_t *rowAt(const ChunkedList *self, uint32_t index) {
 // link is naturally aligned. The link is written once (when the next leaf is
 // created) and read with acquire/release.
 static size_t leafLinkOffset(const ChunkedList *self) {
-    size_t rowsBytes = (size_t)(*self).rowsPerChunk * (size_t)(*self).collection.stride;
+    const Collection *coll = &(*self).collection;
+    size_t rowsBytes = (size_t)(*self).rowsPerChunk * (size_t)(*coll).stride;
     return (rowsBytes + (size_t)(VEX_CHUNKED_LINK_BYTES - 1u)) & ~(size_t)(VEX_CHUNKED_LINK_BYTES - 1u);
 }
 
@@ -249,7 +251,8 @@ static uint8_t *nodeAlloc(const ChunkedList *self, uint32_t depth) {
     uint32_t radix = (*self).radices[depth];
     if (depth == (*self).levels - 1u) {
         size_t Bytes = leafLinkOffset(self) + (size_t)VEX_CHUNKED_LINK_BYTES;
-        uint64_t chunkType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*self).collection.elementClass);
+        const Collection *coll = &(*self).collection;
+        uint64_t chunkType = Type_make(PROJ_VEXSPOKE, FORM_ARRAY, (*coll).elementClass);
         uint8_t *leaf = (uint8_t*) Memory_alloc(chunkType, Bytes);
         if (leaf)
             memset(leaf, 0, Bytes);
@@ -624,7 +627,8 @@ bool ChunkedList_packInto(const ChunkedList *self, uint8_t *dest, size_t destCap
         return false;
 
     uint32_t rows = atomic_load(&(*self).committed);
-    size_t stride = (*self).collection.stride;
+    const Collection *coll = &(*self).collection;
+    size_t stride = (*coll).stride;
     size_t fit = stride == 0 ? 0 : destCap / stride;
     bool truncated = (size_t)rows > fit;
     uint32_t copy = truncated ? (uint32_t)fit : rows;
@@ -693,7 +697,8 @@ void ChunkedList_setChunkBytes(ChunkedList *self, uint32_t chunkBytes) {
     if (atomic_load(&(*self).chunkCount) == 0u) {
         if (chunkBytes < 16u)
             chunkBytes = 16u;
-        uint32_t rows = pow2Rows((size_t)(*self).collection.stride, chunkBytes);
+        const Collection *coll = &(*self).collection;
+        uint32_t rows = pow2Rows((size_t)(*coll).stride, chunkBytes);
         (*self).chunkBytes = chunkBytes;
         (*self).radices[(*self).levels - 1u] = rows;
         recomputeGeometry(self);
@@ -734,11 +739,15 @@ uint64_t ChunkedList_exhaustionCount(const ChunkedList *self) {
 }
 
 uint32_t ChunkedList_elementClassId(const ChunkedList *self) {
-    return self ? (*self).collection.elementClass : 0u;
+    if (self == nullptr) return 0u;
+    const Collection *coll = &(*self).collection;
+    return (*coll).elementClass;
 }
 
 uint32_t ChunkedList_stride(const ChunkedList *self) {
-    return self ? (*self).collection.stride : 0u;
+    if (self == nullptr) return 0u;
+    const Collection *coll = &(*self).collection;
+    return (*coll).stride;
 }
 
 uint32_t ChunkedList_getChunkCount(const ChunkedList *self) {

@@ -115,7 +115,8 @@ static void parserFail(RegexParser *parser, const char *message) {
 
 // Appends a zeroed AST node under the node ceiling.
 static uint32_t parserNode(RegexParser *parser, uint8_t kind) {
-    if ((*parser).nodes.count >= REGEX_MAX_NODES) {
+    RegexNodeList nodes = (*parser).nodes;
+    if (nodes.count >= REGEX_MAX_NODES) {
         parserFail(parser, "pattern too complex (node ceiling)");
         return REGEX_NODE_NONE;
     }

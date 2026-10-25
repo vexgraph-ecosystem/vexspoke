@@ -16,12 +16,12 @@
 // vertical, depth, and w components. Preserves 16-byte SIMD alignment.
 
 typedef struct Vec4 {
-    alignas(16) union {
+    union {
         struct { float horizontal; float vertical; float depth; float w; };
         struct { float x; float y; float z; float _w; };
         struct { float right; float up; float front; float _w2; };
         struct { float r; float g; float b; float a; };
-        float data[4];
+        alignas(16) float data[4];
     };
 } Vec4;
 

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "note": "Ratchet baseline: CI fails only when a file/rule count grows.",
+  "total": 46,
+  "counts": {
+    "src/lang/vec3/vec3_int_float.c::Semantic Consistency Law (Access depth)": 18,
+    "src/lang/vec3/vec3_long_double.c::Semantic Consistency Law (Access depth)": 18,
+    "src/net/vex_ws_source.c::Semantic Consistency Law (Access depth)": 7,
+    "src/objc/audio_cocoa.m::Semantic Consistency Law (Access depth)": 2,
+    "src/thread/thread.c::Semantic Consistency Law (Access depth)": 1
+  }
+}

@@ -96,14 +96,15 @@ SphereArray *SphereArray_3(int32_t radius, uint32_t elementClass, size_t stride)
     }
     memset(data, 0, dataBytes);
 
-    (*self).collection.typeId = TYPE_SPHERE_ARRAY;
-    (*self).collection.elementClass = elementClass;
-    (*self).collection.stride = (uint32_t) stride;
-    (*self).collection.capacity = (uint32_t) totalVoxels;
-    (*self).collection.head = 0;
-    (*self).collection.exhaustionCount = 0;
-    (*self).collection.exhaustionReported = false;
-    (*self).collection.data = data;
+    Collection *coll = &(*self).collection;
+    (*coll).typeId = TYPE_SPHERE_ARRAY;
+    (*coll).elementClass = elementClass;
+    (*coll).stride = (uint32_t) stride;
+    (*coll).capacity = (uint32_t) totalVoxels;
+    (*coll).head = 0;
+    (*coll).exhaustionCount = 0;
+    (*coll).exhaustionReported = false;
+    (*coll).data = data;
     (*self).radius = radius;
     (*self).diameter = diameter;
 
@@ -125,7 +126,7 @@ SphereArray *SphereArray_3(int32_t radius, uint32_t elementClass, size_t stride)
             }
         }
     }
-    (*self).collection.activeCount = active;
+    (*coll).activeCount = active;
 
     return self;
 }
@@ -142,9 +143,10 @@ void SphereArray_free(SphereArray *self) {
     if (self == nullptr) {
         return;
     }
-    if ((*self).collection.data != nullptr) {
-        Memory_free((*self).collection.data);
-        (*self).collection.data = nullptr;
+    Collection *coll = &(*self).collection;
+    if ((*coll).data != nullptr) {
+        Memory_free((*coll).data);
+        (*coll).data = nullptr;
     }
     Memory_free(self);
 }
@@ -161,7 +163,8 @@ int32_t SphereArray_diameter(const SphereArray *self) {
 
 size_t SphereArray_validVoxelCount(const SphereArray *self) {
     if (self == nullptr) return 0;
-    return (size_t) (*self).collection.activeCount;
+    const Collection *coll = &(*self).collection;
+    return (size_t) (*coll).activeCount;
 }
 
 int64_t SphereArray_distanceSquaredOffset(int32_t dx, int32_t dy, int32_t dz) {
@@ -211,7 +214,8 @@ uint8_t *SphereArray_slotGrid(SphereArray *self, int32_t gx, int32_t gy, int32_t
         return nullptr;
     }
     size_t idx = SphereArray_index(gx, gy, gz, (*self).diameter);
-    return (*self).collection.data + (idx * (size_t) (*self).collection.stride);
+    const Collection *coll = &(*self).collection;
+    return (*coll).data + (idx * (size_t) (*coll).stride);
 }
 
 uint8_t *SphereArray_slotOffset(SphereArray *self, int32_t dx, int32_t dy, int32_t dz) {
@@ -228,8 +232,9 @@ bool SphereArray_getGrid(void *dest, const SphereArray *self, int32_t gx, int32_
         return false;
     }
     size_t idx = SphereArray_index(gx, gy, gz, (*self).diameter);
-    size_t stride = (size_t) (*self).collection.stride;
-    const uint8_t *src = (*self).collection.data + (idx * stride);
+    const Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
+    const uint8_t *src = (*coll).data + (idx * stride);
     memcpy(dest, src, stride);
     return true;
 }
@@ -240,8 +245,9 @@ bool SphereArray_setGrid(SphereArray *self, int32_t gx, int32_t gy, int32_t gz, 
         return false;
     }
     size_t idx = SphereArray_index(gx, gy, gz, (*self).diameter);
-    size_t stride = (size_t) (*self).collection.stride;
-    uint8_t *dest = (*self).collection.data + (idx * stride);
+    Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
+    uint8_t *dest = (*coll).data + (idx * stride);
     memcpy(dest, src, stride);
     return true;
 }
@@ -267,8 +273,8 @@ void SphereArray_forEach(const SphereArray *self, SphereArrayVoxelFn callback, v
     int32_t r = (*self).radius;
     int32_t d = (*self).diameter;
     int64_t rSq = (int64_t) r * (int64_t) r;
-    size_t stride = (size_t) (*self).collection.stride;
-
+    const Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
     for (int32_t gz = 0; gz < d; gz++) {
         int32_t dz = gz - r;
         int64_t dzSq = (int64_t) dz * (int64_t) dz;
@@ -280,7 +286,7 @@ void SphereArray_forEach(const SphereArray *self, SphereArrayVoxelFn callback, v
                 int32_t dx = gx - r;
                 if (dyzSq + ((int64_t) dx * (int64_t) dx) <= rSq) {
                     size_t idx = SphereArray_index(gx, gy, gz, d);
-                    const uint8_t *voxel = (*self).collection.data + (idx * stride);
+                    const uint8_t *voxel = (*coll).data + (idx * stride);
                     callback(gx, gy, gz, dx, dy, dz, voxel, userData);
                 }
             }

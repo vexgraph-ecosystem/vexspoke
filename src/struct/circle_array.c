@@ -97,14 +97,15 @@ CircleArray *CircleArray_3(int32_t radius, uint32_t elementClass, size_t stride)
     }
     memset(data, 0, dataBytes);
 
-    (*self).collection.typeId = TYPE_CIRCLE_ARRAY;
-    (*self).collection.elementClass = elementClass;
-    (*self).collection.stride = (uint32_t) stride;
-    (*self).collection.capacity = (uint32_t) totalCells;
-    (*self).collection.head = 0;
-    (*self).collection.exhaustionCount = 0;
-    (*self).collection.exhaustionReported = false;
-    (*self).collection.data = data;
+    Collection *coll = &(*self).collection;
+    (*coll).typeId = TYPE_CIRCLE_ARRAY;
+    (*coll).elementClass = elementClass;
+    (*coll).stride = (uint32_t) stride;
+    (*coll).capacity = (uint32_t) totalCells;
+    (*coll).head = 0;
+    (*coll).exhaustionCount = 0;
+    (*coll).exhaustionReported = false;
+    (*coll).data = data;
     (*self).radius = radius;
     (*self).diameter = diameter;
 
@@ -120,7 +121,7 @@ CircleArray *CircleArray_3(int32_t radius, uint32_t elementClass, size_t stride)
             }
         }
     }
-    (*self).collection.activeCount = active;
+    (*coll).activeCount = active;
 
     return self;
 }
@@ -137,9 +138,10 @@ void CircleArray_free(CircleArray *self) {
     if (self == nullptr) {
         return;
     }
-    if ((*self).collection.data != nullptr) {
-        Memory_free((*self).collection.data);
-        (*self).collection.data = nullptr;
+    Collection *coll = &(*self).collection;
+    if ((*coll).data != nullptr) {
+        Memory_free((*coll).data);
+        (*coll).data = nullptr;
     }
     Memory_free(self);
 }
@@ -156,7 +158,8 @@ int32_t CircleArray_diameter(const CircleArray *self) {
 
 size_t CircleArray_validCellCount(const CircleArray *self) {
     if (self == nullptr) return 0;
-    return (size_t) (*self).collection.activeCount;
+    const Collection *coll = &(*self).collection;
+    return (size_t) (*coll).activeCount;
 }
 
 int64_t CircleArray_distanceSquaredOffset(int32_t dx, int32_t dy) {
@@ -199,7 +202,8 @@ uint8_t *CircleArray_slotGrid(CircleArray *self, int32_t gridX, int32_t gridY) {
         return nullptr;
     }
     size_t index = (size_t) gridY * (size_t) (*self).diameter + (size_t) gridX;
-    return (*self).collection.data + (index * (size_t) (*self).collection.stride);
+    const Collection *coll = &(*self).collection;
+    return (*coll).data + (index * (size_t) (*coll).stride);
 }
 
 uint8_t *CircleArray_slotOffset(CircleArray *self, int32_t dx, int32_t dy) {
@@ -215,8 +219,9 @@ bool CircleArray_getGrid(void *dest, const CircleArray *self, int32_t gridX, int
         return false;
     }
     size_t index = (size_t) gridY * (size_t) (*self).diameter + (size_t) gridX;
-    size_t stride = (size_t) (*self).collection.stride;
-    const uint8_t *src = (*self).collection.data + (index * stride);
+    const Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
+    const uint8_t *src = (*coll).data + (index * stride);
     memcpy(dest, src, stride);
     return true;
 }
@@ -227,8 +232,9 @@ bool CircleArray_setGrid(CircleArray *self, int32_t gridX, int32_t gridY, const 
         return false;
     }
     size_t index = (size_t) gridY * (size_t) (*self).diameter + (size_t) gridX;
-    size_t stride = (size_t) (*self).collection.stride;
-    uint8_t *dest = (*self).collection.data + (index * stride);
+    Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
+    uint8_t *dest = (*coll).data + (index * stride);
     memcpy(dest, src, stride);
     return true;
 }
@@ -252,8 +258,8 @@ void CircleArray_forEach(const CircleArray *self, CircleArrayCellFn callback, vo
     int32_t r = (*self).radius;
     int32_t d = (*self).diameter;
     int64_t rSq = (int64_t) r * (int64_t) r;
-    size_t stride = (size_t) (*self).collection.stride;
-
+    const Collection *coll = &(*self).collection;
+    size_t stride = (size_t) (*coll).stride;
     for (int32_t gy = 0; gy < d; gy++) {
         int32_t dy = gy - r;
         int64_t dySq = (int64_t) dy * (int64_t) dy;
@@ -261,7 +267,7 @@ void CircleArray_forEach(const CircleArray *self, CircleArrayCellFn callback, vo
             int32_t dx = gx - r;
             if ((int64_t) dx * (int64_t) dx + dySq <= rSq) {
                 size_t index = (size_t) gy * (size_t) d + (size_t) gx;
-                const uint8_t *element = (*self).collection.data + (index * stride);
+                const uint8_t *element = (*coll).data + (index * stride);
                 callback(gx, gy, dx, dy, element, userData);
             }
         }

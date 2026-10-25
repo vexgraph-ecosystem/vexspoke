@@ -158,27 +158,28 @@ static void OctreeNode_free(OctreeNode *node) {
 }
 
 static void OctreeNode_subdivide(OctreeNode *node, uint32_t childCapacity) {
-    float midX = ((*node).bounds.minX + (*node).bounds.maxX) * 0.5f;
-    float midY = ((*node).bounds.minY + (*node).bounds.maxY) * 0.5f;
-    float midZ = ((*node).bounds.minZ + (*node).bounds.maxZ) * 0.5f;
+    OctreeAABB bounds = (*node).bounds;
+    float midX = (bounds.minX + bounds.maxX) * 0.5f;
+    float midY = (bounds.minY + bounds.maxY) * 0.5f;
+    float midZ = (bounds.minZ + bounds.maxZ) * 0.5f;
 
     OctreeAABB subBounds[8];
     // 0: ---
-    subBounds[0] = (OctreeAABB) { (*node).bounds.minX, (*node).bounds.minY, (*node).bounds.minZ, midX, midY, midZ };
+    subBounds[0] = (OctreeAABB) { bounds.minX, bounds.minY, bounds.minZ, midX, midY, midZ };
     // 1: +--
-    subBounds[1] = (OctreeAABB) { midX, (*node).bounds.minY, (*node).bounds.minZ, (*node).bounds.maxX, midY, midZ };
+    subBounds[1] = (OctreeAABB) { midX, bounds.minY, bounds.minZ, bounds.maxX, midY, midZ };
     // 2: -+-
-    subBounds[2] = (OctreeAABB) { (*node).bounds.minX, midY, (*node).bounds.minZ, midX, (*node).bounds.maxY, midZ };
+    subBounds[2] = (OctreeAABB) { bounds.minX, midY, bounds.minZ, midX, bounds.maxY, midZ };
     // 3: ++-
-    subBounds[3] = (OctreeAABB) { midX, midY, (*node).bounds.minZ, (*node).bounds.maxX, (*node).bounds.maxY, midZ };
+    subBounds[3] = (OctreeAABB) { midX, midY, bounds.minZ, bounds.maxX, bounds.maxY, midZ };
     // 4: --+
-    subBounds[4] = (OctreeAABB) { (*node).bounds.minX, (*node).bounds.minY, midZ, midX, midY, (*node).bounds.maxZ };
+    subBounds[4] = (OctreeAABB) { bounds.minX, bounds.minY, midZ, midX, midY, bounds.maxZ };
     // 5: +-+
-    subBounds[5] = (OctreeAABB) { midX, (*node).bounds.minY, midZ, (*node).bounds.maxX, midY, (*node).bounds.maxZ };
+    subBounds[5] = (OctreeAABB) { midX, bounds.minY, midZ, bounds.maxX, midY, bounds.maxZ };
     // 6: -++
-    subBounds[6] = (OctreeAABB) { (*node).bounds.minX, midY, midZ, midX, (*node).bounds.maxY, (*node).bounds.maxZ };
+    subBounds[6] = (OctreeAABB) { bounds.minX, midY, midZ, midX, bounds.maxY, bounds.maxZ };
     // 7: +++
-    subBounds[7] = (OctreeAABB) { midX, midY, midZ, (*node).bounds.maxX, (*node).bounds.maxY, (*node).bounds.maxZ };
+    subBounds[7] = (OctreeAABB) { midX, midY, midZ, bounds.maxX, bounds.maxY, bounds.maxZ };
 
     for (int i = 0; i < 8; i++) {
         (*node).children[i] = OctreeNode_2(subBounds[i], childCapacity);
@@ -370,7 +371,8 @@ uint64_t Octree_exhaustionCount(const Octree *self) {
 
 void Octree_clear(Octree *self) {
     if (self == nullptr || (*self).root == nullptr) return;
-    OctreeAABB bounds = (*(*self).root).bounds;
+    const OctreeNode *root = (*self).root;
+    OctreeAABB bounds = (*root).bounds;
     OctreeNode_free((*self).root);
     (*self).root = OctreeNode_2(bounds, (*self).maxItemsPerNode);
     (*self).totalItems = 0;

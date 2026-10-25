@@ -159,14 +159,15 @@ static void nearestRecursive(const KdNode *node,
                              float        *bestDistSq) {
     if (node == nullptr) return;
 
-    float d = distSq(query, (*node).point.coord);
+    KdPoint point = (*node).point;
+    float d = distSq(query, point.coord);
     if (d < *bestDistSq) {
         *bestDistSq = d;
-        *bestPoint = (*node).point;
+        *bestPoint = point;
     }
 
     uint8_t axis = (*node).axis;
-    float planeDelta = query[axis] - (*node).point.coord[axis];
+    float planeDelta = query[axis] - point.coord[axis];
 
     const KdNode *nearChild = (planeDelta <= 0.0f) ? (*node).left : (*node).right;
     const KdNode *farChild  = (planeDelta <= 0.0f) ? (*node).right : (*node).left;
@@ -185,8 +186,9 @@ bool KdTree_nearest(const KdTree *tree, const float queryCoord[3], KdPoint *outN
         return false;
     }
     float bestD = 1e30f;
-    KdPoint bestP = (*(*tree).root).point;
-    nearestRecursive((*tree).root, queryCoord, &bestP, &bestD);
+    const KdNode *root = (*tree).root;
+    KdPoint bestP = (*root).point;
+    nearestRecursive(root, queryCoord, &bestP, &bestD);
 
     *outNearest = bestP;
     if (outDistSq != nullptr) {
@@ -203,14 +205,15 @@ static size_t radiusRecursive(const KdNode *node,
                               size_t        count) {
     if (node == nullptr || count >= maxCount) return count;
 
-    float d = distSq(query, (*node).point.coord);
+    KdPoint point = (*node).point;
+    float d = distSq(query, point.coord);
     if (d <= radiusSq) {
-        outPayloads[count++] = (*node).point.payload;
+        outPayloads[count++] = point.payload;
         if (count >= maxCount) return count;
     }
 
     uint8_t axis = (*node).axis;
-    float planeDelta = query[axis] - (*node).point.coord[axis];
+    float planeDelta = query[axis] - point.coord[axis];
 
     const KdNode *nearChild = (planeDelta <= 0.0f) ? (*node).left : (*node).right;
     const KdNode *farChild  = (planeDelta <= 0.0f) ? (*node).right : (*node).left;

@@ -371,7 +371,8 @@ bool Regex_toStringStruct(const Regex *regex, char *dest, size_t cap, bool *outT
     textPrintf(&text, ", instCount=%u", Regex_instCount(regex));
     textPrintf(&text, ", classCount=%u", (*regex).classCount);
     textAppend(&text, ", program=");
-    textPrintf(&text, "%s", (*regex).program.insts ? "set" : "null");
+    RegexProgram program = (*regex).program;
+    textPrintf(&text, "%s", program.insts ? "set" : "null");
     textAppend(&text, ", classes=");
     textPrintf(&text, "%s", (*regex).classes ? "set" : "null");
     textAppend(&text, " }");

@@ -210,7 +210,8 @@ int32_t TreeSitTree_find_by_byte(const TreeSitTree *tree, uint32_t byte_offset) 
 
     while (curr >= 0) {
         const TreeSitNode *node = &(*tree).nodes[curr];
-        if (byte_offset >= (*node).span.start_byte && byte_offset <= (*node).span.end_byte) {
+        TreeSitSpan span = (*node).span;
+        if (byte_offset >= span.start_byte && byte_offset <= span.end_byte) {
             best_match = curr;
             curr = (*node).first_child; // Drill down into finer-grained child
         } else {
