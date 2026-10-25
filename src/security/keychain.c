@@ -46,6 +46,8 @@ const char *Keychain_codeName(KeychainCode code) {
     }
 }
 
+#if defined(__APPLE__)
+
 static bool keysValid(const char *service, const char *account) {
     if (service == nullptr || account == nullptr)
         return false;
@@ -57,8 +59,6 @@ static bool keysValid(const char *service, const char *account) {
         return false;
     return true;
 }
-
-#if defined(__APPLE__)
 
 static KeychainCode codeFor(OSStatus status) {
     switch (status) {
