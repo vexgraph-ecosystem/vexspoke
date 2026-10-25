@@ -1,6 +1,6 @@
 // relational/cell.c — the 32-byte identity cell.
 //
-// Allocate an arena block whose 16-byte MemoryHeader is the identity; the
+// Allocate an arena block whose 32-byte MemoryHeader is the identity; the
 // payload is one Cell (value + pad). No behavior beyond the header reads and the
 // value slot.
 
@@ -12,14 +12,17 @@
 #include "annotation/overview.h"
 #include "nio/mem.h"
 
+_Static_assert(CELL_BLOCK_BYTES == sizeof(MemoryHeader) + CELL_PAYLOAD_BYTES,
+               "Cell block is the 32-byte identity header plus the 16-byte payload");
+
 ;;DEFINITION
 /**
  * ============================================================================
  * DEFINITION: Cell
  * ============================================================================
- * The reflection engine's identity atom: one 32-byte arena block made of the
- * standard 16-byte MemoryHeader (typeId, length, sugar — the identity) plus a
- * 16-byte payload (a value/pointer slot and padding). A cell is therefore
+ * The reflection engine's identity atom: one 48-byte arena block made of the
+ * standard 32-byte MemoryHeader (id, hash, length, pointer — the identity) plus
+ * a 16-byte payload (a value/pointer slot and padding). A cell is therefore
  * self-describing: Cell_check(cell, typeId) answers its kind straight from the
  * header, with no side table and no extra Bytes.
  *
@@ -37,7 +40,7 @@
  * ============================================================================
  * CLASS: Cell (relational/cell.c)
  * ============================================================================
- * the 32-byte identity cell (MemoryHeader identity + a value slot).
+ * the identity cell (32-byte MemoryHeader identity + a 16-byte value slot).
  *
  * STRUCT FIELDS (Mirroring relational/cell.h — the payload; the identity is the
  * block header before it):

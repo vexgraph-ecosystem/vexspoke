@@ -6,7 +6,7 @@ workspace build links `librelational_engine.a`; canonical `nio/mem.h` and
 `io/file.h` resolve from engine sources. CPU computation/behavior remains Vexspoke.
 
 The existing native `Memory_*`/`MemoryArena_*`/`Transient_*` and `File_*` ABI,
-16-byte allocation headers and arena semantics are preserved. This is not a Rust
+32-byte allocation headers, 32-byte payload alignment and arena semantics are preserved. This is not a Rust
 allocator rewrite: engine Rust typed pools and its partial storage C ABI are
 separate surfaces. Broader container migration remains staged. Engine
 `nio/relational_memory.h` exposes `relational_engine/memory.h` separately.

@@ -14,7 +14,7 @@
 // live in a never-moved ChunkedList (so a node's address is stable for life),
 // and the graph edges are 32-bit INDICES into that list — data-oriented and
 // relocatable, not invisible pointer chases. Each node references one identity
-// Cell, allocated separately so it carries its own 16-byte header; the shelf is
+// Cell, allocated separately so it carries its own 32-byte header; the shelf is
 // the indexable pool the reflective walk traverses.
 //
 // COLD PATH ONLY (the Cold-Only Reflection Law): the shelf is the rendezvous

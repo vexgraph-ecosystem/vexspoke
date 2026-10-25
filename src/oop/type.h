@@ -12,7 +12,7 @@
 // the form/modifier/wrapper predicates, Type_arch, and the parent-chain
 // resolver (Type_registerParents/Type_registerBareParents/Type_getParentClass/
 // Type_isA) — is OWNED by Relational Engine in `type/type.h` and included
-// above. The 16-byte block header lives with the allocator there too
+// above. The 32-byte block header lives with the allocator there too
 // (MemoryHeader in nio/mem.h).
 //
 // This file keeps ONLY vexspoke's class numbers: the legacy 1-based ID_* list

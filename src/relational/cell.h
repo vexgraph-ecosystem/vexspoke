@@ -7,25 +7,27 @@
 
 #include "c23/constructor.h"
 
-// relational/cell.h — the 32-byte identity cell.
+// relational/cell.h — the identity cell.
 //
-// A cell is one arena block whose 16-byte MemoryHeader IS its identity — the
+// A cell is one arena block whose 32-byte MemoryHeader IS its identity — the
 // "self-describing header" (the Self-Describing memory Block Law) made the unit
 // of reflection. The block is:
 //
-//     [ MemoryHeader 16B: typeId | length | sugar ][ value 8B ][ pad 8B ]  = 32B
-//       `--------------- the identity ------------'  `--- the Cell payload -'
+//     [ MemoryHeader 32B: id | hash | length | pointer ][ value 8B ][ pad 8B ] = 48B
+//       `----------------- the identity ---------------'  `-- the Cell payload --'
 //
 // The `value` field is a thin pointer to the cell's value, or the value inline
 // for small kinds — one 8-byte slot either way, so the cell is uniform. The pad
-// rounds the block to 32 Bytes (two cells per cache line).
+// rounds the payload to 16 Bytes; the block is the 32-byte header plus that
+// payload, and its payload is 32-byte aligned (the Universal Alignment Law).
 //
 // Cell_check(cell, typeId) reads the identity header's typeId, so a live
 // pointer can answer "are you kind X?" without a side table. This is the block
 // reactive objects are built on (the same header, a different payload shape).
 
 #define CELL_PAYLOAD_BYTES 16u
-#define CELL_BLOCK_BYTES 32u
+// Whole block: the 32-byte identity header plus the 16-byte payload.
+#define CELL_BLOCK_BYTES 48u
 
 typedef struct Cell {
     uintptr_t value; // thin pointer to the value, or the value inline

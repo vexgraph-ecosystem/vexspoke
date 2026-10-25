@@ -23,7 +23,7 @@
  * chain), so a node index resolves in O(1) and a node address never moves; the
  * edges are u32 indices rather than pointers, which keeps the shelf
  * data-oriented, relocatable, and packable. Each node references one identity
- * Cell, allocated separately so Cell_check reads its 16-byte header.
+ * Cell, allocated separately so Cell_check reads its 32-byte header.
  *
  * Lifetime: an arena object (or embedded); Shelf_shutdown frees every referenced
  * cell and the node list. Ownership of cells added via Shelf_addCell/addNode
