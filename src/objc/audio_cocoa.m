@@ -266,10 +266,12 @@ float AudioClip_seconds(AudioClip *clip) {
 // DEPRECATED-CARRY(connect:to:format: -> connect:to:format:error:, floor 14)
 static void audioConnect(AVAudioEngine *engine, AVAudioNode *node,
                          AVAudioNode *dest, AVAudioFormat *format) {
+#if defined(__MAC_27_0) && __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
     if (@available(macOS 27.0, *)) {
         (void) [engine connect:node to:dest format:format error:nullptr];
         return;
     }
+#endif
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [engine connect:node to:dest format:format];
@@ -278,8 +280,10 @@ static void audioConnect(AVAudioEngine *engine, AVAudioNode *node,
 
 // DEPRECATED-CARRY(play -> playAndReturnError:, floor 14)
 static bool audioNodePlay(AVAudioPlayerNode *node) {
+#if defined(__MAC_27_0) && __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
     if (@available(macOS 27.0, *))
         return [node playAndReturnError:nullptr];
+#endif
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [node play];
