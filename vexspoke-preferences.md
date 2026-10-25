@@ -3,7 +3,7 @@
 > Universal constitution: `gist.md` is the compressed law list; `PREFERENCES.md` is its rationale.
 
 ## 0. Constitution Link (supreme)
-- [gist.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a#file-gist-md) — the compressed law list, mirrored in this workspace at `../../../metadata/gists/preferences/gist.md`. It is the only normative law text; `../../../PREFERENCES.md` carries the rationale and is never ingested whole. Numbers are slice addresses inside one file, never law identity: cite by Title.
+- [gist.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a#file-gist-md) — the compressed law list, mirrored in this workspace at `../../../metadata/gists/preferences/gist.md`. It is the only normative law text; `../../../metadata/gists/preferences/PREFERENCES.md` carries the rationale and is never ingested whole. Numbers are slice addresses inside one file, never law identity: cite by Title.
 - All universal laws bind this repository. Read one on demand from the workspace root: `./tools/prefs law "<title>"`, `./tools/prefs section "<section>"`, `./tools/prefs repo <name>`.
 - This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation, behavior, and network protocols). Relational Engine owns filesystem IO/NIO and the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke `net/` owns network protocol clients and servers, including BSD socket-backed HTTP. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
 
