@@ -107,6 +107,8 @@ void Clock_setTimeScale(Clock *clock, double scale) {
     (*clock).timeScale = scale;
 }
 
+
+
 // Returns the configured elapsed-time multiplier.
 double Clock_timeScale(const Clock *clock) {
     return (*clock).timeScale;

@@ -5,7 +5,7 @@
 ## 0. Constitution Link (supreme)
 - [gist.md](https://gist.github.com/vex-graph/4132a6c45cb6d3797c3e8eff2e94035a#file-gist-md) — the compressed law list, mirrored in this workspace at `../../../metadata/gists/preferences/gist.md`. It is the only normative law text; `../../../metadata/gists/preferences/PREFERENCES.md` carries the rationale and is never ingested whole. Numbers are slice addresses inside one file, never law identity: cite by Title.
 - All universal laws bind this repository. Read one on demand from the workspace root: `./tools/prefs law "<title>"`, `./tools/prefs section "<section>"`, `./tools/prefs repo <name>`.
-- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation, behavior, and network protocols). Relational Engine owns filesystem IO/NIO and the native Memory/MemoryArena/Transient allocator implementation, plus Rust storage and native C search. Vexspoke `net/` owns network protocol clients and servers, including BSD socket-backed HTTP. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
+- This document codifies **exclusive** preferences for `vexspoke` (R2 CPU computation, behavior, and network protocols). Relational Engine owns filesystem IO/NIO, the native Memory/MemoryArena/Transient allocator implementation, and the relational symbol table/spotlight runtime (`src/relational`), plus Rust storage and native C search. Vexspoke `net/` owns network protocol clients and servers, including BSD socket-backed HTTP. Existing C Memory ABI and type IDs remain compatible; this migration is not a Rust allocator rewrite.
 
 ## 1. Repo-Local Law Index (Binding Matrix)
 
@@ -59,7 +59,7 @@ _Rule._
 
 ### 24-Byte Variable Slot Law (The 23+1 Rule)
 
-**Definition.** Every interned variable name is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 Bytes total), paired with an 8-byte intrusive self-pointer (`uint64_t self`) as the cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`); two slots pack byte-perfect into a single 64-byte CPU cache line. *Why:* the 23-byte pin keeps slots uniform, identity stated once per process, lookups branchless binary search over direct 24-byte compares — overlong names reject cold, silent truncation would corrupt identity. Backing comes from the engine arena (`MemoryArena_alloc` in `relational/variable_pool.c`); the engine's Rust `VariableSlot` is a different record (`[name 24B][value 8B]`) and the two are never conflated.
+**Definition.** Every interned variable name is strictly bounded to 23 ASCII characters plus a 1-byte NUL terminator (24 Bytes total), paired with an 8-byte intrusive self-pointer (`uint64_t self`) as the cache-aligned, power-of-two 32-byte slot record (`StringSlot`: `[self 8B][name 24B]`); two slots pack byte-perfect into a single 64-byte CPU cache line. *Why:* the 23-byte pin keeps slots uniform, identity stated once per process, lookups branchless binary search over direct 24-byte compares — overlong names reject cold, silent truncation would corrupt identity. Backing comes from the engine arena (`MemoryArena_alloc` in relational-engine's `relational/variable_pool.c`); the engine's Rust `VariableSlot` is a different record (`[name 24B][value 8B]`) and the two are never conflated.
 
 _Rule._
 
@@ -108,7 +108,7 @@ _Rule._
 
 ## 3. Repo-Local Extensions (managed, per the Conflict Triage Law)
 
-;;INTENTION("R2 Relational memory Substrate: bit-packed memory headers, coordinate-agnostic vectors, bitpool slot allocation, zero steady-state allocation.")
+;;INTENTION("R2 CPU Computation & Behavior: pure algorithms, coordinate-agnostic vectors, reactive generic engine, and network protocols.")
 
 `nio/mem.h`, filesystem `io/*` and `nio/relational_memory.h` resolve from Relational Engine, not Vexspoke; network protocols and socket adapters belong in Vexspoke `net/*`. The default build links the native engine `Memory_*` implementation; the Rust byte/string ABI in `relational_engine/memory.h` remains a separate surface, no C/Rust atomic layouts are shared, and imported comparison directories stay outside production closure. R1 keeps engine code and owner storage resident during consumer reloads and excludes active callers before destruction; whole-string replacement is not record-schema migration, and Hotcwap reload integration remains unproved.
 

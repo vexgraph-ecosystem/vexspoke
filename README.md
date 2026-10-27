@@ -8,7 +8,7 @@ cooperating R2 storage owner is Relational Engine; R1 `hotcwap` supervises
 lifetimes. An unfinished ecosystem library, not a finished product.
 
 **Implemented and proven (macOS arm64):** the CPU/behavior surface with owner
-tests under `../../tests/vexspoke` — math (`FastMath`/`Vec*`/`Mat*`), algorithms
+tests under `../../../tests/vexspoke` — math (`FastMath`/`Vec*`/`Mat*`), algorithms
 (sort/BVH/path), lockless `BitPool`/`RingBuffer`/`SpinLock`, collections
 (`List`/`Map`/`Set`/`Heap`/…), the reflection hierarchy (`Variable`/`Field`/
 `Struct`/`Class`/`Method`, with `Field` carrying physical layout), reactive
@@ -31,7 +31,7 @@ only); staged migration of the retained containers and
 
 **Platforms proven:** macOS arm64 only; Windows is unproven.
 
-**Evidence:** `../../tests/vexspoke` owners and `../../gist/test-checklist.md`; the
+**Evidence:** `../../../tests/vexspoke` owners and `../../../metadata/gists/test-checklist.md`; the
 `type_test` owner pins the registry + algebra mapping.
 
 A C23 CPU computation and behavior library — everything is a pointer.
@@ -68,7 +68,7 @@ the readiness Gist. The ecosystem, especially its R5 apps, is unfinished.
 ### Build
 
 ```sh
-./tools/b build vexspoke # from the Vexgraph workspace root
+./tools/b build vexspoke # from the workspace root
 ```
 
 ### Standalone autonomy
