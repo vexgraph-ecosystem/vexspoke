@@ -1,4 +1,5 @@
 #include "security/secure_random.h"
+#include "platform/platform.h"
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -58,16 +59,15 @@
  */
 
 // --- OS CSPRNG backends -----------------------------------------------------
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
-    defined(__NetBSD__) || defined(__DragonFly__)
+#if defined(VEX_PLATFORM_APPLE)
     #define SR_BACKEND_ARC4RANDOM 1
-#elif defined(__linux__)
+#elif defined(VEX_PLATFORM_LINUX)
     #define SR_BACKEND_GETRANDOM 1
     #include <errno.h>
     #include <fcntl.h>
     #include <sys/random.h>
     #include <unistd.h>
-#elif defined(_WIN32)
+#elif defined(VEX_PLATFORM_WINDOWS)
     #define SR_BACKEND_BCRYPT 1
     #include <windows.h>
     #include <bcrypt.h>
