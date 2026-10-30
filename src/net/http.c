@@ -6,7 +6,9 @@
 // received per Content-Length or chunked framing into the caller's buffer.
 // Zero allocation — every buffer is caller-owned.
 
-#if !defined(_GNU_SOURCE) && !defined(__APPLE__)
+#include "platform/platform.h"
+
+#if !defined(_GNU_SOURCE) && !defined(VEX_PLATFORM_APPLE)
 #define _GNU_SOURCE // strcasestr
 #endif
 
