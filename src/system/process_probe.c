@@ -2,13 +2,14 @@
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include "system/process_probe.h"
+#include "platform/platform.h"
 
 #include <dirent.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
 
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 #include <libproc.h>
 #endif
 
@@ -63,7 +64,7 @@
 ;;INTENTION("basename compare is intentionally loose (no bundle-id verification): enough to answer 'is OBS alive'; false positives are documented per-row in the registries that consume this probe")
 
 // Applies to macOS — darwin/Apple Silicon native engine (Rule 13).
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 
 enum { kPidScanCap = 4096 }; // bounded stack scan; see PRIVATE HELPERS note
 
@@ -93,7 +94,7 @@ ProcessProbe *ProcessProbe_shared(void) {
 bool ProcessProbe_isRunning(const ProcessProbe *self, const char *procName) {
     if (!self || !procName || (*procName) == '\0')
         return false;
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
     int maxPids = proc_listpids(PROC_ALL_PIDS, 0, nullptr, 0);
     if (maxPids <= 0)
         return false;
