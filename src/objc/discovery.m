@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdatomic.h>
+#include "platform/platform.h"
 
 #include "system/display_info.h"
 #include "system/display_monitor.h"
 #include "system/hardware_info.h"
 #include "system/graphics_info.h"
 
-#ifdef __APPLE__
+#if defined(VEX_PLATFORM_APPLE)
 #include <sys/sysctl.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include "annotation/definition.h"
@@ -73,7 +74,7 @@ void SystemDiscovery_bootstrap(void) {
     if (!atomic_compare_exchange_strong(&s_bootstrapped, &expected, true))
         return; // already bootstrapped
 
-#ifdef __APPLE__
+#if defined(VEX_PLATFORM_APPLE)
     @autoreleasepool {
         // --- 1. Hardware Discovery (sysctl) ---
         uint64_t memsize = 0;
