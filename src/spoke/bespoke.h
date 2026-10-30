@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "platform/platform.h"
 #include "c23/constructor.h"
 
 // spoke/bespoke.h — R2 Behavior: Unified Bespoke Bridge Hub.
@@ -32,9 +33,9 @@ typedef struct Bespoke {
 } Bespoke;
 
 // --- Weak extern driver hooks (R3 graphvex / api-haven implementations) ---
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 #  define BESPOKE_WEAK __attribute__((weak_import))
-#elif defined(__linux__)
+#elif defined(VEX_PLATFORM_LINUX)
 #  define BESPOKE_WEAK __attribute__((weak))
 #else
 #  define BESPOKE_WEAK
