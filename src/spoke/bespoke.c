@@ -47,7 +47,7 @@
  * ============================================================================
  */
 
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(VEX_PLATFORM_APPLE) || defined(VEX_PLATFORM_LINUX)
 __attribute__((weak)) bool runGraphics(void) { return false; }
 __attribute__((weak)) BespokeState checkGraphics(void) { return BESPOKE_ABSENT; }
 __attribute__((weak)) bool runNetworking(void) { return false; }
