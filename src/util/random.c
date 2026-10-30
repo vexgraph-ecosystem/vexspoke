@@ -1,9 +1,10 @@
 #include "util/random.h"
+#include "platform/platform.h"
 
 #include <stdlib.h>
 #include <time.h>
 
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 #include <mach/mach_time.h>
 #endif
 
@@ -85,7 +86,7 @@ static const __uint128_t PCG64_MULT =
 static Random *system_rng = nullptr;
 
 static uint64_t systemSeed(void) {
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
     uint64_t ticks = (uint64_t) mach_absolute_time();
 #else
     struct timespec ts;
