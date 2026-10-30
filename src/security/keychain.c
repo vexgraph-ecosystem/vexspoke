@@ -1,10 +1,11 @@
 #include "security/keychain.h"
+#include "platform/platform.h"
 #include "exception/throw.h"
 #include "annotation/definition.h"
 #include "annotation/overview.h"
 #include <string.h>
 
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
 #endif
@@ -46,7 +47,7 @@ const char *Keychain_codeName(KeychainCode code) {
     }
 }
 
-#if defined(__APPLE__)
+#if defined(VEX_PLATFORM_APPLE)
 
 static bool keysValid(const char *service, const char *account) {
     if (service == nullptr || account == nullptr)
